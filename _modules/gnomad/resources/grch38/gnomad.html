@@ -1,0 +1,550 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.resources.grch38.gnomad &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>gnomad.resources.grch38.gnomad</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gnomad.resources.grch38.gnomad</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GnomadPublicTableResource</span><span class="p">,</span>
+    <span class="n">GnomadPublicMatrixTableResource</span><span class="p">,</span>
+    <span class="n">VersionedMatrixTableResource</span><span class="p">,</span>
+    <span class="n">VersionedTableResource</span><span class="p">,</span>
+    <span class="n">DataException</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="n">CURRENT_EXOME_RELEASE</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">CURRENT_GENOME_RELEASE</span> <span class="o">=</span> <span class="s2">&quot;3.1.1&quot;</span>
+<span class="n">CURRENT_GENOME_COVERAGE_RELEASE</span> <span class="o">=</span> <span class="s2">&quot;3.0.1&quot;</span>
+<span class="n">EXOME_RELEASES</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">GENOME_RELEASES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;3.0&quot;</span><span class="p">,</span> <span class="s2">&quot;3.1&quot;</span><span class="p">,</span> <span class="s2">&quot;3.1.1&quot;</span><span class="p">]</span>
+<span class="n">GENOME_COVERAGE_RELEASES</span> <span class="o">=</span> <span class="n">GENOME_RELEASES</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;3.0.1&quot;</span><span class="p">]</span>
+<span class="n">DATA_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;genomes&quot;</span><span class="p">]</span>
+
+<span class="n">GENOME_POPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AFR&quot;</span><span class="p">,</span> <span class="s2">&quot;AMI&quot;</span><span class="p">,</span> <span class="s2">&quot;AMR&quot;</span><span class="p">,</span> <span class="s2">&quot;ASJ&quot;</span><span class="p">,</span> <span class="s2">&quot;EAS&quot;</span><span class="p">,</span> <span class="s2">&quot;FIN&quot;</span><span class="p">,</span> <span class="s2">&quot;NFE&quot;</span><span class="p">,</span> <span class="s2">&quot;SAS&quot;</span><span class="p">,</span> <span class="s2">&quot;OTH&quot;</span><span class="p">]</span>
+<span class="n">SUBSETS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;non_v2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_topmed&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_cancer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;controls_and_biobanks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_neuro&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tgp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hgdp&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Order to sort subgroupings during VCF export.</span>
+
+<span class="sd">Ensures that INFO labels in VCF are in desired order (e.g., tgp_raw_AC_esn_XX).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">GROUPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;adj&quot;</span><span class="p">,</span> <span class="s2">&quot;raw&quot;</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Group names used to generate labels for high quality genotypes and all raw genotypes.</span>
+
+<span class="sd">Used in VCF export.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">SEXES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">,</span> <span class="s2">&quot;XY&quot;</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Sample sexes used in VCF export.</span>
+
+<span class="sd">Used to stratify frequency annotations (AC, AN, AF) for each sex.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">POPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;afr&quot;</span><span class="p">,</span> <span class="s2">&quot;ami&quot;</span><span class="p">,</span> <span class="s2">&quot;amr&quot;</span><span class="p">,</span> <span class="s2">&quot;asj&quot;</span><span class="p">,</span> <span class="s2">&quot;eas&quot;</span><span class="p">,</span> <span class="s2">&quot;fin&quot;</span><span class="p">,</span> <span class="s2">&quot;nfe&quot;</span><span class="p">,</span> <span class="s2">&quot;oth&quot;</span><span class="p">,</span> <span class="s2">&quot;sas&quot;</span><span class="p">,</span> <span class="s2">&quot;mid&quot;</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Global populations in gnomAD v3.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">COHORTS_WITH_POP_STORED_AS_SUBPOP</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tgp&quot;</span><span class="p">,</span> <span class="s2">&quot;hgdp&quot;</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Subsets in gnomAD v3.1 that are broken down by their known subpops instead of global pops in the frequency struct.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">TGP_POPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;esn&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pur&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pjl&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;clm&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;jpt&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;chb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;itu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tsi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mxl&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ceu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;msl&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yri&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;beb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fin&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;khv&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cdx&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lwk&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;acb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;asw&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ibs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gbr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gih&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;chs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gwd&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">1000 Genomes Project (1KG/TGP) subpops.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">HGDP_POPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;japanese&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;papuan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adygei&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;orcadian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;biakapygmy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yakut&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;han&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;uygur&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;miaozu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mongola&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;balochi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bedouin&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;russian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;daur&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pima&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hezhen&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sindhi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yizu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oroqen&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;san&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tuscan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;palestinian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tujia&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;druze&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pathan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;basque&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;makrani&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;italian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;naxi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;karitiana&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sardinian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mbutipygmy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mozabite&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yoruba&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lahu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dai&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cambodian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;melanesian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;french&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;brahui&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hazara&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bantusafrica&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;surui&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mandenka&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kalash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;xibo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;colombian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bantukenya&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;she&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;burusho&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maya&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Human Genome Diversity Project (HGDP) subpops.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">TGP_POP_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;chb&quot;</span><span class="p">:</span> <span class="s2">&quot;Han Chinese&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;jpt&quot;</span><span class="p">:</span> <span class="s2">&quot;Japanese&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;chs&quot;</span><span class="p">:</span> <span class="s2">&quot;Southern Han Chinese&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cdx&quot;</span><span class="p">:</span> <span class="s2">&quot;Chinese Dai&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;khv&quot;</span><span class="p">:</span> <span class="s2">&quot;Kinh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ceu&quot;</span><span class="p">:</span> <span class="s2">&quot;Utah Residents (European Ancestry)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tsi&quot;</span><span class="p">:</span> <span class="s2">&quot;Toscani&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fin&quot;</span><span class="p">:</span> <span class="s2">&quot;Finnish&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gbr&quot;</span><span class="p">:</span> <span class="s2">&quot;British&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ibs&quot;</span><span class="p">:</span> <span class="s2">&quot;Iberian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yri&quot;</span><span class="p">:</span> <span class="s2">&quot;Yoruba&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lwk&quot;</span><span class="p">:</span> <span class="s2">&quot;Luhya&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gwd&quot;</span><span class="p">:</span> <span class="s2">&quot;Gambian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;msl&quot;</span><span class="p">:</span> <span class="s2">&quot;Mende&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;esn&quot;</span><span class="p">:</span> <span class="s2">&quot;Esan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;asw&quot;</span><span class="p">:</span> <span class="s2">&quot;African-American&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;acb&quot;</span><span class="p">:</span> <span class="s2">&quot;African Caribbean&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mxl&quot;</span><span class="p">:</span> <span class="s2">&quot;Mexican-American&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pur&quot;</span><span class="p">:</span> <span class="s2">&quot;Puerto Rican&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;clm&quot;</span><span class="p">:</span> <span class="s2">&quot;Colombian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pel&quot;</span><span class="p">:</span> <span class="s2">&quot;Peruvian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gih&quot;</span><span class="p">:</span> <span class="s2">&quot;Gujarati&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pjl&quot;</span><span class="p">:</span> <span class="s2">&quot;Punjabi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;beb&quot;</span><span class="p">:</span> <span class="s2">&quot;Bengali&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stu&quot;</span><span class="p">:</span> <span class="s2">&quot;Sri Lankan Tamil&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;itu&quot;</span><span class="p">:</span> <span class="s2">&quot;Indian Telugu&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">1000 Genomes Project (1KG/TGP) pop label map.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">POPS_STORED_AS_SUBPOPS</span> <span class="o">=</span> <span class="n">TGP_POPS</span> <span class="o">+</span> <span class="n">HGDP_POPS</span>
+<span class="n">POPS_TO_REMOVE_FOR_POPMAX</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;asj&quot;</span><span class="p">,</span> <span class="s2">&quot;fin&quot;</span><span class="p">,</span> <span class="s2">&quot;oth&quot;</span><span class="p">,</span> <span class="s2">&quot;ami&quot;</span><span class="p">,</span> <span class="s2">&quot;mid&quot;</span><span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Populations that are removed before popmax calculations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">DOWNSAMPLINGS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mi">10</span><span class="p">,</span>
+    <span class="mi">20</span><span class="p">,</span>
+    <span class="mi">50</span><span class="p">,</span>
+    <span class="mi">100</span><span class="p">,</span>
+    <span class="mi">200</span><span class="p">,</span>
+    <span class="mi">500</span><span class="p">,</span>
+    <span class="mi">1000</span><span class="p">,</span>
+    <span class="mi">2000</span><span class="p">,</span>
+    <span class="mi">5000</span><span class="p">,</span>
+    <span class="mi">10000</span><span class="p">,</span>
+    <span class="mi">15000</span><span class="p">,</span>
+    <span class="mi">20000</span><span class="p">,</span>
+    <span class="mi">25000</span><span class="p">,</span>
+    <span class="mi">30000</span><span class="p">,</span>
+    <span class="mi">40000</span><span class="p">,</span>
+    <span class="mi">50000</span><span class="p">,</span>
+    <span class="mi">60000</span><span class="p">,</span>
+    <span class="mi">70000</span><span class="p">,</span>
+    <span class="mi">75000</span><span class="p">,</span>
+    <span class="mi">80000</span><span class="p">,</span>
+    <span class="mi">85000</span><span class="p">,</span>
+    <span class="mi">90000</span><span class="p">,</span>
+    <span class="mi">95000</span><span class="p">,</span>
+    <span class="mi">100000</span><span class="p">,</span>
+    <span class="mi">110000</span><span class="p">,</span>
+    <span class="mi">120000</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">List of the downsampling numbers to use for frequency calculations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">gnomad_syndip</span> <span class="o">=</span> <span class="n">VersionedMatrixTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;3.0&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;3.0&quot;</span><span class="p">:</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/truth-sets/hail-0.2/gnomad_v3_syndip.b38.mt&quot;</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">na12878</span> <span class="o">=</span> <span class="n">VersionedMatrixTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;3.0&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;3.0&quot;</span><span class="p">:</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/truth-sets/hail-0.2/gnomad_v3_na12878.mt&quot;</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_public_release_ht_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get public release table path.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :param version: One of the release versions of gnomAD on GRCh38</span>
+<span class="sd">    :return: Path to release Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version_prefix</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span> <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;3.0&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;v&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;gs://gnomad-public-requester-pays/release/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/ht/</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">/gnomad.</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">version_prefix</span><span class="si">}{</span><span class="n">version</span><span class="si">}</span><span class="s2">.sites.ht&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">_public_coverage_ht_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get public coverage hail table.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :param version: One of the release versions of gnomAD on GRCh38</span>
+<span class="sd">    :return: path to coverage Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version_prefix</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span> <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;3.0&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;v&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;gs://gnomad-public-requester-pays/release/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/coverage/</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">/gnomad.</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">version_prefix</span><span class="si">}{</span><span class="n">version</span><span class="si">}</span><span class="s2">.coverage.ht&quot;</span>
+
+
+<div class="viewcode-block" id="public_release"><a class="viewcode-back" href="../../../../api_reference/resources/grch38/gnomad.html#gnomad.resources.grch38.gnomad.public_release">[docs]</a><span class="k">def</span> <span class="nf">public_release</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionedTableResource</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve publicly released versioned table resource.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :return: Release Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DATA_TYPES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">, please select a data type from </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;exomes&quot;</span><span class="p">:</span>
+        <span class="n">current_release</span> <span class="o">=</span> <span class="n">CURRENT_EXOME_RELEASE</span>
+        <span class="n">releases</span> <span class="o">=</span> <span class="n">EXOME_RELEASES</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">current_release</span> <span class="o">=</span> <span class="n">CURRENT_GENOME_RELEASE</span>
+        <span class="n">releases</span> <span class="o">=</span> <span class="n">GENOME_RELEASES</span>
+
+    <span class="k">return</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+        <span class="n">current_release</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="n">release</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">_public_release_ht_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">release</span> <span class="ow">in</span> <span class="n">releases</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="coverage"><a class="viewcode-back" href="../../../../api_reference/resources/grch38/gnomad.html#gnomad.resources.grch38.gnomad.coverage">[docs]</a><span class="k">def</span> <span class="nf">coverage</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionedTableResource</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve gnomAD&#39;s coverage table by data_type.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :return: Coverage Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DATA_TYPES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">, please select a data type from </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;exomes&quot;</span><span class="p">:</span>
+        <span class="n">current_release</span> <span class="o">=</span> <span class="n">CURRENT_EXOME_RELEASE</span>
+        <span class="n">releases</span> <span class="o">=</span> <span class="n">EXOME_RELEASES</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">current_release</span> <span class="o">=</span> <span class="n">CURRENT_GENOME_COVERAGE_RELEASE</span>
+        <span class="n">releases</span> <span class="o">=</span> <span class="n">GENOME_COVERAGE_RELEASES</span>
+
+    <span class="k">return</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+        <span class="n">current_release</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="n">release</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">_public_coverage_ht_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">release</span> <span class="ow">in</span> <span class="n">releases</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="coverage_tsv_path"><a class="viewcode-back" href="../../../../api_reference/resources/grch38/gnomad.html#gnomad.resources.grch38.gnomad.coverage_tsv_path">[docs]</a><span class="k">def</span> <span class="nf">coverage_tsv_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve gnomAD&#39;s coverage table by data_type.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :return: Coverage Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DATA_TYPES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">, please select a data type from </span><span class="si">{</span><span class="n">DATA_TYPES</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;exomes&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">CURRENT_EXOME_RELEASE</span>
+        <span class="k">elif</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">EXOME_RELEASES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Version </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> of gnomAD exomes for GRCh38 does not exist&quot;</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">CURRENT_GENOME_COVERAGE_RELEASE</span>
+        <span class="k">elif</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">GENOME_COVERAGE_RELEASES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Version </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> of gnomAD genomes for GRCh38 does not exist&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;gs://gnomad-public-requester-pays/release/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/coverage/</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">/gnomad.</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">.r</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">.coverage.summary.tsv.bgz&quot;</span></div>
+
+
+<div class="viewcode-block" id="release_vcf_path"><a class="viewcode-back" href="../../../../api_reference/resources/grch38/gnomad.html#gnomad.resources.grch38.gnomad.release_vcf_path">[docs]</a><span class="k">def</span> <span class="nf">release_vcf_path</span><span class="p">(</span><span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">contig</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Publically released VCF. Provide specific contig, i.e. &quot;chr20&quot;, to retrieve contig specific VCF.</span>
+
+<span class="sd">    :param data_type: One of &quot;exomes&quot; or &quot;genomes&quot;</span>
+<span class="sd">    :param version: One of the release versions of gnomAD on GRCh37</span>
+<span class="sd">    :param contig: Single contig &quot;chr1&quot; to &quot;chrY&quot;</span>
+<span class="sd">    :return: Path to VCF</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">contig</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">contig</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">contig</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">version_prefix</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span> <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;3.0&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;v&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;gs://gnomad-public-requester-pays/release/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">/vcf/</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">/gnomad.</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">version_prefix</span><span class="si">}{</span><span class="n">version</span><span class="si">}</span><span class="s2">.sites</span><span class="si">{</span><span class="n">contig</span><span class="si">}</span><span class="s2">.vcf.bgz&quot;</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.sample_qc.pipeline &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>gnomad.sample_qc.pipeline</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gnomad.sample_qc.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">from</span> <span class="nn">gnomad.sample_qc.sex</span> <span class="kn">import</span> <span class="n">get_ploidy_cutoffs</span><span class="p">,</span> <span class="n">get_sex_expr</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.annotations</span> <span class="kn">import</span> <span class="n">bi_allelic_site_inbreeding_expr</span><span class="p">,</span> <span class="n">bi_allelic_expr</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.filtering</span> <span class="kn">import</span> <span class="n">filter_low_conf_regions</span><span class="p">,</span> <span class="n">filter_to_adj</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.reference_genome</span> <span class="kn">import</span> <span class="n">get_reference_genome</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.sparse_mt</span> <span class="kn">import</span> <span class="n">impute_sex_ploidy</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="filter_rows_for_qc"><a class="viewcode-back" href="../../../api_reference/sample_qc/pipeline.html#gnomad.sample_qc.pipeline.filter_rows_for_qc">[docs]</a><span class="k">def</span> <span class="nf">filter_rows_for_qc</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">min_af</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">min_callrate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
+    <span class="n">min_inbreeding_coeff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.8</span><span class="p">,</span>
+    <span class="n">min_hardy_weinberg_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+    <span class="n">apply_hard_filters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">bi_allelic_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">snv_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Annotate rows with `sites_callrate`, `site_inbreeding_coeff` and `af`, then apply thresholds.</span>
+
+<span class="sd">    AF and callrate thresholds are taken from gnomAD QC; inbreeding coeff, MQ, FS and QD filters are taken from</span>
+<span class="sd">    GATK best practices.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This function expect the typical ``info`` annotation of type struct with fields ``MQ``, ``FS`` and ``QD``</span>
+<span class="sd">        if applying hard filters.</span>
+
+<span class="sd">    :param mt: Input MT</span>
+<span class="sd">    :param min_af: Minimum site AF to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_callrate: Minimum site call rate to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_inbreeding_coeff_threshold: Minimum site inbreeding coefficient to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_hardy_weinberg_threshold: Minimum site HW test p-value to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :paramapply_hard_filters: Whether to apply standard GAKT default site hard filters: QD &gt;= 2, FS &lt;= 60 and MQ &gt;= 30</span>
+<span class="sd">    :parambi_allelic_only: Whether to only keep bi-allelic sites or include multi-allelic sites too</span>
+<span class="sd">    :paramsnv_only: Whether to only keep SNVs or include other variant types</span>
+<span class="sd">    :return: annotated and filtered table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">annotation_expr</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">min_af</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;af&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">n_alt_alleles</span><span class="p">())</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">min_callrate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;site_callrate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">fraction</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">min_inbreeding_coeff_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;site_inbreeding_coeff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi_allelic_site_inbreeding_expr</span><span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">GT</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">min_hardy_weinberg_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;hwe&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">hardy_weinberg_test</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">annotation_expr</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="n">annotation_expr</span><span class="p">)</span>
+
+    <span class="n">filter_expr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">min_af</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">af</span> <span class="o">&gt;</span> <span class="n">min_af</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">min_callrate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">site_callrate</span> <span class="o">&gt;</span> <span class="n">min_callrate</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">min_inbreeding_coeff_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">site_inbreeding_coeff</span> <span class="o">&gt;</span> <span class="n">min_inbreeding_coeff_threshold</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">min_hardy_weinberg_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">hwe</span><span class="o">.</span><span class="n">p_value</span> <span class="o">&gt;</span> <span class="n">min_hardy_weinberg_threshold</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">snv_only</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">bi_allelic_only</span><span class="p">:</span>
+        <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bi_allelic_expr</span><span class="p">(</span><span class="n">mt</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">apply_hard_filters</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;info&quot;</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">row_value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;QD&quot;</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="p">:</span>
+                <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">QD</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Could not apply QD hard filter, as `info.QD` not found in schema.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;FS&quot;</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="p">:</span>
+                <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">FS</span> <span class="o">&lt;=</span> <span class="mi">60</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Could not apply FS hard filter, as `info.FS` not found in schema.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;MQ&quot;</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="p">:</span>
+                <span class="n">filter_expr</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mt</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">MQ</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Could not apply MQ hard filter, as `info.MQ` not found in schema.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Could not apply hard filters as `info` not found in schema.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">iand</span><span class="p">,</span> <span class="n">filter_expr</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_qc_mt"><a class="viewcode-back" href="../../../api_reference/sample_qc/pipeline.html#gnomad.sample_qc.pipeline.get_qc_mt">[docs]</a><span class="k">def</span> <span class="nf">get_qc_mt</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">adj_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">min_af</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">min_callrate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
+    <span class="n">min_inbreeding_coeff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.8</span><span class="p">,</span>
+    <span class="n">min_hardy_weinberg_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+    <span class="n">apply_hard_filters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">ld_r2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">filter_lcr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_decoy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_segdup</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_exome_low_coverage_regions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">high_conf_regions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a QC-ready MT.</span>
+
+<span class="sd">    Keeps the following:</span>
+<span class="sd">        - Variants outside known problematic regions</span>
+<span class="sd">        - Bi-allelic SNVs only</span>
+<span class="sd">        - Variants passing hard thresholds</span>
+<span class="sd">        - Variants passing the set call rate and MAF thresholds</span>
+<span class="sd">        - Genotypes passing on gnomAD ADJ criteria (GQ&gt;=20, DP&gt;=10, AB&gt;0.2 for hets)</span>
+
+<span class="sd">    In addition, the MT will be LD-pruned if `ld_r2` is set.</span>
+
+<span class="sd">    :param mt: Input MT</span>
+<span class="sd">    :param adj_only: If set, only ADJ genotypes are kept. This filter is applied before the call rate and AF calculation.</span>
+<span class="sd">    :param min_af: Minimum allele frequency to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_callrate: Minimum call rate to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_inbreeding_coeff_threshold: Minimum site inbreeding coefficient to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param min_hardy_weinberg_threshold: Minimum site HW test p-value to keep. Not applied if set to ``None``.</span>
+<span class="sd">    :param apply_hard_filters: Whether to apply standard GAKT default site hard filters: QD &gt;= 2, FS &lt;= 60 and MQ &gt;= 30</span>
+<span class="sd">    :param ld_r2: Minimum r2 to keep when LD-pruning (set to `None` for no LD pruning)</span>
+<span class="sd">    :param filter_lcr: Filter LCR regions</span>
+<span class="sd">    :param filter_decoy: Filter decoy regions</span>
+<span class="sd">    :param filter_segdup: Filter segmental duplication regions</span>
+<span class="sd">    :param filter_exome_low_coverage_regions: If set, only high coverage exome regions (computed from gnomAD are kept)</span>
+<span class="sd">    :param high_conf_regions: If given, the data will be filtered to only include variants in those regions</span>
+<span class="sd">    :return: Filtered MT</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating QC MatrixTable&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ld_r2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;The LD-prune step of this function requires non-preemptible workers only!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">filter_low_conf_regions</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">,</span>
+        <span class="n">filter_lcr</span><span class="o">=</span><span class="n">filter_lcr</span><span class="p">,</span>
+        <span class="n">filter_decoy</span><span class="o">=</span><span class="n">filter_decoy</span><span class="p">,</span>
+        <span class="n">filter_segdup</span><span class="o">=</span><span class="n">filter_segdup</span><span class="p">,</span>
+        <span class="n">filter_exome_low_coverage_regions</span><span class="o">=</span><span class="n">filter_exome_low_coverage_regions</span><span class="p">,</span>
+        <span class="n">high_conf_regions</span><span class="o">=</span><span class="n">high_conf_regions</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">adj_only</span><span class="p">:</span>
+        <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">filter_to_adj</span><span class="p">(</span>
+            <span class="n">qc_mt</span>
+        <span class="p">)</span>  <span class="c1"># TODO: Make sure that this works fine before call rate filtering</span>
+
+    <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">filter_rows_for_qc</span><span class="p">(</span>
+        <span class="n">qc_mt</span><span class="p">,</span>
+        <span class="n">min_af</span><span class="p">,</span>
+        <span class="n">min_callrate</span><span class="p">,</span>
+        <span class="n">min_inbreeding_coeff_threshold</span><span class="p">,</span>
+        <span class="n">min_hardy_weinberg_threshold</span><span class="p">,</span>
+        <span class="n">apply_hard_filters</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ld_r2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+        <span class="n">unfiltered_qc_mt</span> <span class="o">=</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">unfilter_entries</span><span class="p">()</span>
+        <span class="n">pruned_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">ld_prune</span><span class="p">(</span><span class="n">unfiltered_qc_mt</span><span class="o">.</span><span class="n">GT</span><span class="p">,</span> <span class="n">r2</span><span class="o">=</span><span class="n">ld_r2</span><span class="p">)</span>
+        <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">pruned_ht</span><span class="p">[</span><span class="n">qc_mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">]))</span>
+
+    <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+        <span class="n">qc_mt_params</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="n">adj_only</span><span class="o">=</span><span class="n">adj_only</span><span class="p">,</span>
+            <span class="n">min_af</span><span class="o">=</span><span class="n">min_af</span> <span class="k">if</span> <span class="n">min_af</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">),</span>
+            <span class="n">min_callrate</span><span class="o">=</span><span class="n">min_callrate</span>
+            <span class="k">if</span> <span class="n">min_callrate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">),</span>
+            <span class="n">inbreeding_coeff_threshold</span><span class="o">=</span><span class="n">min_inbreeding_coeff_threshold</span>
+            <span class="k">if</span> <span class="n">min_inbreeding_coeff_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">),</span>
+            <span class="n">min_hardy_weinberg_threshold</span><span class="o">=</span><span class="n">min_hardy_weinberg_threshold</span>
+            <span class="k">if</span> <span class="n">min_hardy_weinberg_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">),</span>
+            <span class="n">apply_hard_filters</span><span class="o">=</span><span class="n">apply_hard_filters</span><span class="p">,</span>
+            <span class="n">ld_r2</span><span class="o">=</span><span class="n">ld_r2</span> <span class="k">if</span> <span class="n">ld_r2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">),</span>
+            <span class="n">filter_exome_low_coverage_regions</span><span class="o">=</span><span class="n">filter_exome_low_coverage_regions</span><span class="p">,</span>
+            <span class="n">high_conf_regions</span><span class="o">=</span><span class="n">high_conf_regions</span>
+            <span class="k">if</span> <span class="n">high_conf_regions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tarray</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">annotate_cols</span><span class="p">(</span><span class="n">sample_callrate</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">fraction</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">qc_mt</span><span class="o">.</span><span class="n">GT</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="annotate_sex"><a class="viewcode-back" href="../../../api_reference/sample_qc/pipeline.html#gnomad.sample_qc.pipeline.annotate_sex">[docs]</a><span class="k">def</span> <span class="nf">annotate_sex</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">is_sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">excluded_intervals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">included_intervals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalization_contig</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;chr20&quot;</span><span class="p">,</span>
+    <span class="n">sites_ht</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">aaf_expr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gt_expr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GT&quot;</span><span class="p">,</span>
+    <span class="n">f_stat_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">aaf_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Impute sample sex based on X-chromosome heterozygosity and sex chromosome ploidy.</span>
+
+<span class="sd">    Return Table with the following fields:</span>
+<span class="sd">        - s (str): Sample</span>
+<span class="sd">        - chr20_mean_dp (float32): Sample&#39;s mean coverage over chromosome 20.</span>
+<span class="sd">        - chrX_mean_dp (float32): Sample&#39;s mean coverage over chromosome X.</span>
+<span class="sd">        - chrY_mean_dp (float32): Sample&#39;s mean coverage over chromosome Y.</span>
+<span class="sd">        - chrX_ploidy (float32): Sample&#39;s imputed ploidy over chromosome X.</span>
+<span class="sd">        - chrY_ploidy (float32): Sample&#39;s imputed ploidy over chromosome Y.</span>
+<span class="sd">        - f_stat (float64): Sample f-stat. Calculated using hl.impute_sex.</span>
+<span class="sd">        - n_called (int64): Number of variants with a genotype call. Calculated using hl.impute_sex.</span>
+<span class="sd">        - expected_homs (float64): Expected number of homozygotes. Calculated using hl.impute_sex.</span>
+<span class="sd">        - observed_homs (int64): Expected number of homozygotes. Calculated using hl.impute_sex.</span>
+<span class="sd">        - X_karyotype (str): Sample&#39;s chromosome X karyotype.</span>
+<span class="sd">        - Y_karyotype (str): Sample&#39;s chromosome Y karyotype.</span>
+<span class="sd">        - sex_karyotype (str): Sample&#39;s sex karyotype.</span>
+
+<span class="sd">    :param mt: Input MatrixTable</span>
+<span class="sd">    :param bool is_sparse: Whether input MatrixTable is in sparse data format</span>
+<span class="sd">    :param excluded_intervals: Optional table of intervals to exclude from the computation.</span>
+<span class="sd">    :param included_intervals: Optional table of intervals to use in the computation. REQUIRED for exomes.</span>
+<span class="sd">    :param normalization_contig: Which chromosome to use to normalize sex chromosome coverage. Used in determining sex chromosome ploidies.</span>
+<span class="sd">    :param sites_ht: Optional Table to use. If present, filters input MatrixTable to sites in this Table prior to imputing sex,</span>
+<span class="sd">                    and pulls alternate allele frequency from this Table.</span>
+<span class="sd">    :param aaf_expr: Optional. Name of field in input MatrixTable with alternate allele frequency.</span>
+<span class="sd">    :param gt_expr: Name of entry field storing the genotype. Default: &#39;GT&#39;</span>
+<span class="sd">    :param f_stat_cutoff: f-stat to roughly divide &#39;XX&#39; from &#39;XY&#39; samples. Assumes XX samples are below cutoff and XY are above cutoff.</span>
+<span class="sd">    :param float aaf_threshold: Minimum alternate allele frequency to be used in f-stat calculations.</span>
+<span class="sd">    :return: Table of samples and their imputed sex karyotypes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Imputing sex chromosome ploidies...&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_sparse</span><span class="p">:</span>
+        <span class="n">ploidy_ht</span> <span class="o">=</span> <span class="n">impute_sex_ploidy</span><span class="p">(</span>
+            <span class="n">mt</span><span class="p">,</span> <span class="n">excluded_intervals</span><span class="p">,</span> <span class="n">included_intervals</span><span class="p">,</span> <span class="n">normalization_contig</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Imputing sex ploidy does not exist yet for dense data.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">x_contigs</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span><span class="o">.</span><span class="n">x_contigs</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering mt to biallelic SNPs in X contigs: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">x_contigs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;was_split&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">row</span><span class="p">):</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">((</span><span class="o">~</span><span class="n">mt</span><span class="o">.</span><span class="n">was_split</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">,</span> <span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span><span class="n">contig</span><span class="p">)</span> <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">x_contigs</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sites_ht</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">aaf_expr</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;sites_ht was provided, but aaf_expr is missing. Assuming name of field with alternate allele frequency is &#39;AF&#39;.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">aaf_expr</span> <span class="o">=</span> <span class="s2">&quot;AF&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to provided sites&quot;</span><span class="p">)</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="n">sites_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">])</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">aaf_expr</span><span class="p">]))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calculating inbreeding coefficient on chrX&quot;</span><span class="p">)</span>
+    <span class="n">sex_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">impute_sex</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">[</span><span class="n">gt_expr</span><span class="p">],</span>
+        <span class="n">aaf_threshold</span><span class="o">=</span><span class="n">aaf_threshold</span><span class="p">,</span>
+        <span class="n">male_threshold</span><span class="o">=</span><span class="n">f_stat_cutoff</span><span class="p">,</span>
+        <span class="n">female_threshold</span><span class="o">=</span><span class="n">f_stat_cutoff</span><span class="p">,</span>
+        <span class="n">aaf</span><span class="o">=</span><span class="n">aaf_expr</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Annotating sex ht with sex chromosome ploidies&quot;</span><span class="p">)</span>
+    <span class="n">sex_ht</span> <span class="o">=</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">ploidy_ht</span><span class="p">[</span><span class="n">sex_ht</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Inferring sex karyotypes&quot;</span><span class="p">)</span>
+    <span class="n">x_ploidy_cutoffs</span><span class="p">,</span> <span class="n">y_ploidy_cutoffs</span> <span class="o">=</span> <span class="n">get_ploidy_cutoffs</span><span class="p">(</span><span class="n">sex_ht</span><span class="p">,</span> <span class="n">f_stat_cutoff</span><span class="p">)</span>
+    <span class="n">sex_ht</span> <span class="o">=</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+        <span class="n">x_ploidy_cutoffs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="n">upper_cutoff_X</span><span class="o">=</span><span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">lower_cutoff_XX</span><span class="o">=</span><span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">upper_cutoff_XX</span><span class="o">=</span><span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">lower_cutoff_XXX</span><span class="o">=</span><span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+        <span class="p">),</span>
+        <span class="n">y_ploidy_cutoffs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="n">lower_cutoff_Y</span><span class="o">=</span><span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">upper_cutoff_Y</span><span class="o">=</span><span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">lower_cutoff_YY</span><span class="o">=</span><span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">),</span>
+        <span class="n">f_stat_cutoff</span><span class="o">=</span><span class="n">f_stat_cutoff</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">get_sex_expr</span><span class="p">(</span>
+            <span class="n">sex_ht</span><span class="o">.</span><span class="n">chrX_ploidy</span><span class="p">,</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">chrY_ploidy</span><span class="p">,</span> <span class="n">x_ploidy_cutoffs</span><span class="p">,</span> <span class="n">y_ploidy_cutoffs</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

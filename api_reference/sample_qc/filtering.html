@@ -1,0 +1,351 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.sample_qc.filtering &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.pipeline" href="pipeline.html" />
+    <link rel="prev" title="gnomad.sample_qc.ancestry" href="ancestry.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.sample_qc</a> &raquo;</li>
+        
+      <li>gnomad.sample_qc.filtering</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/sample_qc/filtering.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-sample-qc-filtering">
+<h1>gnomad.sample_qc.filtering<a class="headerlink" href="#gnomad-sample-qc-filtering" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.filtering.compute_qc_metrics_residuals" title="gnomad.sample_qc.filtering.compute_qc_metrics_residuals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.filtering.compute_qc_metrics_residuals</span></code></a>(ht, …)</p></td>
+<td><p>Compute QC metrics residuals after regressing out PCs (and optionally PC^2).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.filtering.compute_stratified_metrics_filter" title="gnomad.sample_qc.filtering.compute_stratified_metrics_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.filtering.compute_stratified_metrics_filter</span></code></a>(ht, …)</p></td>
+<td><p>Compute median, MAD, and upper and lower thresholds for each metric used in outlier filtering.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.filtering.compute_stratified_sample_qc" title="gnomad.sample_qc.filtering.compute_stratified_sample_qc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.filtering.compute_stratified_sample_qc</span></code></a>(mt, …)</p></td>
+<td><p>Run hl.sample_qc on different strata and then also merge the results into a single expression.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.filtering.merge_sample_qc_expr" title="gnomad.sample_qc.filtering.merge_sample_qc_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.filtering.merge_sample_qc_expr</span></code></a>(…)</p></td>
+<td><p>Create an expression that merges results from non-overlapping strata of hail.sample_qc.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.filtering"></span><dl class="function">
+<dt id="gnomad.sample_qc.filtering.compute_qc_metrics_residuals">
+<code class="sig-prename descclassname">gnomad.sample_qc.filtering.</code><code class="sig-name descname">compute_qc_metrics_residuals</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">pc_scores</em>, <em class="sig-param">qc_metrics</em>, <em class="sig-param">use_pc_square=True</em>, <em class="sig-param">n_pcs=None</em>, <em class="sig-param">regression_sample_inclusion_expr=&lt;BooleanExpression of type bool&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/filtering.html#compute_qc_metrics_residuals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.filtering.compute_qc_metrics_residuals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute QC metrics residuals after regressing out PCs (and optionally PC^2).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <cite>regression_sample_inclusion_expr</cite> can be used to select a subset of the samples to include in the regression calculation.
+Residuals are always computed for all samples.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input sample QC metrics HT</p></li>
+<li><p><strong>pc_scores</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>) – The expression in the input HT that stores the PC scores</p></li>
+<li><p><strong>qc_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – A dictionary with the name of each QC metric to compute residuals for and their corresponding expression in the input HT.</p></li>
+<li><p><strong>use_pc_square</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to  use PC^2 in the regression or not</p></li>
+<li><p><strong>n_pcs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Numer of PCs to use. If not set, then all PCs in <cite>pc_scores</cite> are used.</p></li>
+<li><p><strong>regression_sample_inclusion_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – An optional expression to select samples to include in the regression calculation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with QC metrics residuals</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.sample_qc.filtering.compute_stratified_metrics_filter">
+<code class="sig-prename descclassname">gnomad.sample_qc.filtering.</code><code class="sig-name descname">compute_stratified_metrics_filter</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">qc_metrics</em>, <em class="sig-param">strata=None</em>, <em class="sig-param">lower_threshold=4.0</em>, <em class="sig-param">upper_threshold=4.0</em>, <em class="sig-param">metric_threshold=None</em>, <em class="sig-param">filter_name='qc_metrics_filters'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/filtering.html#compute_stratified_metrics_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.filtering.compute_stratified_metrics_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute median, MAD, and upper and lower thresholds for each metric used in outlier filtering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – HT containing relevant sample QC metric annotations</p></li>
+<li><p><strong>qc_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – list of metrics (name and expr) for which to compute the critical values for filtering outliers</p></li>
+<li><p><strong>strata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]]) – List of annotations used for stratification. These metrics should be discrete types!</p></li>
+<li><p><strong>lower_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower MAD threshold</p></li>
+<li><p><strong>upper_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper MAD threshold</p></li>
+<li><p><strong>metric_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – Can be used to specify different (lower, upper) thresholds for one or more metrics</p></li>
+<li><p><strong>filter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of resulting filters annotation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table grouped by strata, with upper and lower threshold values computed for each sample QC metric</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.sample_qc.filtering.compute_stratified_sample_qc">
+<code class="sig-prename descclassname">gnomad.sample_qc.filtering.</code><code class="sig-name descname">compute_stratified_sample_qc</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">strata</em>, <em class="sig-param">tmp_ht_prefix</em>, <em class="sig-param">gt_col=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/filtering.html#compute_stratified_sample_qc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.filtering.compute_stratified_sample_qc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run hl.sample_qc on different strata and then also merge the results into a single expression.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Strata should be non-overlapping, e.g. SNV vs indels or bi-allelic vs multi-allelic</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MT</p></li>
+<li><p><strong>strata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Strata names and filtering expressions</p></li>
+<li><p><strong>tmp_ht_prefix</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional path prefix to write the intermediate strata results to (recommended for larger datasets)</p></li>
+<li><p><strong>gt_col</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Name of entry field storing the genotype. Default: ‘GT’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Sample QC table, including strat-specific numbers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.sample_qc.filtering.merge_sample_qc_expr">
+<code class="sig-prename descclassname">gnomad.sample_qc.filtering.</code><code class="sig-name descname">merge_sample_qc_expr</code><span class="sig-paren">(</span><em class="sig-param">sample_qc_exprs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/filtering.html#merge_sample_qc_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.filtering.merge_sample_qc_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an expression that merges results from non-overlapping strata of hail.sample_qc.</p>
+<p>E.g.:</p>
+<ul class="simple">
+<li><p>Compute autosomes and sex chromosomes metrics separately, then merge results</p></li>
+<li><p>Compute bi-allelic and multi-allelic metrics separately, then merge results</p></li>
+</ul>
+<p>Note regarding the merging of <code class="docutils literal notranslate"><span class="pre">dp_stats</span></code> and <code class="docutils literal notranslate"><span class="pre">gq_stats</span></code>:
+Because <code class="docutils literal notranslate"><span class="pre">n</span></code> is needed to aggregate <code class="docutils literal notranslate"><span class="pre">stdev</span></code>, <code class="docutils literal notranslate"><span class="pre">n_called</span></code> is used for this purpose.
+This should work very well on a standard GATK VCF and it essentially assumes that:</p>
+<ul class="simple">
+<li><p>samples that are called have <cite>DP</cite> and <cite>GQ</cite> fields</p></li>
+<li><p>samples that are not called do not have <cite>DP</cite> and <cite>GQ</cite> fields</p></li>
+</ul>
+<p>Even if these assumptions are broken for some genotypes, it shouldn’t matter too much.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_qc_exprs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>]) – List of sample QC struct expressions for each stratification</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Combined sample QC results</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="pipeline.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ancestry.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.ancestry" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

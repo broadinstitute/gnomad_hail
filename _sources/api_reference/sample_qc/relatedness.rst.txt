@@ -1,0 +1,8 @@
+gnomad.sample_qc.relatedness
+============================
+
+
+
+.. gnomad_automodulesummary:: gnomad.sample_qc.relatedness
+
+.. automodule:: gnomad.sample_qc.relatedness

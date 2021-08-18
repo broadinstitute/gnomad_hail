@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.sample_qc.ancestry &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.filtering" href="filtering.html" />
+    <link rel="prev" title="gnomad.sample_qc" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.sample_qc</a> &raquo;</li>
+        
+      <li>gnomad.sample_qc.ancestry</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/sample_qc/ancestry.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-sample-qc-ancestry">
+<h1>gnomad.sample_qc.ancestry<a class="headerlink" href="#gnomad-sample-qc-ancestry" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.ancestry.pc_project" title="gnomad.sample_qc.ancestry.pc_project"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.ancestry.pc_project</span></code></a>(mt, …)</p></td>
+<td><p>Project samples in <cite>mt</cite> on pre-computed PCs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.ancestry.assign_population_pcs" title="gnomad.sample_qc.ancestry.assign_population_pcs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.ancestry.assign_population_pcs</span></code></a>(…)</p></td>
+<td><p>Use a random forest model to assign population labels based on the results of PCA.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.ancestry.run_pca_with_relateds" title="gnomad.sample_qc.ancestry.run_pca_with_relateds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.ancestry.run_pca_with_relateds</span></code></a>(…)</p></td>
+<td><p>Run PCA excluding the given related samples, and project those samples in the PC space to return scores for all samples.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.ancestry"></span><dl class="function">
+<dt id="gnomad.sample_qc.ancestry.pc_project">
+<code class="sig-prename descclassname">gnomad.sample_qc.ancestry.</code><code class="sig-name descname">pc_project</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">loadings_ht</em>, <em class="sig-param">loading_location='loadings'</em>, <em class="sig-param">af_location='pca_af'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/ancestry.html#pc_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.ancestry.pc_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project samples in <cite>mt</cite> on pre-computed PCs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – MT containing the samples to project</p></li>
+<li><p><strong>loadings_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – HT containing the PCA loadings and allele frequencies used for the PCA</p></li>
+<li><p><strong>loading_location</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Location of expression for loadings in <cite>loadings_ht</cite></p></li>
+<li><p><strong>af_location</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Location of expression for allele frequency in <cite>loadings_ht</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with scores calculated from loadings in column <cite>scores</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.sample_qc.ancestry.assign_population_pcs">
+<code class="sig-prename descclassname">gnomad.sample_qc.ancestry.</code><code class="sig-name descname">assign_population_pcs</code><span class="sig-paren">(</span><em class="sig-param">pop_pca_scores</em>, <em class="sig-param">pc_cols</em>, <em class="sig-param">known_col='known_pop'</em>, <em class="sig-param">fit=None</em>, <em class="sig-param">seed=42</em>, <em class="sig-param">prop_train=0.8</em>, <em class="sig-param">n_estimators=100</em>, <em class="sig-param">min_prob=0.9</em>, <em class="sig-param">output_col='pop'</em>, <em class="sig-param">missing_label='oth'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/ancestry.html#assign_population_pcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.ancestry.assign_population_pcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a random forest model to assign population labels based on the results of PCA.</p>
+<p>Default values for model and assignment parameters are those used in gnomAD.</p>
+<dl class="simple">
+<dt>As input, this function can either take:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>A Hail Table (typically the output of <cite>hwe_normalized_pca</cite>). In this case,</dt><dd><ul>
+<li><p><cite>pc_cols</cite> should be an ArrayExpression of Floats where each element is one of the PCs to use.</p></li>
+<li><p>A Hail Table will be returned as output</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>A Pandas DataFrame. In this case:</dt><dd><ul>
+<li><p>Each PC should be in a separate column and <cite>pc_cols</cite> is the list of all the columns containing the PCs to use.</p></li>
+<li><p>A pandas DataFrame is returned as output</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you have a Pandas Dataframe and have all PCs as an array in a single column, the <cite>expand_pd_array_col</cite>
+can be used to expand this column into multiple <cite>PC</cite> columns.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pop_pc_pd</strong> – Input Hail Table or Pandas Dataframe</p></li>
+<li><p><strong>pc_cols</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Columns storing the PCs to use</p></li>
+<li><p><strong>known_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column storing the known population labels</p></li>
+<li><p><strong>fit</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]) – fit from a previously trained random forest model (i.e., the output from a previous RandomForestClassifier() call)</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Random seed</p></li>
+<li><p><strong>prop_train</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Proportion of known data used for training</p></li>
+<li><p><strong>n_estimators</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of trees to use in the RF model</p></li>
+<li><p><strong>min_prob</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum probability of belonging to a given population for the population to be set (otherwise set to <cite>None</cite>)</p></li>
+<li><p><strong>output_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Output column storing the assigned population</p></li>
+<li><p><strong>missing_label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Label for samples for which the assignment probability is smaller than <cite>min_prob</cite></p></li>
+<li><p><strong>pop_pca_scores</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – </p></li>
+<li><p><strong>fit</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Hail Table or Pandas Dataframe (depending on input) containing sample IDs and imputed population labels, trained random forest model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.sample_qc.ancestry.run_pca_with_relateds">
+<code class="sig-prename descclassname">gnomad.sample_qc.ancestry.</code><code class="sig-name descname">run_pca_with_relateds</code><span class="sig-paren">(</span><em class="sig-param">qc_mt</em>, <em class="sig-param">related_samples_to_drop</em>, <em class="sig-param">n_pcs=10</em>, <em class="sig-param">autosomes_only=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/ancestry.html#run_pca_with_relateds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.sample_qc.ancestry.run_pca_with_relateds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run PCA excluding the given related samples, and project those samples in the PC space to return scores for all samples.</p>
+<p>The <cite>related_samples_to_drop</cite> Table has to be keyed by the sample ID and all samples present in this
+table will be excluded from the PCA.</p>
+<p>The loadings Table returned also contains a <cite>pca_af</cite> annotation which is the allele frequency
+used for PCA. This is useful to project other samples in the PC space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qc_mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input QC MT</p></li>
+<li><p><strong>related_samples_to_drop</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional table of related samples to drop</p></li>
+<li><p><strong>n_pcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of PCs to compute</p></li>
+<li><p><strong>autosomes_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to run the analysis on autosomes only</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>eigenvalues, scores and loadings</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="filtering.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.filtering" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="gnomad.sample_qc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,575 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.assessment.summary_stats &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.assessment.validity_checks" href="validity_checks.html" />
+    <link rel="prev" title="gnomad.assessment" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">assessment</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">summary_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="validity_checks.html">validity_checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.assessment</a> &raquo;</li>
+        
+      <li>gnomad.assessment.summary_stats</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/assessment/summary_stats.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-assessment-summary-stats">
+<h1>gnomad.assessment.summary_stats<a class="headerlink" href="#gnomad-assessment-summary-stats" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.freq_bin_expr" title="gnomad.assessment.summary_stats.freq_bin_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.freq_bin_expr</span></code></a>(…)</p></td>
+<td><p>Return frequency string annotations based on input AC or AF.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_summary_counts_dict" title="gnomad.assessment.summary_stats.get_summary_counts_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_summary_counts_dict</span></code></a>(…)</p></td>
+<td><p>Return dictionary containing containing counts of multiple variant categories.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_summary_ac_dict" title="gnomad.assessment.summary_stats.get_summary_ac_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_summary_ac_dict</span></code></a>(…)</p></td>
+<td><p>Return dictionary containing containing total allele counts for variant categories.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_summary_counts" title="gnomad.assessment.summary_stats.get_summary_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_summary_counts</span></code></a>(ht)</p></td>
+<td><p>Generate a struct with summary counts across variant categories.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_an_criteria" title="gnomad.assessment.summary_stats.get_an_criteria"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_an_criteria</span></code></a>(mt)</p></td>
+<td><p>Generate criteria to filter samples based on allele number (AN).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_tx_expression_expr" title="gnomad.assessment.summary_stats.get_tx_expression_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_tx_expression_expr</span></code></a>(…)</p></td>
+<td><p>Pull appropriate transcript expression annotation struct given a specific locus and alleles (provided in <cite>key_expr</cite>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.default_generate_gene_lof_matrix" title="gnomad.assessment.summary_stats.default_generate_gene_lof_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.default_generate_gene_lof_matrix</span></code></a>(mt, …)</p></td>
+<td><p>Generate loss-of-function gene matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.get_het_hom_summary_dict" title="gnomad.assessment.summary_stats.get_het_hom_summary_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.get_het_hom_summary_dict</span></code></a>(…)</p></td>
+<td><p>Generate dictionary containing summary counts.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.summary_stats.default_generate_gene_lof_summary" title="gnomad.assessment.summary_stats.default_generate_gene_lof_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.summary_stats.default_generate_gene_lof_summary</span></code></a>(mt)</p></td>
+<td><p>Generate summary counts for loss-of-function (LoF), missense, and synonymous variants.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.assessment.summary_stats"></span><dl class="function">
+<dt id="gnomad.assessment.summary_stats.freq_bin_expr">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">freq_bin_expr</code><span class="sig-paren">(</span><em class="sig-param">freq_expr</em>, <em class="sig-param">index=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#freq_bin_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.freq_bin_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return frequency string annotations based on input AC or AF.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Default index is 0 because function assumes freq_expr was calculated with <cite>annotate_freq</cite>.</p></li>
+<li><p>Frequency index 0 from <cite>annotate_freq</cite> is frequency for all pops calculated on adj genotypes only.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Array of structs containing frequency information.</p></li>
+<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Which index of freq_expr to use for annotation. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>StringExpression containing bin name based on input AC or AF.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_summary_counts_dict">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_summary_counts_dict</code><span class="sig-paren">(</span><em class="sig-param">locus_expr</em>, <em class="sig-param">allele_expr</em>, <em class="sig-param">lof_expr</em>, <em class="sig-param">no_lof_flags_expr</em>, <em class="sig-param">most_severe_csq_expr</em>, <em class="sig-param">prefix_str=''</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_summary_counts_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_summary_counts_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dictionary containing containing counts of multiple variant categories.</p>
+<dl class="simple">
+<dt>Categories are:</dt><dd><ul class="simple">
+<li><p>Number of variants</p></li>
+<li><p>Number of indels</p></li>
+<li><p>Number of SNVs</p></li>
+<li><p>Number of LoF variants</p></li>
+<li><p>Number of LoF variants that pass LOFTEE</p></li>
+<li><p>Number of LoF variants that pass LOFTEE without any flgs</p></li>
+<li><p>Number of LoF variants annotated as ‘other splice’ (OS) by LOFTEE</p></li>
+<li><p>Number of LoF variants that fail LOFTEE</p></li>
+<li><p>Number of missense variants</p></li>
+<li><p>Number of synonymous variants</p></li>
+<li><p>Number of autosomal variants</p></li>
+<li><p>Number of allosomal variants</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Assumes <cite>allele_expr</cite> contains only two variants (multi-allelics have been split).</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – LocusExpression.</p></li>
+<li><p><strong>allele_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression containing alleles.</p></li>
+<li><p><strong>lof_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – StringExpression containing LOFTEE annotation.</p></li>
+<li><p><strong>no_lof_flags_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – BooleanExpression indicating whether LoF variant has any flags.</p></li>
+<li><p><strong>most_severe_csq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – StringExpression containing most severe consequence annotation.</p></li>
+<li><p><strong>prefix_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Desired prefix string for category names. Default is empty str.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dict of categories and counts per category.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_summary_ac_dict">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_summary_ac_dict</code><span class="sig-paren">(</span><em class="sig-param">ac_expr</em>, <em class="sig-param">lof_expr</em>, <em class="sig-param">no_lof_flags_expr</em>, <em class="sig-param">most_severe_csq_expr</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_summary_ac_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_summary_ac_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dictionary containing containing total allele counts for variant categories.</p>
+<dl class="simple">
+<dt>Categories are:</dt><dd><ul class="simple">
+<li><p>All variants</p></li>
+<li><p>LoF variants</p></li>
+<li><p>LoF variants that pass LOFTEE</p></li>
+<li><p>LoF variants that pass LOFTEE without any flags</p></li>
+<li><p>LoF variants that are annotate as ‘other splice’ (OS) by LOFTEE</p></li>
+<li><p>LoF variants that fail LOFTEE</p></li>
+<li><p>Missense variants</p></li>
+<li><p>Synonymous variants</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Assumes <cite>allele_expr</cite> contains only two variants (multi-allelics have been split).</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>allele_expr</strong> – ArrayExpression containing alleles.</p></li>
+<li><p><strong>lof_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – StringExpression containing LOFTEE annotation.</p></li>
+<li><p><strong>no_lof_flags_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – BooleanExpression indicating whether LoF variant has any flags.</p></li>
+<li><p><strong>ac_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – </p></li>
+<li><p><strong>most_severe_csq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dict of variant categories and their total allele counts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_summary_counts">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_summary_counts</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">freq_field='freq'</em>, <em class="sig-param">filter_field='filters'</em>, <em class="sig-param">filter_decoy=False</em>, <em class="sig-param">index=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_summary_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_summary_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a struct with summary counts across variant categories.</p>
+<dl class="simple">
+<dt>Summary counts:</dt><dd><ul class="simple">
+<li><p>Number of variants</p></li>
+<li><p>Number of indels</p></li>
+<li><p>Number of SNVs</p></li>
+<li><p>Number of LoF variants</p></li>
+<li><p>Number of LoF variants that pass LOFTEE (including with LoF flags)</p></li>
+<li><p>Number of LoF variants that pass LOFTEE without LoF flags</p></li>
+<li><p>Number of OS (other splice) variants annotated by LOFTEE</p></li>
+<li><p>Number of LoF variants that fail LOFTEE filters</p></li>
+</ul>
+</dd>
+</dl>
+<p>Also annotates Table’s globals with total variant counts.</p>
+<dl class="simple">
+<dt>Before calculating summary counts, function:</dt><dd><ul class="simple">
+<li><p>Filters out low confidence regions</p></li>
+<li><p>Filters to canonical transcripts</p></li>
+<li><p>Uses the most severe consequence</p></li>
+</ul>
+</dd>
+<dt>Assumes that:</dt><dd><ul class="simple">
+<li><p>Input HT is annotated with VEP.</p></li>
+<li><p>Multiallelic variants have been split and/or input HT contains bi-allelic variants only.</p></li>
+<li><p>freq_expr was calculated with <cite>annotate_freq</cite>.</p></li>
+<li><p>(Frequency index 0 from <cite>annotate_freq</cite> is frequency for all pops calculated on adj genotypes only.)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>freq_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in HT containing frequency annotation (array of structs). Default is “freq”.</p></li>
+<li><p><strong>filter_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in HT containing variant filter information. Default is “filters”.</p></li>
+<li><p><strong>filter_decoy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter decoy regions. Default is False.</p></li>
+<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Which index of freq_expr to use for annotation. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table grouped by frequency bin and aggregated across summary count categories.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_an_criteria">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_an_criteria</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">samples_by_sex=None</em>, <em class="sig-param">meta_root='meta'</em>, <em class="sig-param">sex_field='sex_imputation.sex_karyotype'</em>, <em class="sig-param">xy_str='XY'</em>, <em class="sig-param">xx_str='XX'</em>, <em class="sig-param">freq_field='freq'</em>, <em class="sig-param">freq_index=0</em>, <em class="sig-param">an_proportion_cutoff=0.8</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_an_criteria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_an_criteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate criteria to filter samples based on allele number (AN).</p>
+<p>Uses allele number as proxy for call rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable.</p></li>
+<li><p><strong>samples_by_sex</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Optional Dictionary containing number of samples (value) for each sample sex (key).</p></li>
+<li><p><strong>meta_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MatrixTable containing sample metadata information. Default is ‘meta’.</p></li>
+<li><p><strong>sex_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MatrixTable containing sample sex assignment. Defualt is ‘sex_imputation.sex_karyotype’.</p></li>
+<li><p><strong>xy_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String marking whether a sample has XY sex. Default is ‘XY’.</p></li>
+<li><p><strong>xx_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String marking whether a sample has XX sex. Default is ‘XX’.</p></li>
+<li><p><strong>freq_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MT that contains frequency information. Default is ‘freq’.</p></li>
+<li><p><strong>freq_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Which index of frequency struct to use. Default is 0.</p></li>
+<li><p><strong>an_proportion_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Desired allele number proportion cutoff. Default is 0.8.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_tx_expression_expr">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_tx_expression_expr</code><span class="sig-paren">(</span><em class="sig-param">key_expr</em>, <em class="sig-param">tx_ht</em>, <em class="sig-param">csq_expr</em>, <em class="sig-param">gene_field='ensg'</em>, <em class="sig-param">csq_field='csq'</em>, <em class="sig-param">tx_struct='tx_annotation'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_tx_expression_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_tx_expression_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pull appropriate transcript expression annotation struct given a specific locus and alleles (provided in <cite>key_expr</cite>).</p>
+<p>Assumes that <cite>key_expr</cite> contains a locus and alleles.
+Assumes that multi-allelic variants have been split in both <cite>tx_ht</cite> and <cite>key_expr</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_key_expr</strong> – StructExpression containing locus and alleles to search in <cite>tx_ht</cite>.</p></li>
+<li><p><strong>tx_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table containing transcript expression information.</p></li>
+<li><p><strong>csq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Input StructExpression that contains VEP consequence information.</p></li>
+<li><p><strong>gene_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Field in <cite>csq_expr</cite> that contains gene ID.</p></li>
+<li><p><strong>csq_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Field in <cite>csq_expr</cite> that contains <cite>most_severe_consequence</cite> annotation.</p></li>
+<li><p><strong>tx_struct</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – StructExpression that contains transcript expression information.</p></li>
+<li><p><strong>key_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>StructExpression that contains transcript expression information for given gene ID in <cite>csq_expr</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.default_generate_gene_lof_matrix">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">default_generate_gene_lof_matrix</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">tx_ht</em>, <em class="sig-param">high_expression_cutoff=0.9</em>, <em class="sig-param">low_expression_cutoff=0.1</em>, <em class="sig-param">filter_field='filters'</em>, <em class="sig-param">freq_field='freq'</em>, <em class="sig-param">freq_index=0</em>, <em class="sig-param">additional_csq_set={'missense_variant'</em>, <em class="sig-param">'synonymous_variant'}</em>, <em class="sig-param">all_transcripts=False</em>, <em class="sig-param">filter_an=False</em>, <em class="sig-param">filter_to_rare=False</em>, <em class="sig-param">pre_loftee=False</em>, <em class="sig-param">lof_csq_set={'frameshift_variant'</em>, <em class="sig-param">'splice_acceptor_variant'</em>, <em class="sig-param">'splice_donor_variant'</em>, <em class="sig-param">'stop_gained'}</em>, <em class="sig-param">remove_ultra_common=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#default_generate_gene_lof_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.default_generate_gene_lof_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate loss-of-function gene matrix.</p>
+<p>Used to generate summary metrics on LoF variants.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable.</p></li>
+<li><p><strong>tx_ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional Table containing expression levels per transcript.</p></li>
+<li><p><strong>high_expression_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum mean proportion expressed cutoff for a transcript to be considered highly expressed. Default is 0.9.</p></li>
+<li><p><strong>low_expression_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper mean proportion expressed cutoff for a transcript to lowly expressed. Default is 0.1.</p></li>
+<li><p><strong>filter_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MT that contains variant filters. Default is ‘filters’.</p></li>
+<li><p><strong>freq_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MT that contains frequency information. Default is ‘freq’.</p></li>
+<li><p><strong>freq_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Which index of frequency struct to use. Default is 0.</p></li>
+<li><p><strong>additional_csq_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Set of additional consequences to keep. Default is {‘missense_variant’, ‘synonymous_variant’}.</p></li>
+<li><p><strong>all_transcripts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use all transcripts instead of just the transcript with most severe consequence. Default is False.</p></li>
+<li><p><strong>filter_an</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter using allele number as proxy for call rate. Default is False.</p></li>
+<li><p><strong>filter_to_rare</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to rare (AF &lt; 5%) variants. Default is False.</p></li>
+<li><p><strong>pre_loftee</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether LoF consequences have been annotated with LOFTEE. Default is False.</p></li>
+<li><p><strong>lof_csq_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Set of LoF consequence strings. Default is {“splice_acceptor_variant”, “splice_donor_variant”, “stop_gained”, “frameshift_variant”}.</p></li>
+<li><p><strong>remove_ultra_common</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to remove ultra common (AF &gt; 95%) variants. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.get_het_hom_summary_dict">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">get_het_hom_summary_dict</code><span class="sig-paren">(</span><em class="sig-param">csq_set</em>, <em class="sig-param">most_severe_csq_expr</em>, <em class="sig-param">defined_sites_expr</em>, <em class="sig-param">num_homs_expr</em>, <em class="sig-param">num_hets_expr</em>, <em class="sig-param">pop_expr</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#get_het_hom_summary_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.get_het_hom_summary_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate dictionary containing summary counts.</p>
+<dl class="simple">
+<dt>Summary counts are:</dt><dd><ul class="simple">
+<li><p>Number of sites with defined genotype calls</p></li>
+<li><p>Number of samples with heterozygous calls</p></li>
+<li><p>Number of samples with homozygous calls</p></li>
+</ul>
+</dd>
+</dl>
+<p>Function has option to generate counts by population.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csq_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Set containing transcript consequence string(s).</p></li>
+<li><p><strong>most_severe_csq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – StringExpression containing most severe consequence.</p></li>
+<li><p><strong>defined_sites_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression containing number of sites with defined genotype calls.</p></li>
+<li><p><strong>num_homs_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression containing number of samples with homozygous genotype calls.</p></li>
+<li><p><strong>num_hets_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression containing number of samples with heterozygous genotype calls.</p></li>
+<li><p><strong>pop_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – StringExpression containing sample population labels.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary of summary annotation names and their values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.summary_stats.default_generate_gene_lof_summary">
+<code class="sig-prename descclassname">gnomad.assessment.summary_stats.</code><code class="sig-name descname">default_generate_gene_lof_summary</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">collapse_indels=False</em>, <em class="sig-param">tx=False</em>, <em class="sig-param">lof_csq_set={'frameshift_variant'</em>, <em class="sig-param">'splice_acceptor_variant'</em>, <em class="sig-param">'splice_donor_variant'</em>, <em class="sig-param">'stop_gained'}</em>, <em class="sig-param">meta_root='meta'</em>, <em class="sig-param">pop_field='pop'</em>, <em class="sig-param">filter_loftee=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/summary_stats.html#default_generate_gene_lof_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.summary_stats.default_generate_gene_lof_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate summary counts for loss-of-function (LoF), missense, and synonymous variants.</p>
+<p>Also calculates p, proportion of of haplotypes carrying a putative LoF (pLoF) variant,
+and observed/expected (OE) ratio of samples with homozygous pLoF variant calls.</p>
+<dl class="simple">
+<dt>Summary counts are (all per gene):</dt><dd><ul class="simple">
+<li><p>Number of samples with no pLoF variants.</p></li>
+<li><p>Number of samples with heterozygous pLoF variants.</p></li>
+<li><p>Number of samples with homozygous pLoF variants.</p></li>
+<li><p>Total number of sites with genotype calls.</p></li>
+<li><p>All of the above stats grouped by population.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Assumes MT was created using <cite>default_generate_gene_lof_matrix</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Assumes LoF variants in MT were filtered (LOFTEE pass and no LoF flag only).
+If LoF variants have not been filtered and <cite>filter_loftee</cite> is True,
+expects MT has the row annotation <cite>vep</cite>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable.</p></li>
+<li><p><strong>collapse_indels</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to collapse indels. Default is False.</p></li>
+<li><p><strong>tx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether input MT has transcript expression data. Default is False.</p></li>
+<li><p><strong>lof_csq_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Set containing LoF transcript consequence strings. Default is LOF_CSQ_SET.</p></li>
+<li><p><strong>meta_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String indicating top level name for sample metadata. Default is ‘meta’.</p></li>
+<li><p><strong>pop_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String indiciating field with sample population assignment information. Default is ‘pop’.</p></li>
+<li><p><strong>filter_loftee</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Filters to LOFTEE pass variants (and no LoF flags) only. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with het/hom summary counts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="validity_checks.html" class="btn btn-neutral float-right" title="gnomad.assessment.validity_checks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="gnomad.assessment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

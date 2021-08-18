@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.assessment.validity_checks &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.variant_qc" href="../variant_qc/index.html" />
+    <link rel="prev" title="gnomad.assessment.summary_stats" href="summary_stats.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">assessment</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="summary_stats.html">summary_stats</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">validity_checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.assessment</a> &raquo;</li>
+        
+      <li>gnomad.assessment.validity_checks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/assessment/validity_checks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-assessment-validity-checks">
+<h1>gnomad.assessment.validity_checks<a class="headerlink" href="#gnomad-assessment-validity-checks" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.generic_field_check" title="gnomad.assessment.validity_checks.generic_field_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.generic_field_check</span></code></a>(ht, …)</p></td>
+<td><p>Check generic logical condition <cite>cond_expr</cite> involving annotations in a Hail Table when <cite>n_fail</cite> is absent and print the results to stdout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.make_filters_expr_dict" title="gnomad.assessment.validity_checks.make_filters_expr_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.make_filters_expr_dict</span></code></a>(ht)</p></td>
+<td><p>Make Hail expressions to measure % variants filtered under varying conditions of interest.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.make_group_sum_expr_dict" title="gnomad.assessment.validity_checks.make_group_sum_expr_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.make_group_sum_expr_dict</span></code></a>(t, …)</p></td>
+<td><p>Compute the sum of call stats annotations for a specified group of annotations, compare to the annotated version, and display the result in stdout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.compare_row_counts" title="gnomad.assessment.validity_checks.compare_row_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.compare_row_counts</span></code></a>(…)</p></td>
+<td><p>Check if the row counts in two Tables are the same.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.summarize_variant_filters" title="gnomad.assessment.validity_checks.summarize_variant_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.summarize_variant_filters</span></code></a>(t)</p></td>
+<td><p>Summarize variants filtered under various conditions in input MatrixTable or Table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.generic_field_check_loop" title="gnomad.assessment.validity_checks.generic_field_check_loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.generic_field_check_loop</span></code></a>(ht, …)</p></td>
+<td><p>Loop through all conditional checks for a given hail Table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.compare_subset_freqs" title="gnomad.assessment.validity_checks.compare_subset_freqs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.compare_subset_freqs</span></code></a>(t, …)</p></td>
+<td><p>Perform validity checks on frequency data in input Table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.sum_group_callstats" title="gnomad.assessment.validity_checks.sum_group_callstats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.sum_group_callstats</span></code></a>(t)</p></td>
+<td><p>Compute the sum of annotations for a specified group of annotations, and compare to the annotated version.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.summarize_variants" title="gnomad.assessment.validity_checks.summarize_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.summarize_variants</span></code></a>(t)</p></td>
+<td><p>Get summary of variants in a MatrixTable or Table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.check_raw_and_adj_callstats" title="gnomad.assessment.validity_checks.check_raw_and_adj_callstats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.check_raw_and_adj_callstats</span></code></a>(t, …)</p></td>
+<td><p>Perform validity checks on raw and adj data in input Table/MatrixTable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.check_sex_chr_metrics" title="gnomad.assessment.validity_checks.check_sex_chr_metrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.check_sex_chr_metrics</span></code></a>(t, …)</p></td>
+<td><p>Perform validity checks for annotations on the sex chromosomes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.compute_missingness" title="gnomad.assessment.validity_checks.compute_missingness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.compute_missingness</span></code></a>(t, …)</p></td>
+<td><p>Check amount of missingness in all row annotations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.vcf_field_check" title="gnomad.assessment.validity_checks.vcf_field_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.vcf_field_check</span></code></a>(t, …)</p></td>
+<td><p>Check that all VCF fields and descriptions are present in input Table and VCF header dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.assessment.validity_checks.validate_release_t" title="gnomad.assessment.validity_checks.validate_release_t"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.assessment.validity_checks.validate_release_t</span></code></a>(t)</p></td>
+<td><p>Perform a battery of validity checks on a specified group of subsets in a MatrixTable containing variant annotations.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.assessment.validity_checks"></span><dl class="function">
+<dt id="gnomad.assessment.validity_checks.generic_field_check">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">generic_field_check</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">check_description</em>, <em class="sig-param">display_fields</em>, <em class="sig-param">cond_expr=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">show_percent_sites=False</em>, <em class="sig-param">n_fail=None</em>, <em class="sig-param">ht_count=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#generic_field_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.generic_field_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check generic logical condition <cite>cond_expr</cite> involving annotations in a Hail Table when <cite>n_fail</cite> is absent and print the results to stdout.</p>
+<p>Displays the number of rows (and percent of rows, if <cite>show_percent_sites</cite> is True) in the Table that fail, either previously computed as <cite>n_fail</cite> or that match the <cite>cond_expr</cite>, and fail to be the desired condition (<cite>check_description</cite>).
+If the number of rows that match the <cite>cond_expr</cite> or <cite>n_fail</cite> is 0, then the Table passes that check; otherwise, it fails.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>cond_expr</cite> and <cite>check_description</cite> are opposites and should never be the same.
+E.g., If <cite>cond_expr</cite> filters for instances where the raw AC is less than adj AC,
+then it is checking sites that fail to be the desired condition (<cite>check_description</cite>)
+of having a raw AC greater than or equal to the adj AC.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing annotations to be checked.</p></li>
+<li><p><strong>check_description</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String describing the condition being checked; is displayed in stdout summary message.</p></li>
+<li><p><strong>display_fields</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – StructExpression containing annotations to be displayed in case of failure (for troubleshooting purposes); these fields are also displayed if verbose is True.</p></li>
+<li><p><strong>cond_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Optional logical expression referring to annotations in ht to be checked.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.</p></li>
+<li><p><strong>show_percent_sites</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Show percentage of sites that fail checks. Default is False.</p></li>
+<li><p><strong>n_fail</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Optional number of sites that fail the conditional checks (previously computed). If not supplied, <cite>cond_expr</cite> is used to filter the Table and obtain the count of sites that fail the checks.</p></li>
+<li><p><strong>ht_count</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Optional number of sites within hail Table (previously computed). If not supplied, a count of sites in the Table is performed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.make_filters_expr_dict">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">make_filters_expr_dict</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">extra_filter_checks=None</em>, <em class="sig-param">variant_filter_field='RF'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#make_filters_expr_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.make_filters_expr_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make Hail expressions to measure % variants filtered under varying conditions of interest.</p>
+<dl class="simple">
+<dt>Checks for:</dt><dd><ul class="simple">
+<li><p>Total number of variants</p></li>
+<li><dl class="simple">
+<dt>Fraction of variants removed due to:</dt><dd><ul>
+<li><p>Any filter</p></li>
+<li><p>Inbreeding coefficient filter in combination with any other filter</p></li>
+<li><p>AC0 filter in combination with any other filter</p></li>
+<li><p><cite>variant_filter_field</cite> filtering in combination with any other filter</p></li>
+<li><p>Only inbreeding coefficient filter</p></li>
+<li><p>Only AC0 filter</p></li>
+<li><p>Only filtering defined by <cite>variant_filter_field</cite></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing ‘filter’ annotation to be examined.</p></li>
+<li><p><strong>extra_filter_checks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]]) – Optional dictionary containing filter condition name (key) extra filter expressions (value) to be examined.</p></li>
+<li><p><strong>variant_filter_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String of variant filtration used in the filters annotation on <cite>ht</cite> (e.g. RF, VQSR, AS_VQSR). Default is “RF”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary containing Hail aggregation expressions to examine filter flags.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.make_group_sum_expr_dict">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">make_group_sum_expr_dict</code><span class="sig-paren">(</span><em class="sig-param">t, subset, label_groups, sort_order=['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group'], delimiter='-', metric_first_field=True, metrics=['AC', 'AN', 'nhomalt']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#make_group_sum_expr_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.make_group_sum_expr_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the sum of call stats annotations for a specified group of annotations, compare to the annotated version, and display the result in stdout.</p>
+<p>For example, if subset1 consists of pop1, pop2, and pop3, check that t.info.AC-subset1 == sum(t.info.AC-subset1-pop1, t.info.AC-subset1-pop2, t.info.AC-subset1-pop3).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table containing call stats annotations to be summed.</p></li>
+<li><p><strong>subset</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String indicating sample subset.</p></li>
+<li><p><strong>label_groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary containing an entry for each label group, where key is the name of the grouping, e.g. “sex” or “pop”, and value is a list of all possible values for that grouping (e.g. [“XY”, “XX”] or [“afr”, “nfe”, “amr”]).</p></li>
+<li><p><strong>sort_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing order to sort label group combinations. Default is SORT_ORDER.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations. Default is “-“.</p></li>
+<li><p><strong>metric_first_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, metric precedes subset in the Table’s fields, e.g. AC-hgdp. If False, subset precedes metric, hgdp-AC. Default is True.</p></li>
+<li><p><strong>metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to sum and compare to annotationed versions. Default is [“AC”, “AN”, “nhomalt”].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>]]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary of sample sum field check expressions and display fields.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.compare_row_counts">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">compare_row_counts</code><span class="sig-paren">(</span><em class="sig-param">ht1</em>, <em class="sig-param">ht2</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#compare_row_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.compare_row_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the row counts in two Tables are the same.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht1</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – First Table to be checked.</p></li>
+<li><p><strong>ht2</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Second Table to be checked.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Whether the row counts are the same.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.summarize_variant_filters">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">summarize_variant_filters</code><span class="sig-paren">(</span><em class="sig-param">t, variant_filter_field='RF', problematic_regions=['lcr', 'segdup', 'nonpar'], single_filter_count=False, monoallelic_expr=None, extra_filter_checks=None, n_rows=50, n_cols=140</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#summarize_variant_filters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.summarize_variant_filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Summarize variants filtered under various conditions in input MatrixTable or Table.</p>
+<dl class="simple">
+<dt>Summarize counts for:</dt><dd><ul class="simple">
+<li><p>Total number of variants</p></li>
+<li><dl class="simple">
+<dt>Fraction of variants removed due to:</dt><dd><ul>
+<li><p>Any filter</p></li>
+<li><p>Inbreeding coefficient filter in combination with any other filter</p></li>
+<li><p>AC0 filter in combination with any other filter</p></li>
+<li><p><cite>variant_filter_field</cite> filtering in combination with any other filter in combination with any other filter</p></li>
+<li><p>Only inbreeding coefficient filter</p></li>
+<li><p>Only AC0 filter</p></li>
+<li><p>Only <cite>variant_filter_field</cite> filtering</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table to be checked.</p></li>
+<li><p><strong>variant_filter_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String of variant filtration used in the filters annotation on <cite>ht</cite> (e.g. RF, VQSR, AS_VQSR). Default is “RF”.</p></li>
+<li><p><strong>problematic_regions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of regions considered problematic to run filter check in. Default is [“lcr”, “segdup”, “nonpar”].</p></li>
+<li><p><strong>single_filter_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, explode the Table’s filter column and give a supplement total count of each filter. Default is False.</p></li>
+<li><p><strong>monoallelic_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Optional boolean expression of monoallelic status that logs how many monoallelic sites are in the Table.</p></li>
+<li><p><strong>extra_filter_checks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]]) – Optional dictionary containing filter condition name (key) and extra filter expressions (value) to be examined.</p></li>
+<li><p><strong>n_rows</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of rows to display only when showing percentages of filtered variants grouped by multiple conditions. Default is 50.</p></li>
+<li><p><strong>n_cols</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of columns to display only when showing percentages of filtered variants grouped by multiple conditions. Default is 140.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.generic_field_check_loop">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">generic_field_check_loop</code><span class="sig-paren">(</span><em class="sig-param">ht</em>, <em class="sig-param">field_check_expr</em>, <em class="sig-param">verbose</em>, <em class="sig-param">show_percent_sites=False</em>, <em class="sig-param">ht_count=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#generic_field_check_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.generic_field_check_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loop through all conditional checks for a given hail Table.</p>
+<p>This loop allows aggregation across the hail Table once, as opposed to aggregating during every conditional check.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing annotations to be checked.</p></li>
+<li><p><strong>field_check_expr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>]]]) – Dictionary whose keys are conditions being checked and values are the expressions for filtering to condition.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.</p></li>
+<li><p><strong>show_percent_sites</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Show percentage of sites that fail checks. Default is False.</p></li>
+<li><p><strong>ht_count</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Previously computed sum of sites within hail Table. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.compare_subset_freqs">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">compare_subset_freqs</code><span class="sig-paren">(</span><em class="sig-param">t, subsets, verbose, show_percent_sites=True, delimiter='-', metric_first_field=True, metrics=['AC', 'AN', 'nhomalt']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#compare_subset_freqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.compare_subset_freqs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform validity checks on frequency data in input Table.</p>
+<dl class="simple">
+<dt>Check:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Number of sites where callset frequency is equal to a subset frequency (raw and adj)</dt><dd><ul>
+<li><p>eg. t.info.AC-adj != t.info.AC-subset1-adj</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Total number of sites where the raw allele count annotation is defined</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table.</p></li>
+<li><p><strong>subsets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sample subsets.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.</p></li>
+<li><p><strong>show_percent_sites</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show the percentage and count of overall sites that fail; if False, only show the number of sites that fail.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations. Default is “-“.</p></li>
+<li><p><strong>metric_first_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, metric precedes subset, e.g. AC-non_v2-. If False, subset precedes metric, non_v2-AC-XY. Default is True.</p></li>
+<li><p><strong>metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to compare between subset and entire callset. Default is [“AC”, “AN”, “nhomalt”].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.sum_group_callstats">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">sum_group_callstats</code><span class="sig-paren">(</span><em class="sig-param">t, sexes=['XX', 'XY'], subsets=[''], pops=['afr', 'ami', 'amr', 'asj', 'eas', 'fin', 'nfe', 'oth', 'sas', 'mid'], groups=['adj'], additional_subsets_and_pops=None, verbose=False, sort_order=['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group'], delimiter='-', metric_first_field=True, metrics=['AC', 'AN', 'nhomalt']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#sum_group_callstats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.sum_group_callstats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the sum of annotations for a specified group of annotations, and compare to the annotated version.</p>
+<p>Displays results from checking the sum of the specified annotations in stdout.
+Also checks that annotations for all expected sample populations are present.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table.</p></li>
+<li><p><strong>sexes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sexes in table.</p></li>
+<li><p><strong>subsets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sample subsets that contain pops passed in pops parameter. An empty string, e.g. “”, should be passed to test entire callset. Default is [“”].</p></li>
+<li><p><strong>pops</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of pops contained within the subsets. Default is POPS.</p></li>
+<li><p><strong>groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of callstat groups, e.g. “adj” and “raw” contained within the callset. gnomAD does not store the raw callstats for the pop or sex groupings of any subset. Default is [“adj”]</p></li>
+<li><p><strong>sample_sum_sets_and_pops</strong> – Dict with subset (keys) and list of the subset’s specific populations (values). Default is None.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks. Default is False.</p></li>
+<li><p><strong>sort_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing order to sort label group combinations. Default is SORT_ORDER.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations. Default is “-“.</p></li>
+<li><p><strong>metric_first_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, metric precedes label group, e.g. AC-afr-male. If False, label group precedes metric, afr-male-AC. Default is True.</p></li>
+<li><p><strong>metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to sum and compare to annotationed versions. Default is [“AC”, “AN”, “nhomalt”].</p></li>
+<li><p><strong>additional_subsets_and_pops</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.summarize_variants">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">summarize_variants</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#summarize_variants"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.summarize_variants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get summary of variants in a MatrixTable or Table.</p>
+<p>Print the number of variants to stdout and check that each chromosome has variant calls.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table to be checked.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Struct" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Struct</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Struct of variant summary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.check_raw_and_adj_callstats">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">check_raw_and_adj_callstats</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">subsets</em>, <em class="sig-param">verbose</em>, <em class="sig-param">delimiter='-'</em>, <em class="sig-param">metric_first_field=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#check_raw_and_adj_callstats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.check_raw_and_adj_callstats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform validity checks on raw and adj data in input Table/MatrixTable.</p>
+<dl class="simple">
+<dt>Check that:</dt><dd><ul class="simple">
+<li><p>Raw AC and AF are not 0</p></li>
+<li><p>AC and AF are not negative</p></li>
+<li><p>Raw values for AC, AN, nhomalt in each sample subset are greater than or equal to their corresponding adj values</p></li>
+</ul>
+</dd>
+</dl>
+<p>Raw and adj call stat annotations must be in an info struct annotation on the Table/MatrixTable, e.g. t.info.AC-raw.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table to check.</p></li>
+<li><p><strong>subsets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sample subsets.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations. Default is “-“.</p></li>
+<li><p><strong>metric_first_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, metric precedes label group, e.g. AC-afr-male. If False, label group precedes metric, afr-male-AC. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.check_sex_chr_metrics">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">check_sex_chr_metrics</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">info_metrics</em>, <em class="sig-param">contigs</em>, <em class="sig-param">verbose</em>, <em class="sig-param">delimiter='-'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#check_sex_chr_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.check_sex_chr_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform validity checks for annotations on the sex chromosomes.</p>
+<dl class="simple">
+<dt>Check:</dt><dd><ul class="simple">
+<li><p>That metrics for chrY variants in XX samples are NA and not 0</p></li>
+<li><p>That nhomalt counts are equal to XX nhomalt counts for all non-PAR chrX variants</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table.</p></li>
+<li><p><strong>info_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics in info struct of input Table.</p></li>
+<li><p><strong>contigs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of contigs present in input Table.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as the delimiter in XX metrics. Default is “-“.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.compute_missingness">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">compute_missingness</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">info_metrics</em>, <em class="sig-param">non_info_metrics</em>, <em class="sig-param">n_sites</em>, <em class="sig-param">missingness_threshold</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#compute_missingness"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.compute_missingness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check amount of missingness in all row annotations.</p>
+<p>Print metric to sdout if the percentage of metric annotations missingness exceeds the missingness_threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table.</p></li>
+<li><p><strong>info_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics in info struct of input Table.</p></li>
+<li><p><strong>non_info_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of row annotations minus info struct from input Table.</p></li>
+<li><p><strong>n_sites</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of sites in input Table.</p></li>
+<li><p><strong>missingness_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper cutoff for allowed amount of missingness.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.vcf_field_check">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">vcf_field_check</code><span class="sig-paren">(</span><em class="sig-param">t, header_dict, row_annotations=None, entry_annotations=None, hists=['gq_hist_alt', 'gq_hist_all', 'dp_hist_alt', 'dp_hist_all', 'ab_hist_alt']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#vcf_field_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.vcf_field_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that all VCF fields and descriptions are present in input Table and VCF header dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table to be exported to VCF.</p></li>
+<li><p><strong>header_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – VCF header dictionary.</p></li>
+<li><p><strong>row_annotations</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – List of row annotations in MatrixTable or Table.</p></li>
+<li><p><strong>entry_annotations</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – List of entry annotations to use if running this check on a MatrixTable.</p></li>
+<li><p><strong>hists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of variant histogram annotations. Default is HISTS.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Boolean with whether all expected fields and descriptions are present.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.assessment.validity_checks.validate_release_t">
+<code class="sig-prename descclassname">gnomad.assessment.validity_checks.</code><code class="sig-name descname">validate_release_t</code><span class="sig-paren">(</span><em class="sig-param">t, subsets=[''], pops=['afr', 'ami', 'amr', 'asj', 'eas', 'fin', 'nfe', 'oth', 'sas', 'mid'], missingness_threshold=0.5, monoallelic_expr=None, verbose=False, show_percent_sites=True, delimiter='-', metric_first_field=True, sum_metrics=['AC', 'AN', 'nhomalt'], sexes=['XX', 'XY'], groups=['adj'], sample_sum_sets_and_pops=None, sort_order=['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group'], variant_filter_field='RF', problematic_regions=['lcr', 'segdup', 'nonpar'], single_filter_count=False, summarize_variants_check=True, filters_check=True, raw_adj_check=True, subset_freq_check=True, samples_sum_check=True, sex_chr_check=True, missingness_check=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/assessment/validity_checks.html#validate_release_t"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.assessment.validity_checks.validate_release_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a battery of validity checks on a specified group of subsets in a MatrixTable containing variant annotations.</p>
+<p>Includes:
+- Summaries of % filter status for different partitions of variants
+- Histogram outlier bin checks
+- Checks on AC, AN, and AF annotations
+- Checks that subgroup annotation values add up to the supergroup annotation values
+- Checks on sex-chromosome annotations; and summaries of % missingness in variant annotations</p>
+<p>All annotations must be within an info struct, e.g. t.info.AC-raw.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table containing variant annotations to check.</p></li>
+<li><p><strong>subsets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of subsets to be checked.</p></li>
+<li><p><strong>pops</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of pops within main callset.</p></li>
+<li><p><strong>missingness_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper cutoff for allowed amount of missingness. Default is 0.5.</p></li>
+<li><p><strong>monoallelic_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – When passed, log how many monoallelic sites are in the Table.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, display top values of relevant annotations being checked, regardless of whether check conditions are violated; if False, display only top values of relevant annotations if check conditions are violated.</p></li>
+<li><p><strong>show_percent_sites</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Show percentage of sites that fail checks. Default is False.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations. Default is “-“.</p></li>
+<li><p><strong>metric_first_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, metric precedes label group, e.g. AC-afr-male. If False, label group precedes metric, afr-male-AC. Default is True.</p></li>
+<li><p><strong>sum_metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to sum and compare to annotationed versions and between subsets and entire callset. Default is [“AC”, “AN”, “nhomalt”].</p></li>
+<li><p><strong>sexes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sexes in table. Default is SEXES.</p></li>
+<li><p><strong>groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of callstat groups, e.g. “adj” and “raw” contained within the callset. gnomAD does not store the raw callstats for the pop or sex groupings of any subset. Default is [“adj”]</p></li>
+<li><p><strong>sample_sum_sets_and_pops</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Dict with subset (keys) and populations within subset (values) for sample sum check.</p></li>
+<li><p><strong>sort_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing order to sort label group combinations. Default is SORT_ORDER.</p></li>
+<li><p><strong>variant_filter_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String of variant filtration used in the filters annotation on <cite>ht</cite> (e.g. RF, VQSR, AS_VQSR). Default is “RF”.</p></li>
+<li><p><strong>problematic_regions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of regions considered problematic to run filter check in. Default is [“lcr”, “segdup”, “nonpar”].</p></li>
+<li><p><strong>single_filter_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, explode the Table’s filter column and give a supplement total count of each filter. Default is False.</p></li>
+<li><p><strong>summarize_variants_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When true, runs the summarize_variants method. Default is True.</p></li>
+<li><p><strong>filters_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the summarize_variant_filters method. Default is True.</p></li>
+<li><p><strong>raw_adj_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the check_raw_and_adj_callstats method. Default is True.</p></li>
+<li><p><strong>subset_freq_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the compare_subset_freqs method. Default is True.</p></li>
+<li><p><strong>samples_sum_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the sum_group_callstats method. Default is True.</p></li>
+<li><p><strong>sex_chr_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the check_sex_chr_metricss method. Default is True.</p></li>
+<li><p><strong>missingness_check</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – When True, runs the compute_missingness method. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None (stdout display of results from the battery of validity checks).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../variant_qc/index.html" class="btn btn-neutral float-right" title="gnomad.variant_qc" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="summary_stats.html" class="btn btn-neutral float-left" title="gnomad.assessment.summary_stats" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

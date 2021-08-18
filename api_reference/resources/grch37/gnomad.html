@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.resources.grch37.gnomad &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="gnomad.resources.grch37.gnomad_ld" href="gnomad_ld.html" />
+    <link rel="prev" title="gnomad.resources.grch37" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils/index.html">utils</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">resources</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../config.html">config</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">grch37</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">gnomad</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gnomad_ld.html">gnomad_ld</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference_data.html">reference_data</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../grch38/index.html">grch38</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../import_resources.html">import_resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../resource_utils.html">resource_utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad.resources</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.resources.grch37</a> &raquo;</li>
+        
+      <li>gnomad.resources.grch37.gnomad</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/api_reference/resources/grch37/gnomad.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-resources-grch37-gnomad">
+<h1>gnomad.resources.grch37.gnomad<a class="headerlink" href="#gnomad-resources-grch37-gnomad" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.grch37.gnomad.public_release" title="gnomad.resources.grch37.gnomad.public_release"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.grch37.gnomad.public_release</span></code></a>(…)</p></td>
+<td><p>Retrieve publicly released versioned table resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.grch37.gnomad.coverage" title="gnomad.resources.grch37.gnomad.coverage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.grch37.gnomad.coverage</span></code></a>(…)</p></td>
+<td><p>Retrieve gnomAD’s coverage table by data_type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.grch37.gnomad.liftover" title="gnomad.resources.grch37.gnomad.liftover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.grch37.gnomad.liftover</span></code></a>(…)</p></td>
+<td><p>Get the 38 liftover of gnomad v2.1.1.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.grch37.gnomad.public_pca_loadings" title="gnomad.resources.grch37.gnomad.public_pca_loadings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.grch37.gnomad.public_pca_loadings</span></code></a>([…])</p></td>
+<td><p>Return the TableResource containing sites and loadings from population PCA.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.grch37.gnomad.release_vcf_path" title="gnomad.resources.grch37.gnomad.release_vcf_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.grch37.gnomad.release_vcf_path</span></code></a>(…)</p></td>
+<td><p>Publically released VCF.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.resources.grch37.gnomad"></span><dl class="function">
+<dt id="gnomad.resources.grch37.gnomad.public_release">
+<code class="sig-prename descclassname">gnomad.resources.grch37.gnomad.</code><code class="sig-name descname">public_release</code><span class="sig-paren">(</span><em class="sig-param">data_type</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/gnomad/resources/grch37/gnomad.html#public_release"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.resources.grch37.gnomad.public_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve publicly released versioned table resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of “exomes” or “genomes”</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="../resource_utils.html#gnomad.resources.resource_utils.VersionedTableResource" title="gnomad.resources.resource_utils.VersionedTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VersionedTableResource</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Release Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.resources.grch37.gnomad.coverage">
+<code class="sig-prename descclassname">gnomad.resources.grch37.gnomad.</code><code class="sig-name descname">coverage</code><span class="sig-paren">(</span><em class="sig-param">data_type</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/gnomad/resources/grch37/gnomad.html#coverage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.resources.grch37.gnomad.coverage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve gnomAD’s coverage table by data_type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of “exomes” or “genomes”</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="../resource_utils.html#gnomad.resources.resource_utils.VersionedTableResource" title="gnomad.resources.resource_utils.VersionedTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VersionedTableResource</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Coverage Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.resources.grch37.gnomad.liftover">
+<code class="sig-prename descclassname">gnomad.resources.grch37.gnomad.</code><code class="sig-name descname">liftover</code><span class="sig-paren">(</span><em class="sig-param">data_type</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/gnomad/resources/grch37/gnomad.html#liftover"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.resources.grch37.gnomad.liftover" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the 38 liftover of gnomad v2.1.1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of “exomes” or “genomes”</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="../resource_utils.html#gnomad.resources.resource_utils.VersionedTableResource" title="gnomad.resources.resource_utils.VersionedTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VersionedTableResource</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Release Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.resources.grch37.gnomad.public_pca_loadings">
+<code class="sig-prename descclassname">gnomad.resources.grch37.gnomad.</code><code class="sig-name descname">public_pca_loadings</code><span class="sig-paren">(</span><em class="sig-param">subpop=''</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/gnomad/resources/grch37/gnomad.html#public_pca_loadings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.resources.grch37.gnomad.public_pca_loadings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the TableResource containing sites and loadings from population PCA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>subpop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Can be empty (“”) -&gt; global, “eas” or “nfe”</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="../resource_utils.html#gnomad.resources.resource_utils.GnomadPublicTableResource" title="gnomad.resources.resource_utils.GnomadPublicTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">GnomadPublicTableResource</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>gnomAD public PCA loadings TableResource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.resources.grch37.gnomad.release_vcf_path">
+<code class="sig-prename descclassname">gnomad.resources.grch37.gnomad.</code><code class="sig-name descname">release_vcf_path</code><span class="sig-paren">(</span><em class="sig-param">data_type</em>, <em class="sig-param">version</em>, <em class="sig-param">contig</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/gnomad/resources/grch37/gnomad.html#release_vcf_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.resources.grch37.gnomad.release_vcf_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publically released VCF. Provide specific contig, i.e. “20”, to retrieve contig specific VCF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of “exomes” or “genomes”</p></li>
+<li><p><strong>version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of the release versions of gnomAD on GRCh37</p></li>
+<li><p><strong>contig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Single contig “1” to “Y”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Path to VCF</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gnomad_ld.html" class="btn btn-neutral float-right" title="gnomad.resources.grch37.gnomad_ld" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="gnomad.resources.grch37" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

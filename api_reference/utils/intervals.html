@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.utils.intervals &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.liftover" href="liftover.html" />
+    <link rel="prev" title="gnomad.utils.gen_stats" href="gen_stats.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.utils</a> &raquo;</li>
+        
+      <li>gnomad.utils.intervals</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/utils/intervals.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-utils-intervals">
+<h1>gnomad.utils.intervals<a class="headerlink" href="#gnomad-utils-intervals" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.intervals.sort_intervals" title="gnomad.utils.intervals.sort_intervals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.intervals.sort_intervals</span></code></a>(intervals)</p></td>
+<td><p>Sort an array of intervals by start contig, then start position, then end contig, then end position.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.intervals.union_intervals" title="gnomad.utils.intervals.union_intervals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.intervals.union_intervals</span></code></a>(intervals)</p></td>
+<td><p>Generate a list with the union of all intervals in the input list by merging overlapping intervals.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.intervals.interval_length" title="gnomad.utils.intervals.interval_length"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.intervals.interval_length</span></code></a>(interval)</p></td>
+<td><p>Return the total number of bases in an Interval.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.intervals"></span><dl class="function">
+<dt id="gnomad.utils.intervals.sort_intervals">
+<code class="sig-prename descclassname">gnomad.utils.intervals.</code><code class="sig-name descname">sort_intervals</code><span class="sig-paren">(</span><em class="sig-param">intervals</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/intervals.html#sort_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.intervals.sort_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort an array of intervals by start contig, then start position, then end contig, then end position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>]) – Intervals to sort</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sorted interval list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.intervals.union_intervals">
+<code class="sig-prename descclassname">gnomad.utils.intervals.</code><code class="sig-name descname">union_intervals</code><span class="sig-paren">(</span><em class="sig-param">intervals</em>, <em class="sig-param">is_sorted=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/intervals.html#union_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.intervals.union_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a list with the union of all intervals in the input list by merging overlapping intervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>]) – Intervals to merge</p></li>
+<li><p><strong>is_sorted</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, assumes intervals are already sorted, otherwise will sort.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of merged intervals</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.intervals.interval_length">
+<code class="sig-prename descclassname">gnomad.utils.intervals.</code><code class="sig-name descname">interval_length</code><span class="sig-paren">(</span><em class="sig-param">interval</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/intervals.html#interval_length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.intervals.interval_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the total number of bases in an Interval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>interval</strong> (<a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>) – Input interval</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Total length of the interval</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="liftover.html" class="btn btn-neutral float-right" title="gnomad.utils.liftover" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="gen_stats.html" class="btn btn-neutral float-left" title="gnomad.utils.gen_stats" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

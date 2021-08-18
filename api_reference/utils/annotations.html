@@ -1,0 +1,929 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.utils.annotations &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.file_utils" href="file_utils.html" />
+    <link rel="prev" title="gnomad.utils" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.utils</a> &raquo;</li>
+        
+      <li>gnomad.utils.annotations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/utils/annotations.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-utils-annotations">
+<h1>gnomad.utils.annotations<a class="headerlink" href="#gnomad-utils-annotations" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.pop_max_expr" title="gnomad.utils.annotations.pop_max_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.pop_max_expr</span></code></a>(freq, …)</p></td>
+<td><p>Create an expression containing the frequency information about the population that has the highest AF in <cite>freq_meta</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.project_max_expr" title="gnomad.utils.annotations.project_max_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.project_max_expr</span></code></a>(…)</p></td>
+<td><p>Create an expression that computes allele frequency information by project for the <cite>n_projects</cite> with the largest AF at this row.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.faf_expr" title="gnomad.utils.annotations.faf_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.faf_expr</span></code></a>(freq, …)</p></td>
+<td><p>Calculate the filtering allele frequency (FAF) for each threshold specified in <cite>faf_thresholds</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.qual_hist_expr" title="gnomad.utils.annotations.qual_hist_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.qual_hist_expr</span></code></a>([…])</p></td>
+<td><p>Return a struct expression with genotype quality histograms based on the arguments given (dp, gq, ad).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.age_hists_expr" title="gnomad.utils.annotations.age_hists_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.age_hists_expr</span></code></a>(…)</p></td>
+<td><p>Return a StructExpression with the age histograms for hets and homs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.annotate_freq" title="gnomad.utils.annotations.annotate_freq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.annotate_freq</span></code></a>(mt[, …])</p></td>
+<td><p>Annotate <cite>mt</cite> with stratified allele frequencies.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.get_lowqual_expr" title="gnomad.utils.annotations.get_lowqual_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.get_lowqual_expr</span></code></a>(…)</p></td>
+<td><p>Compute lowqual threshold expression for either split or unsplit alleles based on QUALapprox or AS_QUALapprox.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.get_annotations_hists" title="gnomad.utils.annotations.get_annotations_hists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.get_annotations_hists</span></code></a>(ht, …)</p></td>
+<td><p>Create histograms for variant metrics in ht.info.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.create_frequency_bins_expr" title="gnomad.utils.annotations.create_frequency_bins_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.create_frequency_bins_expr</span></code></a>(AC, AF)</p></td>
+<td><p>Create bins for frequencies in preparation for aggregating QUAL by frequency bin.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.get_adj_expr" title="gnomad.utils.annotations.get_adj_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.get_adj_expr</span></code></a>(…[, …])</p></td>
+<td><p>Get adj genotype annotation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.annotate_adj" title="gnomad.utils.annotations.annotate_adj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.annotate_adj</span></code></a>(mt[, …])</p></td>
+<td><p>Annotate genotypes with adj criteria (assumes diploid).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.add_variant_type" title="gnomad.utils.annotations.add_variant_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.add_variant_type</span></code></a>(…)</p></td>
+<td><p>Get Struct of variant_type and n_alt_alleles from ArrayExpression of Strings (all alleles).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.annotation_type_is_numeric" title="gnomad.utils.annotations.annotation_type_is_numeric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.annotation_type_is_numeric</span></code></a>(t)</p></td>
+<td><p>Given an annotation type, return whether it is a numerical type or not.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.annotation_type_in_vcf_info" title="gnomad.utils.annotations.annotation_type_in_vcf_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.annotation_type_in_vcf_info</span></code></a>(t)</p></td>
+<td><p>Given an annotation type, returns whether that type can be natively exported to a VCF INFO field.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.bi_allelic_site_inbreeding_expr" title="gnomad.utils.annotations.bi_allelic_site_inbreeding_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.bi_allelic_site_inbreeding_expr</span></code></a>(call)</p></td>
+<td><p>Return the site inbreeding coefficient as an expression to be computed on a MatrixTable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.fs_from_sb" title="gnomad.utils.annotations.fs_from_sb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.fs_from_sb</span></code></a>(sb[, …])</p></td>
+<td><p>Compute <cite>FS</cite> (Fisher strand balance) annotation from  the <cite>SB</cite> (strand balance table) field.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.sor_from_sb" title="gnomad.utils.annotations.sor_from_sb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.sor_from_sb</span></code></a>(sb)</p></td>
+<td><p>Compute <cite>SOR</cite> (Symmetric Odds Ratio test) annotation from  the <cite>SB</cite> (strand balance table) field.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.bi_allelic_expr" title="gnomad.utils.annotations.bi_allelic_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.bi_allelic_expr</span></code></a>(t)</p></td>
+<td><p>Return a boolean expression selecting bi-allelic sites only, accounting for whether the input MT/HT was split.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.unphase_call_expr" title="gnomad.utils.annotations.unphase_call_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.unphase_call_expr</span></code></a>(…)</p></td>
+<td><p>Generate unphased version of a call expression (which can be phased or not).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.region_flag_expr" title="gnomad.utils.annotations.region_flag_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.region_flag_expr</span></code></a>(t)</p></td>
+<td><p>Create a <cite>region_flag</cite> struct that contains flags for problematic regions (i.e., LCR, decoy, segdup, and nonpar regions).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.missing_callstats_expr" title="gnomad.utils.annotations.missing_callstats_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.missing_callstats_expr</span></code></a>()</p></td>
+<td><p>Create a missing callstats struct for insertion into frequency annotation arrays when data is missing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.annotations.set_female_y_metrics_to_na_expr" title="gnomad.utils.annotations.set_female_y_metrics_to_na_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.set_female_y_metrics_to_na_expr</span></code></a>(t)</p></td>
+<td><p>Set Y-variant frequency callstats for female-specific metrics to missing structs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.annotations.hemi_expr" title="gnomad.utils.annotations.hemi_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.annotations.hemi_expr</span></code></a>(locus, …)</p></td>
+<td><p>Return whether genotypes are hemizygous.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.annotations"></span><dl class="function">
+<dt id="gnomad.utils.annotations.pop_max_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">pop_max_expr</code><span class="sig-paren">(</span><em class="sig-param">freq</em>, <em class="sig-param">freq_meta</em>, <em class="sig-param">pops_to_exclude=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#pop_max_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.pop_max_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an expression containing the frequency information about the population that has the highest AF in <cite>freq_meta</cite>.</p>
+<p>Populations specified in <cite>pops_to_exclude</cite> are excluded and only frequencies from adj populations are considered.</p>
+<p>This resulting struct contains the following fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>AC: int32</p></li>
+<li><p>AF: float64</p></li>
+<li><p>AN: int32</p></li>
+<li><p>homozygote_count: int32</p></li>
+<li><p>pop: str</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of Structs with fields [‘AC’, ‘AF’, ‘AN’, ‘homozygote_count’]</p></li>
+<li><p><strong>freq_meta</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of meta dictionaries corresponding to freq (as returned by annotate_freq)</p></li>
+<li><p><strong>pops_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Set of populations to skip for popmax calcluation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Popmax struct</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.project_max_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">project_max_expr</code><span class="sig-paren">(</span><em class="sig-param">project_expr</em>, <em class="sig-param">gt_expr</em>, <em class="sig-param">alleles_expr</em>, <em class="sig-param">n_projects=5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#project_max_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.project_max_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an expression that computes allele frequency information by project for the <cite>n_projects</cite> with the largest AF at this row.</p>
+<p>Will return an array with one element per non-reference allele.</p>
+<p>Each of these elements is itself an array of structs with the following fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>AC: int32</p></li>
+<li><p>AF: float64</p></li>
+<li><p>AN: int32</p></li>
+<li><p>homozygote_count: int32</p></li>
+<li><p>project: str</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only projects with AF &gt; 0 are returned.
+In case of ties, the project ordering is not guaranteed, and at most <cite>n_projects</cite> are returned.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – column expression containing the project</p></li>
+<li><p><strong>gt_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – entry expression containing the genotype</p></li>
+<li><p><strong>alleles_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – row expression containing the alleles</p></li>
+<li><p><strong>n_projects</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of projects to return for each row</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>projectmax expression</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.faf_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">faf_expr</code><span class="sig-paren">(</span><em class="sig-param">freq, freq_meta, locus, pops_to_exclude=None, faf_thresholds=[0.95, 0.99]</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#faf_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.faf_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the filtering allele frequency (FAF) for each threshold specified in <cite>faf_thresholds</cite>.</p>
+<p>See <a class="reference external" href="http://cardiodb.org/allelefrequencyapp/">http://cardiodb.org/allelefrequencyapp/</a> for more information.</p>
+<p>The FAF is computed for each of the following population stratification if found in <cite>freq_meta</cite>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>All samples, with adj criteria</p></li>
+<li><p>For each population, with adj criteria</p></li>
+<li><p>For all sex/population on the non-PAR regions of sex chromosomes (will be missing on autosomes and PAR regions of sex chromosomes)</p></li>
+</ul>
+</div></blockquote>
+<p>Each of the FAF entry is a struct with one entry per threshold specified in <cite>faf_thresholds</cite> of type float64.</p>
+<p>This returns a tuple with two expressions:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>An array of FAF expressions as described above</p></li>
+<li><p>An array of dict containing the metadata for each of the array elements, in the same format as that produced by <cite>annotate_freq</cite>.</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of call stats structs (typically generated by hl.agg.call_stats)</p></li>
+<li><p><strong>freq_meta</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of meta dictionaries corresponding to freq (typically generated using annotate_freq)</p></li>
+<li><p><strong>locus</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – locus</p></li>
+<li><p><strong>pops_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Set of populations to exclude from faf calculation (typically bottlenecked or consanguineous populations)</p></li>
+<li><p><strong>faf_thresholds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – List of FAF thresholds to compute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(FAF expression, FAF metadata)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.qual_hist_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">qual_hist_expr</code><span class="sig-paren">(</span><em class="sig-param">gt_expr=None</em>, <em class="sig-param">gq_expr=None</em>, <em class="sig-param">dp_expr=None</em>, <em class="sig-param">ad_expr=None</em>, <em class="sig-param">adj_expr=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#qual_hist_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.qual_hist_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a struct expression with genotype quality histograms based on the arguments given (dp, gq, ad).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If <cite>gt_expr</cite> is provided, will return histograms for non-reference samples only as well as all samples.</p></li>
+<li><p><cite>gt_expr</cite> is required for the allele-balance histogram, as it is only computed on het samples.</p></li>
+<li><p>If <cite>adj_expr</cite> is provided, additional histograms are computed using only adj samples.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gt_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>]) – Entry expression containing genotype</p></li>
+<li><p><strong>gq_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Entry expression containing genotype quality</p></li>
+<li><p><strong>dp_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Entry expression containing depth</p></li>
+<li><p><strong>ad_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>]) – Entry expression containing allelic depth (bi-allelic here)</p></li>
+<li><p><strong>adj_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Entry expression containing adj (high quality) genotype status</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Genotype quality histograms expression</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.age_hists_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">age_hists_expr</code><span class="sig-paren">(</span><em class="sig-param">adj_expr</em>, <em class="sig-param">gt_expr</em>, <em class="sig-param">age_expr</em>, <em class="sig-param">lowest_boundary=30</em>, <em class="sig-param">highest_boundary=80</em>, <em class="sig-param">n_bins=10</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#age_hists_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.age_hists_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a StructExpression with the age histograms for hets and homs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adj_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Entry expression containing whether a genotype is high quality (adj) or not</p></li>
+<li><p><strong>gt_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – Entry expression containing the genotype</p></li>
+<li><p><strong>age_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Col expression containing the sample’s age</p></li>
+<li><p><strong>lowest_boundary</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Lowest bin boundary (any younger sample will be binned in n_smaller)</p></li>
+<li><p><strong>highest_boundary</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Highest bin boundary (any older sample will be binned in n_larger)</p></li>
+<li><p><strong>n_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Total number of bins</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A struct with <cite>age_hist_het</cite> and <cite>age_hist_hom</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.annotate_freq">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">annotate_freq</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">sex_expr=None</em>, <em class="sig-param">pop_expr=None</em>, <em class="sig-param">subpop_expr=None</em>, <em class="sig-param">additional_strata_expr=None</em>, <em class="sig-param">downsamplings=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#annotate_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.annotate_freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotate <cite>mt</cite> with stratified allele frequencies.</p>
+<dl class="simple">
+<dt>The output Matrix table will include:</dt><dd><ul class="simple">
+<li><p>row annotation <cite>freq</cite> containing the stratified allele frequencies</p></li>
+<li><p>global annotation <cite>freq_meta</cite> with metadata</p></li>
+<li><p>global annotation <cite>freq_sample_count</cite> with sample count information</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently this only supports bi-allelic sites.
+The input <cite>mt</cite> needs to have the following entry fields:
+- GT: a CallExpression containing the genotype
+- adj: a BooleanExpression containing whether the genotype is of high quality or not.
+All expressions arguments need to be expression on the input <cite>mt</cite>.</p>
+</div>
+<p class="rubric"><cite>freq</cite> row annotation</p>
+<p>The <cite>freq</cite> row annotation is an Array of Struct, with each Struct containing the following fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>AC: int32</p></li>
+<li><p>AF: float64</p></li>
+<li><p>AN: int32</p></li>
+<li><p>homozygote_count: int32</p></li>
+</ul>
+</div></blockquote>
+<p>Each element of the array corresponds to a stratification of the data, and the metadata about these annotations is
+stored in the globals.</p>
+<p class="rubric">Global <cite>freq_meta</cite> metadata annotation</p>
+<p>The global annotation <cite>freq_meta</cite> is added to the input <cite>mt</cite>. It is a list of dict.
+Each element of the list contains metadata on a frequency stratification and the index in the list corresponds
+to the index of that frequency stratification in the <cite>freq</cite> row annotation.</p>
+<p class="rubric">Global <cite>freq_sample_count</cite> annotation</p>
+<p>The global annotation <cite>freq_sample_count</cite> is added to the input <cite>mt</cite>. This is a sample count per sample grouping
+defined in the <cite>freq_meta</cite> global annotation.</p>
+<p class="rubric">The <cite>downsamplings</cite> parameter</p>
+<p>If the <cite>downsamplings</cite> parameter is used, frequencies will be computed for all samples and by population
+(if <cite>pop_expr</cite> is specified) by downsampling the number of samples without replacement to each of the numbers specified in the
+<cite>downsamplings</cite> array, provided that there are enough samples in the dataset.
+In addition, if <cite>pop_expr</cite> is specified, a downsampling to each of the exact number of samples present in each population is added.
+Note that samples are randomly sampled only once, meaning that the lower downsamplings are subsets of the higher ones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable</p></li>
+<li><p><strong>sex_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>]) – When specified, frequencies are stratified by sex. If <cite>pop_expr</cite> is also specified, then a pop/sex stratifiction is added.</p></li>
+<li><p><strong>pop_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>]) – When specified, frequencies are stratified by population. If <cite>sex_expr</cite> is also specified, then a pop/sex stratifiction is added.</p></li>
+<li><p><strong>subpop_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>]) – When specified, frequencies are stratified by sub-continental population. Note that <cite>pop_expr</cite> is required as well when using this option.</p></li>
+<li><p><strong>additional_strata_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>]]) – When specified, frequencies are stratified by the given additional strata found in the dict. This can e.g. be used to stratify by platform.</p></li>
+<li><p><strong>downsamplings</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – When specified, frequencies are computed by downsampling the data to the number of samples given in the list. Note that if <cite>pop_expr</cite> is specified, downsamplings by population is also computed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>MatrixTable with <cite>freq</cite> annotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.get_lowqual_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">get_lowqual_expr</code><span class="sig-paren">(</span><em class="sig-param">alleles</em>, <em class="sig-param">qual_approx_expr</em>, <em class="sig-param">snv_phred_threshold=30</em>, <em class="sig-param">snv_phred_het_prior=30</em>, <em class="sig-param">indel_phred_threshold=30</em>, <em class="sig-param">indel_phred_het_prior=39</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#get_lowqual_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.get_lowqual_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute lowqual threshold expression for either split or unsplit alleles based on QUALapprox or AS_QUALapprox.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When running This lowqual annotation using QUALapprox, it differs from the GATK LowQual filter.
+This is because GATK computes this annotation at the site level, which uses the least stringent prior for mixed sites.
+When run using AS_QUALapprox, this implementation can thus be more stringent for certain alleles at mixed sites.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alleles</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Array of alleles</p></li>
+<li><p><strong>qual_approx_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – QUALapprox or AS_QUALapprox</p></li>
+<li><p><strong>snv_phred_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Phred-scaled SNV “emission” threshold (similar to GATK emission threshold)</p></li>
+<li><p><strong>snv_phred_het_prior</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Phred-scaled SNV heterozygosity prior (30 = 1/1000 bases, GATK default)</p></li>
+<li><p><strong>indel_phred_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Phred-scaled indel “emission” threshold (similar to GATK emission threshold)</p></li>
+<li><p><strong>indel_phred_het_prior</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Phred-scaled indel heterozygosity prior (30 = 1/1000 bases, GATK default)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>lowqual expression (BooleanExpression if <cite>qual_approx_expr`is Numeric, Array[BooleanExpression] if `qual_approx_expr</cite> is ArrayNumeric)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.get_annotations_hists">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">get_annotations_hists</code><span class="sig-paren">(</span><em class="sig-param">ht, annotations_hists, log10_annotations=['DP']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#get_annotations_hists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.get_annotations_hists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create histograms for variant metrics in ht.info.</p>
+<p>Used when creating site quality distribution json files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with variant metrics</p></li>
+<li><p><strong>annotations_hists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>]) – Dictionary of metrics names and their histogram values (start, end, bins)</p></li>
+<li><p><strong>log10_annotations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to log scale</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary of merics and their histograms</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Dict[str, hl.expr.StructExpression]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.create_frequency_bins_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">create_frequency_bins_expr</code><span class="sig-paren">(</span><em class="sig-param">AC</em>, <em class="sig-param">AF</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#create_frequency_bins_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.create_frequency_bins_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create bins for frequencies in preparation for aggregating QUAL by frequency bin.</p>
+<dl class="simple">
+<dt>Bins:</dt><dd><ul class="simple">
+<li><p>singleton</p></li>
+<li><p>doubleton</p></li>
+<li><p>0.00005</p></li>
+<li><p>0.0001</p></li>
+<li><p>0.0002</p></li>
+<li><p>0.0005</p></li>
+<li><p>0.001,</p></li>
+<li><p>0.002</p></li>
+<li><p>0.005</p></li>
+<li><p>0.01</p></li>
+<li><p>0.02</p></li>
+<li><p>0.05</p></li>
+<li><p>0.1</p></li>
+<li><p>0.2</p></li>
+<li><p>0.5</p></li>
+<li><p>1</p></li>
+</ul>
+</dd>
+</dl>
+<p>NOTE: Frequencies should be frequencies from raw data.
+Used when creating site quality distribution json files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AC</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Field in input that contains the allele count information</p></li>
+<li><p><strong>AF</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Field in input that contains the allele frequency information</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Expression containing bin name</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>hl.expr.StringExpression</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.get_adj_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">get_adj_expr</code><span class="sig-paren">(</span><em class="sig-param">gt_expr</em>, <em class="sig-param">gq_expr</em>, <em class="sig-param">dp_expr</em>, <em class="sig-param">ad_expr</em>, <em class="sig-param">adj_gq=20</em>, <em class="sig-param">adj_dp=10</em>, <em class="sig-param">adj_ab=0.2</em>, <em class="sig-param">haploid_adj_dp=5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#get_adj_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.get_adj_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get adj genotype annotation.</p>
+<p>Defaults correspond to gnomAD values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gt_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – </p></li>
+<li><p><strong>gq_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]) – </p></li>
+<li><p><strong>dp_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]) – </p></li>
+<li><p><strong>ad_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>) – </p></li>
+<li><p><strong>adj_gq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>adj_dp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>adj_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>haploid_adj_dp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.annotate_adj">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">annotate_adj</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">adj_gq=20</em>, <em class="sig-param">adj_dp=10</em>, <em class="sig-param">adj_ab=0.2</em>, <em class="sig-param">haploid_adj_dp=5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#annotate_adj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.annotate_adj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotate genotypes with adj criteria (assumes diploid).</p>
+<p>Defaults correspond to gnomAD values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – </p></li>
+<li><p><strong>adj_gq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>adj_dp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>adj_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>haploid_adj_dp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.add_variant_type">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">add_variant_type</code><span class="sig-paren">(</span><em class="sig-param">alt_alleles</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#add_variant_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.add_variant_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Struct of variant_type and n_alt_alleles from ArrayExpression of Strings (all alleles).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>alt_alleles</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.annotation_type_is_numeric">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">annotation_type_is_numeric</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#annotation_type_is_numeric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.annotation_type_is_numeric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an annotation type, return whether it is a numerical type or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Type to test</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>If the input type is numeric</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.annotation_type_in_vcf_info">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">annotation_type_in_vcf_info</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#annotation_type_in_vcf_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.annotation_type_in_vcf_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an annotation type, returns whether that type can be natively exported to a VCF INFO field.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Types that aren’t natively exportable to VCF will be converted to String on export.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Type to test</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>If the input type can be exported to VCF</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.bi_allelic_site_inbreeding_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">bi_allelic_site_inbreeding_expr</code><span class="sig-paren">(</span><em class="sig-param">call</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#bi_allelic_site_inbreeding_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.bi_allelic_site_inbreeding_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the site inbreeding coefficient as an expression to be computed on a MatrixTable.</p>
+<p>This is implemented based on the GATK InbreedingCoeff metric:
+<a class="reference external" href="https://software.broadinstitute.org/gatk/documentation/article.php?id=8032">https://software.broadinstitute.org/gatk/documentation/article.php?id=8032</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The computation is run based on the counts of alternate alleles and thus should only be run on bi-allelic sites.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>call</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – Expression giving the calls in the MT</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float32Expression.html#hail.expr.Float32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float32Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Site inbreeding coefficient expression</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.fs_from_sb">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">fs_from_sb</code><span class="sig-paren">(</span><em class="sig-param">sb</em>, <em class="sig-param">normalize=True</em>, <em class="sig-param">min_cell_count=200</em>, <em class="sig-param">min_count=4</em>, <em class="sig-param">min_p_value=1e-320</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#fs_from_sb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.fs_from_sb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute <cite>FS</cite> (Fisher strand balance) annotation from  the <cite>SB</cite> (strand balance table) field.</p>
+<p><cite>FS</cite> is the phred-scaled value of the double-sided Fisher exact test on strand balance.</p>
+<p>Using default values will have the same behavior as the GATK implementation, that is:
+- If sum(counts) &gt; 2*`min_cell_count` (default to GATK value of 200), they are normalized
+- If sum(counts) &lt; <cite>min_count</cite> (default to GATK value of 4), returns missing
+- Any p-value &lt; <cite>min_p_value</cite> (default to GATK value of 1e-320) is truncated to that value</p>
+<p>In addition to the default GATK behavior, setting <cite>normalize</cite> to <cite>False</cite> will perform a chi-squared test
+for large counts (&gt; <cite>min_cell_count</cite>) instead of normalizing the cell values.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function can either take
+- an array of length four containing the forward and reverse strands’ counts of ref and alt alleles: [ref fwd, ref rev, alt fwd, alt rev]
+- a two dimensional array with arrays of length two, containing the counts: [[ref fwd, ref rev], [alt fwd, alt rev]]</p>
+</div>
+<p>GATK code here: <a class="reference external" href="https://github.com/broadinstitute/gatk/blob/master/src/main/java/org/broadinstitute/hellbender/tools/walkers/annotator/FisherStrand.java">https://github.com/broadinstitute/gatk/blob/master/src/main/java/org/broadinstitute/hellbender/tools/walkers/annotator/FisherStrand.java</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sb</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – Count of ref/alt reads on each strand</p></li>
+<li><p><strong>normalize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to normalize counts is sum(counts) &gt; min_cell_count (normalize=True), or use a chi sq instead of FET (normalize=False)</p></li>
+<li><p><strong>min_cell_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum count for performing a FET</p></li>
+<li><p><strong>min_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Minimum total count to output FS (otherwise null it output)</p></li>
+<li><p><strong>min_p_value</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>FS value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.sor_from_sb">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">sor_from_sb</code><span class="sig-paren">(</span><em class="sig-param">sb</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#sor_from_sb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.sor_from_sb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute <cite>SOR</cite> (Symmetric Odds Ratio test) annotation from  the <cite>SB</cite> (strand balance table) field.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function can either take
+- an array of length four containing the forward and reverse strands’ counts of ref and alt alleles: [ref fwd, ref rev, alt fwd, alt rev]
+- a two dimensional array with arrays of length two, containing the counts: [[ref fwd, ref rev], [alt fwd, alt rev]]</p>
+</div>
+<p>GATK code here: <a class="reference external" href="https://github.com/broadinstitute/gatk/blob/master/src/main/java/org/broadinstitute/hellbender/tools/walkers/annotator/StrandOddsRatio.java">https://github.com/broadinstitute/gatk/blob/master/src/main/java/org/broadinstitute/hellbender/tools/walkers/annotator/StrandOddsRatio.java</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sb</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – Count of ref/alt reads on each strand</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>SOR value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.bi_allelic_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">bi_allelic_expr</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#bi_allelic_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.bi_allelic_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a boolean expression selecting bi-allelic sites only, accounting for whether the input MT/HT was split.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input HT/MT</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Boolean expression selecting only bi-allelic sites</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.unphase_call_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">unphase_call_expr</code><span class="sig-paren">(</span><em class="sig-param">call_expr</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#unphase_call_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.unphase_call_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate unphased version of a call expression (which can be phased or not).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>call_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – Input call expression</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>unphased call expression</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.region_flag_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">region_flag_expr</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">non_par=True</em>, <em class="sig-param">prob_regions=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#region_flag_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.region_flag_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <cite>region_flag</cite> struct that contains flags for problematic regions (i.e., LCR, decoy, segdup, and nonpar regions).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>No hg38 resources for decoy or self chain are available yet.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table/MatrixTable</p></li>
+<li><p><strong>non_par</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, flag loci that occur within pseudoautosomal regions on sex chromosomes</p></li>
+<li><p><strong>prob_regions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]]) – If supplied, flag loci that occur within regions defined in Hail Table(s)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><cite>region_flag</cite> struct row annotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.missing_callstats_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">missing_callstats_expr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#missing_callstats_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.missing_callstats_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a missing callstats struct for insertion into frequency annotation arrays when data is missing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Hail Struct with missing values for each callstats element</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.set_female_y_metrics_to_na_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">set_female_y_metrics_to_na_expr</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#set_female_y_metrics_to_na_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.set_female_y_metrics_to_na_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Y-variant frequency callstats for female-specific metrics to missing structs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Requires freq, freq_meta, and freq_index_dict annotations to be present in Table or MatrixTable</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Table or MatrixTable for which to adjust female metrics</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Hail array expression to set female Y-variant metrics to missing values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.annotations.hemi_expr">
+<code class="sig-prename descclassname">gnomad.utils.annotations.</code><code class="sig-name descname">hemi_expr</code><span class="sig-paren">(</span><em class="sig-param">locus</em>, <em class="sig-param">sex_expr</em>, <em class="sig-param">gt</em>, <em class="sig-param">male_str='XY'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/annotations.html#hemi_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.annotations.hemi_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether genotypes are hemizygous.</p>
+<p>Return missing expression if locus is not in chrX/chrY non-PAR regions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – Input locus.</p></li>
+<li><p><strong>sex_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Input StringExpression indicating whether sample is XX or XY.</p></li>
+<li><p><strong>gt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – Input genotype.</p></li>
+<li><p><strong>xy_str</strong> – String indicating whether sample is XY. Default is “XY”.</p></li>
+<li><p><strong>male_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>BooleanExpression indicating whether genotypes are hemizygous.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="file_utils.html" class="btn btn-neutral float-right" title="gnomad.utils.file_utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="gnomad.utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

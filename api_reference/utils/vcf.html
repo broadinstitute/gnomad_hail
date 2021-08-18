@@ -1,0 +1,756 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.utils.vcf &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.vep" href="vep.html" />
+    <link rel="prev" title="gnomad.utils.sparse_mt" href="sparse_mt.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.utils</a> &raquo;</li>
+        
+      <li>gnomad.utils.vcf</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/utils/vcf.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-utils-vcf">
+<h1>gnomad.utils.vcf<a class="headerlink" href="#gnomad-utils-vcf" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.SORT_ORDER" title="gnomad.utils.vcf.SORT_ORDER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.SORT_ORDER</span></code></a></p></td>
+<td><p>Order to sort subgroupings during VCF export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.GROUPS" title="gnomad.utils.vcf.GROUPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.GROUPS</span></code></a></p></td>
+<td><p>Group names used to generate labels for high quality genotypes and all raw genotypes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.HISTS" title="gnomad.utils.vcf.HISTS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.HISTS</span></code></a></p></td>
+<td><p>Quality histograms used in VCF export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.FAF_POPS" title="gnomad.utils.vcf.FAF_POPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.FAF_POPS</span></code></a></p></td>
+<td><p>Global populations that are included in filtering allele frequency (faf) calculations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.SEXES" title="gnomad.utils.vcf.SEXES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.SEXES</span></code></a></p></td>
+<td><p>Sample sexes used in VCF export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.AS_FIELDS" title="gnomad.utils.vcf.AS_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.AS_FIELDS</span></code></a></p></td>
+<td><p>Allele-specific variant annotations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.SITE_FIELDS" title="gnomad.utils.vcf.SITE_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.SITE_FIELDS</span></code></a></p></td>
+<td><p>Site level variant annotations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.ALLELE_TYPE_FIELDS" title="gnomad.utils.vcf.ALLELE_TYPE_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.ALLELE_TYPE_FIELDS</span></code></a></p></td>
+<td><p>Allele-type annotations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.REGION_FLAG_FIELDS" title="gnomad.utils.vcf.REGION_FLAG_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.REGION_FLAG_FIELDS</span></code></a></p></td>
+<td><p>Annotations about variant region type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.RF_FIELDS" title="gnomad.utils.vcf.RF_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.RF_FIELDS</span></code></a></p></td>
+<td><p>Annotations specific to the variant QC using a random forest model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.AS_VQSR_FIELDS" title="gnomad.utils.vcf.AS_VQSR_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.AS_VQSR_FIELDS</span></code></a></p></td>
+<td><p>Allele-specific VQSR annotations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.VQSR_FIELDS" title="gnomad.utils.vcf.VQSR_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.VQSR_FIELDS</span></code></a></p></td>
+<td><p>Annotations specific to VQSR.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.INFO_DICT" title="gnomad.utils.vcf.INFO_DICT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.INFO_DICT</span></code></a></p></td>
+<td><p>Dictionary used during VCF export to export row (variant) annotations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT" title="gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT</span></code></a></p></td>
+<td><p>Dictionary with in silico score descriptions to include in the VCF INFO header.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.ENTRIES" title="gnomad.utils.vcf.ENTRIES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.ENTRIES</span></code></a></p></td>
+<td><p>Densified entries to be selected during VCF export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.SPARSE_ENTRIES" title="gnomad.utils.vcf.SPARSE_ENTRIES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.SPARSE_ENTRIES</span></code></a></p></td>
+<td><p>Sparse entries to be selected and densified during VCF export.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.FORMAT_DICT" title="gnomad.utils.vcf.FORMAT_DICT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.FORMAT_DICT</span></code></a></p></td>
+<td><p>Dictionary used during VCF export to export MatrixTable entries.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.adjust_vcf_incompatible_types" title="gnomad.utils.vcf.adjust_vcf_incompatible_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.adjust_vcf_incompatible_types</span></code></a>(ht)</p></td>
+<td><p>Create a Table ready for vcf export.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_label_combos" title="gnomad.utils.vcf.make_label_combos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_label_combos</span></code></a>(label_groups)</p></td>
+<td><p>Make combinations of all possible labels for a supplied dictionary of label groups.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.index_globals" title="gnomad.utils.vcf.index_globals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.index_globals</span></code></a>(…[, …])</p></td>
+<td><p>Create a dictionary keyed by the specified label groupings with values describing the corresponding index of each grouping entry in the meta_array annotation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_combo_header_text" title="gnomad.utils.vcf.make_combo_header_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_combo_header_text</span></code></a>(…)</p></td>
+<td><p>Programmatically generate text to populate the VCF header description for a given variant annotation with specific groupings and subset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.create_label_groups" title="gnomad.utils.vcf.create_label_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.create_label_groups</span></code></a>(pops[, …])</p></td>
+<td><p>Generate a list of label group dictionaries needed to populate info dictionary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_info_dict" title="gnomad.utils.vcf.make_info_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_info_dict</span></code></a>([prefix, …])</p></td>
+<td><p>Generate dictionary of Number and Description attributes of VCF INFO fields.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.add_as_info_dict" title="gnomad.utils.vcf.add_as_info_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.add_as_info_dict</span></code></a>([info_dict])</p></td>
+<td><p>Update info dictionary with allele-specific terms and their descriptions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_vcf_filter_dict" title="gnomad.utils.vcf.make_vcf_filter_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_vcf_filter_dict</span></code></a>(…[, …])</p></td>
+<td><p>Generate dictionary of Number and Description attributes to be used in the VCF header, specifically for FILTER annotations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_hist_bin_edges_expr" title="gnomad.utils.vcf.make_hist_bin_edges_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_hist_bin_edges_expr</span></code></a>(ht)</p></td>
+<td><p>Create dictionaries containing variant histogram annotations and their associated bin edges, formatted into a string separated by pipe delimiters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.make_hist_dict" title="gnomad.utils.vcf.make_hist_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.make_hist_dict</span></code></a>(bin_edges, adj)</p></td>
+<td><p>Generate dictionary of Number and Description attributes to be used in the VCF header, specifically for histogram annotations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.set_female_y_metrics_to_na" title="gnomad.utils.vcf.set_female_y_metrics_to_na"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.set_female_y_metrics_to_na</span></code></a>(t)</p></td>
+<td><p>Set AC, AN, and nhomalt chrY variant annotations for females to NA (instead of 0).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vcf.build_vcf_export_reference" title="gnomad.utils.vcf.build_vcf_export_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.build_vcf_export_reference</span></code></a>(name)</p></td>
+<td><p>Create export reference based on reference genome defined by <cite>build</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vcf.rekey_new_reference" title="gnomad.utils.vcf.rekey_new_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vcf.rekey_new_reference</span></code></a>(t, …)</p></td>
+<td><p>Re-key Table or MatrixTable with a new reference genome.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.vcf"></span><dl class="data">
+<dt id="gnomad.utils.vcf.SORT_ORDER">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">SORT_ORDER</code><em class="property"> = ['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group']</em><a class="headerlink" href="#gnomad.utils.vcf.SORT_ORDER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Order to sort subgroupings during VCF export.
+Ensures that INFO labels in VCF are in desired order (e.g., raw_AC_afr_female).</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.GROUPS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">GROUPS</code><em class="property"> = ['adj', 'raw']</em><a class="headerlink" href="#gnomad.utils.vcf.GROUPS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Group names used to generate labels for high quality genotypes and all raw genotypes. Used in VCF export.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.HISTS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">HISTS</code><em class="property"> = ['gq_hist_alt', 'gq_hist_all', 'dp_hist_alt', 'dp_hist_all', 'ab_hist_alt']</em><a class="headerlink" href="#gnomad.utils.vcf.HISTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quality histograms used in VCF export.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.FAF_POPS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">FAF_POPS</code><em class="property"> = ['afr', 'amr', 'eas', 'nfe', 'sas']</em><a class="headerlink" href="#gnomad.utils.vcf.FAF_POPS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Global populations that are included in filtering allele frequency (faf) calculations. Used in VCF export.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.SEXES">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">SEXES</code><em class="property"> = ['XX', 'XY']</em><a class="headerlink" href="#gnomad.utils.vcf.SEXES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample sexes used in VCF export.</p>
+<p>Used to stratify frequency annotations (AC, AN, AF) for each sex.
+Note that sample sexes in gnomAD v3 and earlier were ‘male’ and ‘female’.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.AS_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">AS_FIELDS</code><em class="property"> = ['AS_FS', 'AS_MQ', 'AS_MQRankSum', 'AS_pab_max', 'AS_QUALapprox', 'AS_QD', 'AS_ReadPosRankSum', 'AS_SB_TABLE', 'AS_SOR', 'AS_VarDP', 'InbreedingCoeff']</em><a class="headerlink" href="#gnomad.utils.vcf.AS_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allele-specific variant annotations.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.SITE_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">SITE_FIELDS</code><em class="property"> = ['FS', 'MQ', 'MQRankSum', 'QUALapprox', 'QD', 'ReadPosRankSum', 'SB', 'SOR', 'VarDP']</em><a class="headerlink" href="#gnomad.utils.vcf.SITE_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Site level variant annotations.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.ALLELE_TYPE_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">ALLELE_TYPE_FIELDS</code><em class="property"> = ['allele_type', 'has_star', 'n_alt_alleles', 'original_alleles', 'variant_type', 'was_mixed']</em><a class="headerlink" href="#gnomad.utils.vcf.ALLELE_TYPE_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allele-type annotations.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.REGION_FLAG_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">REGION_FLAG_FIELDS</code><em class="property"> = ['decoy', 'lcr', 'nonpar', 'segdup']</em><a class="headerlink" href="#gnomad.utils.vcf.REGION_FLAG_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotations about variant region type.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>decoy resource files do not currently exist for GRCh38/hg38.</p>
+</div>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.RF_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">RF_FIELDS</code><em class="property"> = ['rf_positive_label', 'rf_negative_label', 'rf_label', 'rf_train', 'rf_tp_probability']</em><a class="headerlink" href="#gnomad.utils.vcf.RF_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotations specific to the variant QC using a random forest model.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.AS_VQSR_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">AS_VQSR_FIELDS</code><em class="property"> = ['AS_culprit', 'AS_VQSLOD']</em><a class="headerlink" href="#gnomad.utils.vcf.AS_VQSR_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allele-specific VQSR annotations.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.VQSR_FIELDS">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">VQSR_FIELDS</code><em class="property"> = ['AS_culprit', 'AS_VQSLOD', 'NEGATIVE_TRAIN_SITE', 'POSITIVE_TRAIN_SITE']</em><a class="headerlink" href="#gnomad.utils.vcf.VQSR_FIELDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotations specific to VQSR.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.INFO_DICT">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">INFO_DICT</code><em class="property"> = {'AS_SB_TABLE': {'Description': 'Allele-specific forward/reverse read counts for strand bias tests', 'Number': '.'}, 'AS_pab_max': {'Description': 'Maximum p-value over callset for binomial test of observed allele balance for a heterozygous genotype, given expectation of 0.5', 'Number': 'A'}, 'BaseQRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference base qualities'}, 'FS': {'Description': &quot;Phred-scaled p-value of Fisher's exact test for strand bias&quot;}, 'InbreedingCoeff': {'Description': 'Inbreeding coefficient, the excess heterozygosity at a variant site, computed as 1 - (the number of heterozygous genotypes)/(the number of heterozygous genotypes expected under Hardy-Weinberg equilibrium)', 'Number': 'A'}, 'MQ': {'Description': 'Root mean square of the mapping quality of reads across all samples'}, 'MQRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference read mapping qualities'}, 'NEGATIVE_TRAIN_SITE': {'Description': 'Variant was used to build the negative training set of low-quality variants for VQSR'}, 'POSITIVE_TRAIN_SITE': {'Description': 'Variant was used to build the positive training set of high-quality variants for VQSR'}, 'QD': {'Description': 'Variant call confidence normalized by depth of sample reads supporting a variant'}, 'QUALapprox': {'Description': 'Sum of PL[0] values; used to approximate the QUAL score', 'Number': '1'}, 'ReadPosRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference read position bias'}, 'SOR': {'Description': 'Strand bias estimated by the symmetric odds ratio test'}, 'VQSLOD': {'Description': 'Log-odds ratio of being a true variant versus being a false positive under the trained VQSR Gaussian mixture model'}, 'VarDP': {'Description': 'Depth over variant genotypes (does not include depth of reference samples)'}, 'allele_type': {'Description': 'Allele type (snv, insertion, deletion, or mixed)'}, 'culprit': {'Description': 'Worst-performing annotation in the VQSR Gaussian mixture model'}, 'decoy': {'Description': 'Variant falls within a reference decoy region'}, 'has_star': {'Description': 'Variant locus coincides with a spanning deletion (represented by a star) observed elsewhere in the callset'}, 'lcr': {'Description': 'Variant falls within a low complexity region'}, 'monoallelic': {'Description': 'All samples are homozygous alternate for the variant'}, 'n_alt_alleles': {'Description': 'Total number of alternate alleles observed at variant locus', 'Number': '1'}, 'nonpar': {'Description': 'Variant (on sex chromosome) falls outside a pseudoautosomal region'}, 'original_alleles': {'Description': 'Alleles before splitting multiallelics'}, 'rf_label': {'Description': 'Random forest training label'}, 'rf_negative_label': {'Description': 'Variant was labelled as a negative example for training of random forest model'}, 'rf_positive_label': {'Description': 'Variant was labelled as a positive example for training of random forest model'}, 'rf_tp_probability': {'Description': 'Probability of a called variant being a true variant as determined by random forest model'}, 'rf_train': {'Description': 'Variant was used in training random forest model'}, 'segdup': {'Description': 'Variant falls within a segmental duplication region'}, 'transmitted_singleton': {'Description': 'Variant was a callset-wide doubleton that was transmitted within a family from a parent to a child (i.e., a singleton amongst unrelated samples in cohort)'}, 'variant_type': {'Description': 'Variant type (snv, indel, multi-snv, multi-indel, or mixed)'}, 'was_mixed': {'Description': 'Variant type was mixed'}}</em><a class="headerlink" href="#gnomad.utils.vcf.INFO_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary used during VCF export to export row (variant) annotations.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">IN_SILICO_ANNOTATIONS_INFO_DICT</code><em class="property"> = {'cadd_phred': {'Description': &quot;Cadd Phred-like scores ('scaled C-scores') ranging from 1 to 99, based on the rank of each variant relative to all possible 8.6 billion substitutions in the human reference genome. Larger values are more deleterious.&quot;, 'Number': '1'}, 'cadd_raw_score': {'Description': &quot;Raw CADD scores are interpretable as the extent to which the annotation profile for a given variant suggests that the variant is likely to be 'observed' (negative values) vs 'simulated' (positive values). Larger values are more deleterious.&quot;, 'Number': '1'}, 'primate_ai_score': {'Description': &quot;PrimateAI's deleteriousness score from 0 (less deleterious) to 1 (more deleterious).&quot;, 'Number': '1'}, 'revel_score': {'Description': &quot;dbNSFP's Revel score from 0 to 1. Variants with higher scores are predicted to be more likely to be deleterious.&quot;, 'Number': '1'}, 'splice_ai_consequence': {'Description': &quot;The consequence term associated with the max delta score in 'splice_ai_max_ds'.&quot;}, 'splice_ai_max_ds': {'Description': &quot;Illumina's SpliceAI max delta score; interpreted as the probability of the variant being splice-altering.&quot;, 'Number': '1'}}</em><a class="headerlink" href="#gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary with in silico score descriptions to include in the VCF INFO header.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.ENTRIES">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">ENTRIES</code><em class="property"> = ['GT', 'GQ', 'DP', 'AD', 'MIN_DP', 'PGT', 'PID', 'PL', 'SB']</em><a class="headerlink" href="#gnomad.utils.vcf.ENTRIES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Densified entries to be selected during VCF export.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.SPARSE_ENTRIES">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">SPARSE_ENTRIES</code><em class="property"> = ['END', 'DP', 'GQ', 'LA', 'LAD', 'LGT', 'LPGT', 'LPL', 'MIN_DP', 'PID', 'RGQ', 'SB']</em><a class="headerlink" href="#gnomad.utils.vcf.SPARSE_ENTRIES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sparse entries to be selected and densified during VCF export.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="gnomad.utils.vcf.FORMAT_DICT">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">FORMAT_DICT</code><em class="property"> = {'AD': {'Description': 'Allelic depths for the ref and alt alleles in the order listed', 'Number': 'R', 'Type': 'Integer'}, 'DP': {'Description': 'Approximate read depth (reads with MQ=255 or with bad mates are filtered)', 'Number': '1', 'Type': 'Integer'}, 'GQ': {'Description': 'Phred-scaled confidence that the genotype assignment is correct. Value is the difference between the second lowest PL and the lowest PL (always normalized to 0).', 'Number': '1', 'Type': 'Integer'}, 'GT': {'Description': 'Genotype', 'Number': '1', 'Type': 'String'}, 'MIN_DP': {'Description': 'Minimum DP observed within the GVCF block', 'Number': '1', 'Type': 'Integer'}, 'PGT': {'Description': 'Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another', 'Number': '1', 'Type': 'String'}, 'PID': {'Description': 'Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group', 'Number': '1', 'Type': 'String'}, 'PL': {'Description': 'Normalized, phred-scaled likelihoods for genotypes as defined in the VCF specification', 'Number': 'G', 'Type': 'Integer'}, 'SB': {'Description': &quot;Per-sample component statistics which comprise the Fisher's exact test to detect strand bias. Values are: depth of reference allele on forward strand, depth of reference allele on reverse strand, depth of alternate allele on forward strand, depth of alternate allele on reverse strand.&quot;, 'Number': '4', 'Type': 'Integer'}}</em><a class="headerlink" href="#gnomad.utils.vcf.FORMAT_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary used during VCF export to export MatrixTable entries.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.adjust_vcf_incompatible_types">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">adjust_vcf_incompatible_types</code><span class="sig-paren">(</span><em class="sig-param">ht, pipe_delimited_annotations=['AS_QUALapprox', 'AS_VarDP', 'AS_MQ_DP', 'AS_RAW_MQ', 'AS_SB_TABLE']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#adjust_vcf_incompatible_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.adjust_vcf_incompatible_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Table ready for vcf export.</p>
+<dl class="simple">
+<dt>In particular, the following conversions are done:</dt><dd><ul class="simple">
+<li><p>All int64 are coerced to int32</p></li>
+<li><p>Fields specified by <cite>pipe_delimited_annotations</cite> are converted from arrays to pipe-delimited strings</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>pipe_delimited_annotations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of info fields (they must be fields of the ht.info Struct).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table ready for VCF export.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_label_combos">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_label_combos</code><span class="sig-paren">(</span><em class="sig-param">label_groups, sort_order=['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group'], label_delimiter='_'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_label_combos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_label_combos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make combinations of all possible labels for a supplied dictionary of label groups.</p>
+<p>For example, if label_groups is <cite>{“sex”: [“male”, “female”], “pop”: [“afr”, “nfe”, “amr”]}</cite>,
+this function will return <cite>[“afr_male”, “afr_female”, “nfe_male”, “nfe_female”, “amr_male”, “amr_female’]</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary containing an entry for each label group, where key is the name of the grouping,
+e.g. “sex” or “pop”, and value is a list of all possible values for that grouping (e.g. [“male”, “female”] or [“afr”, “nfe”, “amr”]).</p></li>
+<li><p><strong>sort_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing order to sort label group combinations. Default is SORT_ORDER.</p></li>
+<li><p><strong>label_delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of all possible combinations of values for the supplied label groupings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.index_globals">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">index_globals</code><span class="sig-paren">(</span><em class="sig-param">globals_array</em>, <em class="sig-param">label_groups</em>, <em class="sig-param">label_delimiter='_'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#index_globals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.index_globals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a dictionary keyed by the specified label groupings with values describing the corresponding index of each grouping entry in the meta_array annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>globals_array</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Ordered list containing dictionary entries describing all the grouping combinations contained in the globals_array annotation.
+Keys are the grouping type (e.g., ‘group’, ‘pop’, ‘sex’) and values are the grouping attribute (e.g., ‘adj’, ‘eas’, ‘XY’).</p></li>
+<li><p><strong>label_groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary containing an entry for each label group, where key is the name of the grouping,
+e.g. “sex” or “pop”, and value is a list of all possible values for that grouping (e.g. [“male”, “female”] or [“afr”, “nfe”, “amr”])</p></li>
+<li><p><strong>label_delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String used as delimiter when making group label combinations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary keyed by specified label grouping combinations, with values describing the corresponding index
+of each grouping entry in the globals</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_combo_header_text">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_combo_header_text</code><span class="sig-paren">(</span><em class="sig-param">preposition</em>, <em class="sig-param">combo_dict</em>, <em class="sig-param">pop_names</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_combo_header_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_combo_header_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Programmatically generate text to populate the VCF header description for a given variant annotation with specific groupings and subset.</p>
+<p>For example, if preposition is “for”, group_types is [“group”, “pop”, “sex”], and combo_fields is [“adj”, “afr”, “female”],
+this function will return the string ” for female samples of African-American/African ancestry”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preposition</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Relevant preposition to precede automatically generated text.</p></li>
+<li><p><strong>combo_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Dict with grouping types as keys and values for grouping type as values. This function generates text for these values.
+Possible grouping types are: “group”, “pop”, “sex”, and “subpop”.
+Example input: {“pop”: “afr”, “sex”: “female”}</p></li>
+<li><p><strong>pop_names</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Dict with global population names (keys) and population descriptions (values).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>String with automatically generated description text for a given set of combo fields.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.create_label_groups">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">create_label_groups</code><span class="sig-paren">(</span><em class="sig-param">pops, sexes=['XX', 'XY'], all_groups=['adj', 'raw'], pop_sex_groups=['adj']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#create_label_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.create_label_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a list of label group dictionaries needed to populate info dictionary.</p>
+<p>Label dictionaries are passed as input to <cite>make_info_dict</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pops</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of population names.</p></li>
+<li><p><strong>sexes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of sample sexes.</p></li>
+<li><p><strong>all_groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of data types (raw, adj). Default is <cite>GROUPS</cite>, which is [“raw”, “adj”].</p></li>
+<li><p><strong>pop_sex_groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of data types (raw, adj) to populate with pops and sexes. Default is [“adj”].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of label group dictionaries.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_info_dict">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_info_dict</code><span class="sig-paren">(</span><em class="sig-param">prefix='', prefix_before_metric=True, pop_names={'afr': 'African/African-American', 'ami': 'Amish', 'amr': 'Latino', 'asj': 'Ashkenazi Jewish', 'bgr': 'Bulgarian (Eastern European)', 'consanguineous': 'South Asian (F &gt; 0.05)', 'eas': 'East Asian', 'est': 'Estonian', 'eur': 'European', 'exac': 'ExAC', 'fin': 'Finnish', 'gbr': 'British', 'jpn': 'Japanese', 'kor': 'Korean', 'mde': 'Middle Eastern', 'mid': 'Middle Eastern', 'nfe': 'Non-Finnish European', 'nwe': 'North-Western European', 'oea': 'Other East Asian', 'oeu': 'Other European', 'onf': 'Other Non-Finnish European', 'oth': 'Other', 'sas': 'South Asian', 'sas_non_consang': 'South Asian (F &lt; 0.05)', 'seu': 'Southern European', 'sgp': 'Singaporean', 'swe': 'Swedish', 'uniform': 'Uniform', 'unk': 'Unknown'}, label_groups=None, label_delimiter='_', bin_edges=None, faf=False, popmax=False, description_text='', age_hist_data=None, sort_order=['subset', 'downsampling', 'popmax', 'pop', 'subpop', 'sex', 'group']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_info_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_info_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate dictionary of Number and Description attributes of VCF INFO fields.</p>
+<p>Used to populate the INFO fields of the VCF header during export.</p>
+<dl class="simple">
+<dt>Creates:</dt><dd><ul class="simple">
+<li><p>INFO fields for age histograms (bin freq, n_smaller, and n_larger for heterozygous and homozygous variant carriers)</p></li>
+<li><p>INFO fields for popmax AC, AN, AF, nhomalt, and popmax population</p></li>
+<li><p>INFO fields for AC, AN, AF, nhomalt for each combination of sample population, sex, and subpopulation, both for adj and raw data</p></li>
+<li><p>INFO fields for filtering allele frequency (faf) annotations</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prefix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Prefix string for data, e.g. “gnomAD”. Default is empty string.</p></li>
+<li><p><strong>prefix_before_metric</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether prefix should be added before the metric (AC, AN, AF, nhomalt, faf95, faf99) in INFO field. Default is True.</p></li>
+<li><p><strong>pop_names</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Dict with global population names (keys) and population descriptions (values). Default is POP_NAMES.</p></li>
+<li><p><strong>label_groups</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Dictionary containing an entry for each label group, where key is the name of the grouping,
+e.g. “sex” or “pop”, and value is a list of all possible values for that grouping (e.g. [“male”, “female”] or [“afr”, “nfe”, “amr”]).</p></li>
+<li><p><strong>label_delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as delimiter when making group label combinations.</p></li>
+<li><p><strong>bin_edges</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary keyed by annotation type, with values that reflect the bin edges corresponding to the annotation.</p></li>
+<li><p><strong>faf</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use alternate logic to auto-populate dictionary values associated with filter allele frequency annotations.</p></li>
+<li><p><strong>popmax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use alternate logic to auto-populate dictionary values associated with popmax annotations.</p></li>
+<li><p><strong>description_text</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional text to append to the end of descriptions. Needs to start with a space if specified.</p></li>
+<li><p><strong>age_hist_data</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Pipe-delimited string of age histograms, from <cite>get_age_distributions</cite>.</p></li>
+<li><p><strong>sort_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing order to sort label group combinations. Default is SORT_ORDER.</p></li>
+<li><p><strong>age_hist_data</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary keyed by VCF INFO annotations, where values are dictionaries of Number and Description attributes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.add_as_info_dict">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">add_as_info_dict</code><span class="sig-paren">(</span><em class="sig-param">info_dict={'AS_SB_TABLE': {'Description': 'Allele-specific forward/reverse read counts for strand bias tests', 'Number': '.'}, 'AS_pab_max': {'Description': 'Maximum p-value over callset for binomial test of observed allele balance for a heterozygous genotype, given expectation of 0.5', 'Number': 'A'}, 'BaseQRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference base qualities'}, 'FS': {'Description': &quot;Phred-scaled p-value of Fisher's exact test for strand bias&quot;}, 'InbreedingCoeff': {'Description': 'Inbreeding coefficient, the excess heterozygosity at a variant site, computed as 1 - (the number of heterozygous genotypes)/(the number of heterozygous genotypes expected under Hardy-Weinberg equilibrium)', 'Number': 'A'}, 'MQ': {'Description': 'Root mean square of the mapping quality of reads across all samples'}, 'MQRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference read mapping qualities'}, 'NEGATIVE_TRAIN_SITE': {'Description': 'Variant was used to build the negative training set of low-quality variants for VQSR'}, 'POSITIVE_TRAIN_SITE': {'Description': 'Variant was used to build the positive training set of high-quality variants for VQSR'}, 'QD': {'Description': 'Variant call confidence normalized by depth of sample reads supporting a variant'}, 'QUALapprox': {'Description': 'Sum of PL[0] values; used to approximate the QUAL score', 'Number': '1'}, 'ReadPosRankSum': {'Description': 'Z-score from Wilcoxon rank sum test of alternate vs. reference read position bias'}, 'SOR': {'Description': 'Strand bias estimated by the symmetric odds ratio test'}, 'VQSLOD': {'Description': 'Log-odds ratio of being a true variant versus being a false positive under the trained VQSR Gaussian mixture model'}, 'VarDP': {'Description': 'Depth over variant genotypes (does not include depth of reference samples)'}, 'allele_type': {'Description': 'Allele type (snv, insertion, deletion, or mixed)'}, 'culprit': {'Description': 'Worst-performing annotation in the VQSR Gaussian mixture model'}, 'decoy': {'Description': 'Variant falls within a reference decoy region'}, 'has_star': {'Description': 'Variant locus coincides with a spanning deletion (represented by a star) observed elsewhere in the callset'}, 'lcr': {'Description': 'Variant falls within a low complexity region'}, 'monoallelic': {'Description': 'All samples are homozygous alternate for the variant'}, 'n_alt_alleles': {'Description': 'Total number of alternate alleles observed at variant locus', 'Number': '1'}, 'nonpar': {'Description': 'Variant (on sex chromosome) falls outside a pseudoautosomal region'}, 'original_alleles': {'Description': 'Alleles before splitting multiallelics'}, 'rf_label': {'Description': 'Random forest training label'}, 'rf_negative_label': {'Description': 'Variant was labelled as a negative example for training of random forest model'}, 'rf_positive_label': {'Description': 'Variant was labelled as a positive example for training of random forest model'}, 'rf_tp_probability': {'Description': 'Probability of a called variant being a true variant as determined by random forest model'}, 'rf_train': {'Description': 'Variant was used in training random forest model'}, 'segdup': {'Description': 'Variant falls within a segmental duplication region'}, 'transmitted_singleton': {'Description': 'Variant was a callset-wide doubleton that was transmitted within a family from a parent to a child (i.e., a singleton amongst unrelated samples in cohort)'}, 'variant_type': {'Description': 'Variant type (snv, indel, multi-snv, multi-indel, or mixed)'}, 'was_mixed': {'Description': 'Variant type was mixed'}}, as_fields=['AS_FS', 'AS_MQ', 'AS_MQRankSum', 'AS_pab_max', 'AS_QUALapprox', 'AS_QD', 'AS_ReadPosRankSum', 'AS_SB_TABLE', 'AS_SOR', 'AS_VarDP', 'InbreedingCoeff']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#add_as_info_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.add_as_info_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update info dictionary with allele-specific terms and their descriptions.</p>
+<p>Used in VCF export.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>info_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary containing site-level annotations and their descriptions. Default is INFO_DICT.</p></li>
+<li><p><strong>as_fields</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List containing allele-specific fields to be added to info_dict. Default is AS_FIELDS.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary with allele specific annotations, their descriptions, and their VCF number field.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_vcf_filter_dict">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_vcf_filter_dict</code><span class="sig-paren">(</span><em class="sig-param">snp_cutoff</em>, <em class="sig-param">indel_cutoff</em>, <em class="sig-param">inbreeding_cutoff</em>, <em class="sig-param">variant_qc_filter='RF'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_vcf_filter_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_vcf_filter_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate dictionary of Number and Description attributes to be used in the VCF header, specifically for FILTER annotations.</p>
+<dl class="simple">
+<dt>Generates descriptions for:</dt><dd><ul class="simple">
+<li><p>AC0 filter</p></li>
+<li><p>InbreedingCoeff filter</p></li>
+<li><p>Variant QC filter (RF or AS_VQSR)</p></li>
+<li><p>PASS (passed all variant filters)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snp_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum SNP cutoff score from random forest model.</p></li>
+<li><p><strong>indel_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum indel cutoff score from random forest model.</p></li>
+<li><p><strong>inbreeding_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Inbreeding coefficient hard cutoff.</p></li>
+<li><p><strong>variant_qc_filter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Method used for variant QC filter. One of ‘RF’ or ‘AS_VQSR’. Default is ‘RF’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary keyed by VCF FILTER annotations, where values are Dictionaries of Number and Description attributes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_hist_bin_edges_expr">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_hist_bin_edges_expr</code><span class="sig-paren">(</span><em class="sig-param">ht, hists=['gq_hist_alt', 'gq_hist_all', 'dp_hist_alt', 'dp_hist_all', 'ab_hist_alt'], prefix='', label_delimiter='_', include_age_hists=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_hist_bin_edges_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_hist_bin_edges_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create dictionaries containing variant histogram annotations and their associated bin edges, formatted into a string separated by pipe delimiters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing histogram variant annotations.</p></li>
+<li><p><strong>hists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of variant histogram annotations. Default is HISTS.</p></li>
+<li><p><strong>prefix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Prefix text for age histogram bin edges.  Default is empty string.</p></li>
+<li><p><strong>label_delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String used as delimiter between prefix and histogram annotation.</p></li>
+<li><p><strong>include_age_hists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Include age histogram annotations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary keyed by histogram annotation name, with corresponding reformatted bin edges for values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.make_hist_dict">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">make_hist_dict</code><span class="sig-paren">(</span><em class="sig-param">bin_edges, adj, hist_metric_list=['gq_hist_alt', 'gq_hist_all', 'dp_hist_alt', 'dp_hist_all', 'ab_hist_alt'], label_delimiter='_'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#make_hist_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.make_hist_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate dictionary of Number and Description attributes to be used in the VCF header, specifically for histogram annotations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bin_edges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary keyed by histogram annotation name, with corresponding string-reformatted bin edges for values.</p></li>
+<li><p><strong>adj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to create a header dict for raw or adj quality histograms.</p></li>
+<li><p><strong>hist_metric_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of hists for which to build hist info dict</p></li>
+<li><p><strong>label_delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String used as delimiter in values stored in hist_metric_list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary keyed by VCF INFO annotations, where values are Dictionaries of Number and Description attributes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.set_female_y_metrics_to_na">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">set_female_y_metrics_to_na</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#set_female_y_metrics_to_na"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.set_female_y_metrics_to_na" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set AC, AN, and nhomalt chrY variant annotations for females to NA (instead of 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Table/MatrixTable containing female variant annotations.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary with reset annotations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.build_vcf_export_reference">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">build_vcf_export_reference</code><span class="sig-paren">(</span><em class="sig-param">name, build='GRCh38', keep_contigs=['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX', 'chrY', 'chrM']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#build_vcf_export_reference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.build_vcf_export_reference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create export reference based on reference genome defined by <cite>build</cite>.</p>
+<p>By default this will return a new reference with all non-standard contigs eliminated. Keeps chr 1-22, Y, X, and M.</p>
+<p>An example of a non-standard contig is: ##contig=&lt;ID=chr3_GL000221v1_random,length=155397,assembly=GRCh38&gt;</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name to use for new reference.</p></li>
+<li><p><strong>build</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reference genome build to use as starting reference genome.</p></li>
+<li><p><strong>keep_contigs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Contigs to keep from reference genome defined by <cite>build</cite>. Default is autosomes, sex chromosomes, and chrM.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Reference genome for VCF export containing only contigs in <cite>keep_contigs</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.vcf.rekey_new_reference">
+<code class="sig-prename descclassname">gnomad.utils.vcf.</code><code class="sig-name descname">rekey_new_reference</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">reference</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vcf.html#rekey_new_reference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.vcf.rekey_new_reference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-key Table or MatrixTable with a new reference genome.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table/MatrixTable.</p></li>
+<li><p><strong>reference</strong> (<a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a>) – Reference genome to re-key with.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Re-keyed Table/MatrixTable</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="vep.html" class="btn btn-neutral float-right" title="gnomad.utils.vep" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sparse_mt.html" class="btn btn-neutral float-left" title="gnomad.utils.sparse_mt" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

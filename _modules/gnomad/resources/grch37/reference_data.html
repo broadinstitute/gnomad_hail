@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.resources.grch37.reference_data &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>gnomad.resources.grch37.reference_data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gnomad.resources.grch37.reference_data</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GnomadPublicMatrixTableResource</span><span class="p">,</span>
+    <span class="n">GnomadPublicTableResource</span><span class="p">,</span>
+    <span class="n">VersionedMatrixTableResource</span><span class="p">,</span>
+    <span class="n">VersionedTableResource</span><span class="p">,</span>
+    <span class="n">import_sites_vcf</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">na12878_giab</span> <span class="o">=</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/na12878/NA12878_GIAB_highconf_CG-IllFB-IllGATKHC-Ion-Solid-10X_CHROM1-X_v3.3_highconf.mt&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/na12878/NA12878_GIAB_highconf_CG-IllFB-IllGATKHC-Ion-Solid-10X_CHROM1-X_v3.3_highconf.vcf.bgz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">hapmap</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/hapmap/hapmap_3.3.b37.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/hapmap/hapmap_3.3.b37.vcf.bgz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">kgp_omni</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000G_omni2.5.b37.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000G_omni2.5.b37.vcf.bgz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">mills</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/mills/Mills_and_1000G_gold_standard.indels.b37.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/mills/Mills_and_1000G_gold_standard.indels.b37.vcf.bgz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">syndip</span> <span class="o">=</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/syndip/hybrid.m37m.mt&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/syndip/hybrid.m37m.vcf.bgz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Versioned resources: versions should be listed from most recent to oldest</span>
+<span class="n">vep_context</span> <span class="o">=</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;85&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;85&quot;</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/context/grch37_context_vep_annotated.ht&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">dbsnp</span> <span class="o">=</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;20180423&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;20180423&quot;</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/dbsnp/All_20180423.ht&quot;</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/dbsnp/All_20180423.vcf.bgz&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;skip_invalid_loci&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">clinvar</span> <span class="o">=</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;20181028&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;20181028&quot;</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/clinvar/clinvar_20181028.vep.ht&quot;</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/clinvar/clinvar_20181028.vcf.bgz&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;skip_invalid_loci&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">kgp_phase_3</span> <span class="o">=</span> <span class="n">VersionedMatrixTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;phase_3_split&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;phase_3_split&quot;</span><span class="p">:</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000Genomes_phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.split.mt&quot;</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://genomics-public-data/1000-genomes-phase-3/vcf-20150220/ALL.chr*.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;skip_invalid_loci&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+                <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;phase_3&quot;</span><span class="p">:</span> <span class="n">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000Genomes_phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.mt&quot;</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://genomics-public-data/1000-genomes-phase-3/vcf-20150220/ALL.chr*.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;skip_invalid_loci&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+                <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">kgp</span> <span class="o">=</span> <span class="n">VersionedTableResource</span><span class="p">(</span>
+    <span class="n">default_version</span><span class="o">=</span><span class="s2">&quot;phase_1_hc&quot;</span><span class="p">,</span>
+    <span class="n">versions</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;phase_1_hc&quot;</span><span class="p">:</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000G_phase1.snps.high_confidence.b37.ht&quot;</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">import_sites_vcf</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/kgp/1000G_phase1.snps.high_confidence.b37.vcf.bgz&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;force_bgz&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;skip_invalid_loci&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;min_partitions&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">cpg_sites</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/cpg_sites/cpg.ht&quot;</span>
+<span class="p">)</span>
+
+<span class="n">methylation_sites</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/methylation_sites/methylation.ht&quot;</span>
+<span class="p">)</span>
+
+<span class="n">lcr_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/lcr_intervals/LCR.GRCh37_compliant.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/lcr_intervals/LCR.GRCh37_compliant.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">decoy_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/decoy_intervals/mm-2-merged.GRCh37_compliant.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_bed</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/decoy_intervals/mm-2-merged.GRCh37_compliant.bed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">purcell_5k_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/purcell_5k_intervals/purcell5k.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/purcell_5k_intervals/purcell5k.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">seg_dup_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/seg_dup_intervals/hg19_self_chain_split_both.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_bed</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/seg_dup_intervals/hg19_self_chain_split_both.bed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">exome_hc_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exomes_high_coverage.auto.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exomes_high_coverage.auto.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">high_coverage_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/high_coverage.auto.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/high_coverage.auto.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">exome_calling_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exome_calling_regions.v1.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exome_calling_regions.v1.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">exome_evaluation_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exome_evaluation_regions.v1.noheader.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/exome_evaluation_regions.v1.noheader.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">genome_evaluation_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/hg19-v0-wgs_evaluation_regions.v1.interval_list.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/broad_intervals/hg19-v0-wgs_evaluation_regions.v1.interval_list&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">na12878_hc_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/na12878/NA12878_GIAB_highconf_intervals.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_bed</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/na12878/NA12878_GIAB_highconf_CG-IllFB-IllGATKHC-Ion-Solid-10X_CHROM1-X_v3.3_highconf.bed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">syndip_hc_intervals</span> <span class="o">=</span> <span class="n">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/syndip/syndip_highconf_genome_intervals.ht&quot;</span><span class="p">,</span>
+    <span class="n">import_func</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">import_bed</span><span class="p">,</span>
+    <span class="n">import_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gnomad-public-requester-pays/resources/grch37/syndip/hybrid.m37m.bed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reference_genome&quot;</span><span class="p">:</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_truth_ht"><a class="viewcode-back" href="../../../../api_reference/resources/grch37/reference_data.html#gnomad.resources.grch37.reference_data.get_truth_ht">[docs]</a><span class="k">def</span> <span class="nf">get_truth_ht</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a table with annotations from the latest version of the corresponding truth data.</span>
+
+<span class="sd">    The following annotations are included:</span>
+<span class="sd">        - hapmap</span>
+<span class="sd">        - kgp_omni (1000 Genomes intersection Onni 2.5M array)</span>
+<span class="sd">        - kgp_phase_1_hc (high confidence sites in 1000 genonmes)</span>
+<span class="sd">        - mills (Mills &amp; Devine indels)</span>
+
+<span class="sd">    :return: A table with the latest version of popular truth data annotations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">hapmap</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">hapmap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kgp_omni</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">omni</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">kgp</span><span class="o">.</span><span class="n">versions</span><span class="p">[</span><span class="s2">&quot;phase_1_hc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mt</span><span class="p">()</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">kgp_phase1_hc</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mills</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">mills</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">repartition</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.utils.sparse_mt &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.vcf" href="vcf.html" />
+    <link rel="prev" title="gnomad.utils.slack" href="slack.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">gnomad</a> &raquo;</li>
+        
+          <li><a href="index.html">gnomad.utils</a> &raquo;</li>
+        
+      <li>gnomad.utils.sparse_mt</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/api_reference/utils/sparse_mt.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="gnomad-utils-sparse-mt">
+<h1>gnomad.utils.sparse_mt<a class="headerlink" href="#gnomad-utils-sparse-mt" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.compute_last_ref_block_end" title="gnomad.utils.sparse_mt.compute_last_ref_block_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.compute_last_ref_block_end</span></code></a>(mt)</p></td>
+<td><p>Compute the genomic position of the most upstream reference block overlapping each row on a sparse MT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.densify_sites" title="gnomad.utils.sparse_mt.densify_sites"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.densify_sites</span></code></a>(mt, …)</p></td>
+<td><p>Create a dense version of the input sparse MT at the sites in <cite>sites_ht</cite> reading the minimal amount of data required.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.get_as_info_expr" title="gnomad.utils.sparse_mt.get_as_info_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.get_as_info_expr</span></code></a>(mt)</p></td>
+<td><p>Return an allele-specific annotation Struct containing typical VCF INFO fields from GVCF INFO fields stored in the MT entries.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.get_site_info_expr" title="gnomad.utils.sparse_mt.get_site_info_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.get_site_info_expr</span></code></a>(mt)</p></td>
+<td><p>Create a site-level annotation Struct aggregating typical VCF INFO fields from GVCF INFO fields stored in the MT entries.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.default_compute_info" title="gnomad.utils.sparse_mt.default_compute_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.default_compute_info</span></code></a>(mt)</p></td>
+<td><p>Compute a HT with the typical GATK allele-specific (AS) info fields as well as ACs and lowqual fields.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.split_info_annotation" title="gnomad.utils.sparse_mt.split_info_annotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.split_info_annotation</span></code></a>(…)</p></td>
+<td><p>Split multi-allelic allele-specific info fields.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.split_lowqual_annotation" title="gnomad.utils.sparse_mt.split_lowqual_annotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.split_lowqual_annotation</span></code></a>(…)</p></td>
+<td><p>Split multi-allelic low QUAL annotation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.impute_sex_ploidy" title="gnomad.utils.sparse_mt.impute_sex_ploidy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.impute_sex_ploidy</span></code></a>(mt)</p></td>
+<td><p>Impute sex ploidy from a sparse MatrixTable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.compute_coverage_stats" title="gnomad.utils.sparse_mt.compute_coverage_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.compute_coverage_stats</span></code></a>(mt, …)</p></td>
+<td><p>Compute coverage statistics for every base of the <cite>reference_ht</cite> provided.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.sparse_mt.filter_ref_blocks" title="gnomad.utils.sparse_mt.filter_ref_blocks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.sparse_mt.filter_ref_blocks</span></code></a>(t)</p></td>
+<td><p>Filter ref blocks out of the Table or MatrixTable.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.sparse_mt"></span><dl class="function">
+<dt id="gnomad.utils.sparse_mt.compute_last_ref_block_end">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">compute_last_ref_block_end</code><span class="sig-paren">(</span><em class="sig-param">mt</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#compute_last_ref_block_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.compute_last_ref_block_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the genomic position of the most upstream reference block overlapping each row on a sparse MT.</p>
+<p>Note that since reference blocks do not extend beyond contig boundaries, only the position is kept.</p>
+<p>This function returns a Table with that annotation.  (<cite>last_END_position</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Output Table with <cite>last_END_position</cite> annotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.densify_sites">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">densify_sites</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">sites_ht</em>, <em class="sig-param">last_END_positions_ht</em>, <em class="sig-param">semi_join_rows=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#densify_sites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.densify_sites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a dense version of the input sparse MT at the sites in <cite>sites_ht</cite> reading the minimal amount of data required.</p>
+<p>Note that only rows that appear both in <cite>mt</cite> and <cite>sites_ht</cite> are returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input sparse MT</p></li>
+<li><p><strong>sites_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Desired sites to densify</p></li>
+<li><p><strong>last_END_positions_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table storing positions of the furthest ref block (END tag)</p></li>
+<li><p><strong>semi_join_rows</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter the MT rows based on semi-join (default, better if sites_ht is large) or based on filter_intervals (better if sites_ht only contains a few sites)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dense MT filtered to the sites in <cite>sites_ht</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.get_as_info_expr">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">get_as_info_expr</code><span class="sig-paren">(</span><em class="sig-param">mt, sum_agg_fields=['QUALapprox'], int32_sum_agg_fields=['VarDP'], median_agg_fields=['ReadPosRankSum', 'MQRankSum'], array_sum_agg_fields=['SB', 'RAW_MQandDP'], alt_alleles_range_array_field='alt_alleles_range_array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#get_as_info_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.get_as_info_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an allele-specific annotation Struct containing typical VCF INFO fields from GVCF INFO fields stored in the MT entries.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If <cite>SB</cite> is specified in array_sum_agg_fields, it will be aggregated as <cite>AS_SB_TABLE</cite>, according to GATK standard nomenclature.</p></li>
+<li><p>If <cite>RAW_MQandDP</cite> is specified in array_sum_agg_fields, it will be used for the <cite>MQ</cite> calculation and then dropped according to GATK recommendation.</p></li>
+<li><p>If <cite>RAW_MQ</cite> and <cite>MQ_DP</cite> are given, they will be used for the <cite>MQ</cite> calculation and then dropped according to GATK recommendation.</p></li>
+<li><p>If the fields to be aggregate (<cite>sum_agg_fields</cite>, <cite>int32_sum_agg_fields</cite>, <cite>median_agg_fields</cite>) are passed as list of str,
+then they should correspond to entry fields in <cite>mt</cite> or in <cite>mt.gvcf_info</cite>.</p></li>
+<li><p>Priority is given to entry fields in <cite>mt</cite> over those in <cite>mt.gvcf_info</cite> in case of a name clash.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input Matrix Table</p></li>
+<li><p><strong>sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using sum.</p></li>
+<li><p><strong>int32_sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using sum using int32.</p></li>
+<li><p><strong>median_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using (approximate) median.</p></li>
+<li><p><strong>array_sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>]]) – Fields to aggregate using array sum.</p></li>
+<li><p><strong>alt_alleles_range_array_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Annotation containing an array of the range of alternate alleles e.g., <cite>hl.range(1, hl.len(mt.alleles))</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Expression containing the AS info fields</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.get_site_info_expr">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">get_site_info_expr</code><span class="sig-paren">(</span><em class="sig-param">mt, sum_agg_fields=['QUALapprox'], int32_sum_agg_fields=['VarDP'], median_agg_fields=['ReadPosRankSum', 'MQRankSum'], array_sum_agg_fields=['SB', 'RAW_MQandDP']</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#get_site_info_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.get_site_info_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a site-level annotation Struct aggregating typical VCF INFO fields from GVCF INFO fields stored in the MT entries.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If <cite>RAW_MQandDP</cite> is specified in array_sum_agg_fields, it will be used for the <cite>MQ</cite> calculation and then dropped according to GATK recommendation.</p></li>
+<li><p>If <cite>RAW_MQ</cite> and <cite>MQ_DP</cite> are given, they will be used for the <cite>MQ</cite> calculation and then dropped according to GATK recommendation.</p></li>
+<li><p>If the fields to be aggregate (<cite>sum_agg_fields</cite>, <cite>int32_sum_agg_fields</cite>, <cite>median_agg_fields</cite>) are passed as
+list of str, then they should correspond to entry fields in <cite>mt</cite> or in <cite>mt.gvcf_info</cite>.</p></li>
+<li><p>Priority is given to entry fields in <cite>mt</cite> over those in <cite>mt.gvcf_info</cite> in case of a name clash.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input Matrix Table</p></li>
+<li><p><strong>sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using sum.</p></li>
+<li><p><strong>int32_sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using sum using int32.</p></li>
+<li><p><strong>median_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]]) – Fields to aggregate using (approximate) median.</p></li>
+<li><p><strong>array_sum_agg_fields</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>]]) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Expression containing the site-level info fields</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.default_compute_info">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">default_compute_info</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">site_annotations=False</em>, <em class="sig-param">n_partitions=5000</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#default_compute_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.default_compute_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a HT with the typical GATK allele-specific (AS) info fields as well as ACs and lowqual fields.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This table doesn’t split multi-allelic sites.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable. Note that this table should be filtered to nonref sites.</p></li>
+<li><p><strong>site_annotations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to also generate site level info fields. Default is False.</p></li>
+<li><p><strong>n_partitions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of desired partitions for output Table. Default is 5000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Table with info fields</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.split_info_annotation">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">split_info_annotation</code><span class="sig-paren">(</span><em class="sig-param">info_expr</em>, <em class="sig-param">a_index</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#split_info_annotation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.split_info_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split multi-allelic allele-specific info fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>info_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Field containing info struct.</p></li>
+<li><p><strong>a_index</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>) – Allele index. Output by hl.split_multi or hl.split_multi_hts.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Info struct with split annotations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.split_lowqual_annotation">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">split_lowqual_annotation</code><span class="sig-paren">(</span><em class="sig-param">lowqual_expr</em>, <em class="sig-param">a_index</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#split_lowqual_annotation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.split_lowqual_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split multi-allelic low QUAL annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lowqual_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Field containing low QUAL annotation.</p></li>
+<li><p><strong>a_index</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>) – Allele index. Output by hl.split_multi or hl.split_multi_hts.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Low QUAL expression for particular allele.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.impute_sex_ploidy">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">impute_sex_ploidy</code><span class="sig-paren">(</span><em class="sig-param">mt</em>, <em class="sig-param">excluded_calling_intervals=None</em>, <em class="sig-param">included_calling_intervals=None</em>, <em class="sig-param">normalization_contig='chr20'</em>, <em class="sig-param">chr_x=None</em>, <em class="sig-param">chr_y=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#impute_sex_ploidy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.impute_sex_ploidy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Impute sex ploidy from a sparse MatrixTable.</p>
+<p>Sex ploidy is imputed by normalizing the coverage of chromosomes X and Y using the coverage of an autosomal
+chromosome (by default chr20).</p>
+<p>Coverage is computed using the median block coverage (summed over the block size) and the non-ref coverage at
+non-ref genotypes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input sparse Matrix Table</p></li>
+<li><p><strong>excluded_calling_intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional table of intervals to exclude from the computation.
+Used only when determining contig size (not used when computing chromosome depth).</p></li>
+<li><p><strong>included_calling_intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional table of intervals to use in the computation.
+Used only when determining contig size (not used when computing chromosome depth).</p></li>
+<li><p><strong>normalization_contig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Which chromosome to normalize by</p></li>
+<li><p><strong>chr_x</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional X Chromosome contig name (by default uses the X contig in the reference)</p></li>
+<li><p><strong>chr_y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional Y Chromosome contig name (by default uses the Y contig in the reference)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with mean coverage over chromosomes 20, X and Y and sex chromosomes ploidy based on normalized coverage.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.compute_coverage_stats">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">compute_coverage_stats</code><span class="sig-paren">(</span><em class="sig-param">mt, reference_ht, coverage_over_x_bins=[1, 5, 10, 15, 20, 25, 30, 50, 100]</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#compute_coverage_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.compute_coverage_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute coverage statistics for every base of the <cite>reference_ht</cite> provided.</p>
+<dl class="simple">
+<dt>The following coverage stats are calculated:</dt><dd><ul class="simple">
+<li><p>mean</p></li>
+<li><p>median</p></li>
+<li><p>total DP</p></li>
+<li><p>fraction of samples with coverage above X, for each x in <cite>coverage_over_x_bins</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>The <cite>reference_ht</cite> is a table that contains row for each locus coverage should be computed on.
+It needs to be keyed with the same keys as <cite>mt</cite>, typically either <cite>locus</cite> or <cite>locus, alleles</cite>.
+The <cite>reference_ht</cite> can e.g. be created using <cite>get_reference_ht</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input sparse MT</p></li>
+<li><p><strong>reference_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input reference HT</p></li>
+<li><p><strong>coverage_over_x_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – List of boundaries for computing samples over X</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with per-base coverage stats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="gnomad.utils.sparse_mt.filter_ref_blocks">
+<code class="sig-prename descclassname">gnomad.utils.sparse_mt.</code><code class="sig-name descname">filter_ref_blocks</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/sparse_mt.html#filter_ref_blocks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gnomad.utils.sparse_mt.filter_ref_blocks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter ref blocks out of the Table or MatrixTable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MT/HT</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>MT/HT with ref blocks removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="vcf.html" class="btn btn-neutral float-right" title="gnomad.utils.vcf" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="slack.html" class="btn btn-neutral float-left" title="gnomad.utils.slack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

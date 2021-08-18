@@ -1,0 +1,547 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gnomad.utils.filtering &mdash; gnomad master documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> gnomad
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Change Log</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>gnomad.utils.filtering</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gnomad.utils.filtering</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="n">DataException</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.annotations</span> <span class="kn">import</span> <span class="n">annotate_adj</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.reference_genome</span> <span class="kn">import</span> <span class="n">get_reference_genome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="filter_to_adj"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_adj">[docs]</a><span class="k">def</span> <span class="nf">filter_to_adj</span><span class="p">(</span><span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Filter genotypes to adj criteria.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;adj&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">entry</span><span class="p">):</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">annotate_adj</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_entries</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">adj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">adj</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_by_frequency"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_by_frequency">[docs]</a><span class="k">def</span> <span class="nf">filter_by_frequency</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allele_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">population</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">subpop</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">downsampling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">keep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">adj</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter MatrixTable or Table with gnomAD-format frequency data (assumed bi-allelic/split).</span>
+
+<span class="sd">    gnomAD frequency data format expectation is: Array[Struct(Array[AC], Array[AF], AN, homozygote_count, meta)].</span>
+
+<span class="sd">    At least one of frequency or allele_count is required.</span>
+
+<span class="sd">    Subpop can be specified without a population if desired.</span>
+
+<span class="sd">    :param t: Input MatrixTable or Table</span>
+<span class="sd">    :param direction: One of &quot;above&quot;, &quot;below&quot;, and &quot;equal&quot; (how to apply the filter)</span>
+<span class="sd">    :param frequency: Frequency to filter by (one of frequency or allele_count is required)</span>
+<span class="sd">    :param allele_count: Allele count to filter by (one of frequency or allele_count is required)</span>
+<span class="sd">    :param population: Population in which to filter frequency</span>
+<span class="sd">    :param subpop: Sub-population in which to filter frequency</span>
+<span class="sd">    :param downsampling: Downsampling in which to filter frequency</span>
+<span class="sd">    :param keep: Whether to keep rows passing this frequency (passed to filter_rows)</span>
+<span class="sd">    :param adj: Whether to use adj frequency</span>
+<span class="sd">    :return: Filtered MatrixTable or Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allele_count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one of frequency or allele_count must be specified&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;above&quot;</span><span class="p">,</span> <span class="s2">&quot;below&quot;</span><span class="p">,</span> <span class="s2">&quot;equal&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;direction needs to be one of &quot;above&quot;, &quot;below&quot;, or &quot;equal&quot;&#39;</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="s2">&quot;adj&quot;</span> <span class="k">if</span> <span class="n">adj</span> <span class="k">else</span> <span class="s2">&quot;raw&quot;</span>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">group</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;above&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">frequency</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;below&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">frequency</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">frequency</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">allele_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;above&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">allele_count</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;below&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">allele_count</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">allele_count</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">population</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">population</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">subpop</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subpop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">subpop</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># If one supplies a subpop but not a population, this will ensure this gets it right</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">population</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">downsampling</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;downsampling&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">downsampling</span><span class="p">))</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">population</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subpop</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No downsampling data for subpopulations implemented&quot;</span><span class="p">)</span>
+    <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="n">size</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">combine_functions</span><span class="p">(</span><span class="n">func_list</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">cond</span> <span class="o">=</span> <span class="n">func_list</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">func_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">cond</span> <span class="o">&amp;=</span> <span class="n">c</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cond</span>
+
+    <span class="n">filt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">combine_functions</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">filt</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">freq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_low_conf_regions"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_low_conf_regions">[docs]</a><span class="k">def</span> <span class="nf">filter_low_conf_regions</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">filter_lcr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_decoy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_segdup</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_exome_low_coverage_regions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_telomeres_and_centromeres</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">high_conf_regions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter low-confidence regions.</span>
+
+<span class="sd">    :param mt: MatrixTable or Table to filter</span>
+<span class="sd">    :param filter_lcr: Whether to filter LCR regions</span>
+<span class="sd">    :param filter_decoy: Whether to filter decoy regions</span>
+<span class="sd">    :param filter_segdup: Whether to filter Segdup regions</span>
+<span class="sd">    :param filter_exome_low_coverage_regions: Whether to filter exome low confidence regions</span>
+<span class="sd">    :param filter_telomeres_and_centromeres: Whether to filter telomeres and centromeres</span>
+<span class="sd">    :param high_conf_regions: Paths to set of high confidence regions to restrict to (union of regions)</span>
+<span class="sd">    :return: MatrixTable or Table with low confidence regions removed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">gnomad.resources.grch37.reference_data</span> <span class="k">as</span> <span class="nn">resources</span>
+    <span class="k">elif</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">gnomad.resources.grch38.reference_data</span> <span class="k">as</span> <span class="nn">resources</span>
+
+    <span class="n">criteria</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">filter_lcr</span><span class="p">:</span>
+        <span class="n">lcr</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">lcr_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">lcr</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_decoy</span><span class="p">:</span>
+        <span class="n">decoy</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">decoy_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">decoy</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_segdup</span><span class="p">:</span>
+        <span class="n">segdup</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">seg_dup_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">segdup</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_exome_low_coverage_regions</span><span class="p">:</span>
+        <span class="n">high_cov</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">high_coverage_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">high_cov</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_telomeres_and_centromeres</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">build</span> <span class="o">!=</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+                <span class="s2">&quot;The telomeres_and_centromeres resource only exists for GRCh38&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">telomeres_and_centromeres</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">telomeres_and_centromeres</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">telomeres_and_centromeres</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">high_conf_regions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">high_conf_regions</span><span class="p">:</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">region</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">criteria</span><span class="p">:</span>
+        <span class="n">filter_criteria</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">iand</span><span class="p">,</span> <span class="n">criteria</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mt</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+            <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">filter_criteria</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filter_criteria</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mt</span></div>
+
+
+<div class="viewcode-block" id="filter_to_autosomes"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_autosomes">[docs]</a><span class="k">def</span> <span class="nf">filter_to_autosomes</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter the Table or MatrixTable to autosomes only.</span>
+
+<span class="sd">    This assumes that the input contains a field named `locus` of type Locus</span>
+
+<span class="sd">    :param t: Input MT/HT</span>
+<span class="sd">    :return:  MT/HT autosomes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span>
+    <span class="n">autosomes</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">reference</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">reference</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">reference</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">[</span><span class="n">autosomes</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="add_filters_expr"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.add_filters_expr">[docs]</a><span class="k">def</span> <span class="nf">add_filters_expr</span><span class="p">(</span>
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">],</span>
+    <span class="n">current_filters</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">SetExpression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">SetExpression</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an expression to create or add filters.</span>
+
+<span class="sd">    For each entry in the `filters` dictionary, if the value evaluates to `True`,</span>
+<span class="sd">    then the key is added as a filter name.</span>
+
+<span class="sd">    Current filters are kept if provided using `current_filters`</span>
+
+<span class="sd">    :param filters: The filters and their expressions</span>
+<span class="sd">    :param current_filters: The set of current filters</span>
+<span class="sd">    :return: An expression that can be used to annotate the filters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">current_filters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">current_filters</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+        <span class="n">current_filters</span><span class="p">,</span>
+        <span class="p">[</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">filter_condition</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="n">filter_name</span><span class="p">]),</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">filter_name</span><span class="p">,</span> <span class="n">filter_condition</span> <span class="ow">in</span> <span class="n">filters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="subset_samples_and_variants"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.subset_samples_and_variants">[docs]</a><span class="k">def</span> <span class="nf">subset_samples_and_variants</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">sample_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">table_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span>
+    <span class="n">sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">gt_expr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GT&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subset the MatrixTable to the provided list of samples and their variants.</span>
+
+<span class="sd">    :param mt: Input MatrixTable</span>
+<span class="sd">    :param sample_path: Path to a file with list of samples</span>
+<span class="sd">    :param header: Whether file with samples has a header. Default is True</span>
+<span class="sd">    :param table_key: Key to sample Table. Default is &quot;s&quot;</span>
+<span class="sd">    :param sparse: Whether the MatrixTable is sparse. Default is False</span>
+<span class="sd">    :param gt_expr: Name of field in MatrixTable containing genotype expression. Default is &quot;GT&quot;</span>
+<span class="sd">    :return: MatrixTable subsetted to specified samples and their variants</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sample_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_table</span><span class="p">(</span><span class="n">sample_path</span><span class="p">,</span> <span class="n">no_header</span><span class="o">=</span><span class="ow">not</span> <span class="n">header</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">table_key</span><span class="p">)</span>
+    <span class="n">sample_count</span> <span class="o">=</span> <span class="n">sample_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">missing_ht</span> <span class="o">=</span> <span class="n">sample_ht</span><span class="o">.</span><span class="n">anti_join</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">cols</span><span class="p">())</span>
+    <span class="n">missing_ht_count</span> <span class="o">=</span> <span class="n">missing_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">full_count</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">count_cols</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">missing_ht_count</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">missing_samples</span> <span class="o">=</span> <span class="n">missing_ht</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Only </span><span class="si">{</span><span class="n">sample_count</span> <span class="o">-</span> <span class="n">missing_ht_count</span><span class="si">}</span><span class="s2"> out of </span><span class="si">{</span><span class="n">sample_count</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;subsetting-table IDs matched IDs in the MT.</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;IDs that aren&#39;t in the MT: </span><span class="si">{</span><span class="n">missing_samples</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">semi_join_cols</span><span class="p">(</span><span class="n">sample_ht</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">gt_expr</span><span class="p">]</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()</span> <span class="o">|</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">END</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">gt_expr</span><span class="p">]</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Finished subsetting samples. Kept </span><span class="si">%d</span><span class="s2"> out of </span><span class="si">%d</span><span class="s2"> samples in MT&quot;</span><span class="p">,</span>
+        <span class="n">mt</span><span class="o">.</span><span class="n">count_cols</span><span class="p">(),</span>
+        <span class="n">full_count</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mt</span></div>
+
+
+<div class="viewcode-block" id="filter_to_clinvar_pathogenic"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_clinvar_pathogenic">[docs]</a><span class="k">def</span> <span class="nf">filter_to_clinvar_pathogenic</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">clnrevstat_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNREVSTAT&quot;</span><span class="p">,</span>
+    <span class="n">clnsig_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNSIG&quot;</span><span class="p">,</span>
+    <span class="n">clnsigconf_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNSIGCONF&quot;</span><span class="p">,</span>
+    <span class="n">remove_no_assertion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">remove_conflicting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a MatrixTable or Table that filters the clinvar data to pathogenic and likely pathogenic variants.</span>
+
+<span class="sd">    Example use:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from gnomad.resources.grch38.reference_data import clinvar</span>
+<span class="sd">        clinvar_ht = clinvar.ht()</span>
+<span class="sd">        clinvar_ht = filter_to_clinvar_pathogenic(clinvar_ht)</span>
+
+<span class="sd">    :param: t: Input dataset that contains clinvar data, could either be a MatrixTable or Table.</span>
+<span class="sd">    :param clnrevstat_field: The field string for the expression that contains the review status of the clinical significance of clinvar variants.</span>
+<span class="sd">    :param clnsig_field: The field string for the expression that contains the clinical signifcance of the clinvar variant.</span>
+<span class="sd">    :param clnsigconf_field: The field string for the expression that contains the conflicting clinical significance values for the variant. For variants with no conflicting significance, this field should be undefined.</span>
+<span class="sd">    :param remove_no_assertion: Flag for removing entries in which the clnrevstat (clinical significance) has no assertions (zero stars).</span>
+<span class="sd">    :param remove_conflicting: Flag for removing entries with conflicting clinical interpretations.</span>
+<span class="sd">    :return: Filtered MatrixTable or Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Found </span><span class="si">%d</span><span class="s2"> variants before filtering&quot;</span><span class="p">,</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">count_rows</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">path_expr</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnsig_field</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;pathogenic&quot;</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_no_assertion</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Variants without assertions will be removed.&quot;</span><span class="p">)</span>
+        <span class="n">no_star_assertions</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;no_assertion_provided&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;no_assertion_criteria_provided&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;no_interpretation_for_the_individual_variant&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">path_expr</span> <span class="o">=</span> <span class="n">path_expr</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnrevstat_field</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">no_star_assertions</span><span class="p">)</span><span class="o">.</span><span class="n">length</span><span class="p">()</span>
+            <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_conflicting</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Variants with conflicting clinical interpretations will be removed.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">path_expr</span> <span class="o">=</span> <span class="n">path_expr</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnsigconf_field</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">path_expr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">path_expr</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Found </span><span class="si">%d</span><span class="s2"> variants after filtering to clinvar pathogenic variants.&quot;</span><span class="p">,</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">count_rows</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="remove_fields_from_constant"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.remove_fields_from_constant">[docs]</a><span class="k">def</span> <span class="nf">remove_fields_from_constant</span><span class="p">(</span>
+    <span class="n">constant</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fields_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove fields from a list and display any field(s) missing from the original list.</span>
+
+<span class="sd">    :param constant: List of fields</span>
+<span class="sd">    :param fields_to_remove: List of fields to remove from `constant`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields_to_remove</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">constant</span><span class="p">:</span>
+            <span class="n">constant</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> missing from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">constant</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">constant</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
