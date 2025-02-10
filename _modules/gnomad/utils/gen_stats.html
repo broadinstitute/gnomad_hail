@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.gen_stats &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.gen_stats</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.gen_stats</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="to_phred"><a class="viewcode-back" href="../../../api_reference/utils/gen_stats.html#gnomad.utils.gen_stats.to_phred">[docs]</a><span class="k">def</span> <span class="nf">to_phred</span><span class="p">(</span><span class="n">linear_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the phred-scaled value of the linear-scale input.</span>
+
+<span class="sd">    :param linear_expr: input</span>
+<span class="sd">    :return: Phred-scaled value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="n">hl</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">linear_expr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="from_phred"><a class="viewcode-back" href="../../../api_reference/utils/gen_stats.html#gnomad.utils.gen_stats.from_phred">[docs]</a><span class="k">def</span> <span class="nf">from_phred</span><span class="p">(</span>
+    <span class="n">phred_score_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the linear-scale value of the phred-scaled input.</span>
+
+<span class="sd">    :param phred_score_expr: phred-scaled value</span>
+<span class="sd">    :return: linear-scale value of the phred-scaled input.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="p">(</span><span class="n">phred_score_expr</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_median_and_mad_expr"><a class="viewcode-back" href="../../../api_reference/utils/gen_stats.html#gnomad.utils.gen_stats.get_median_and_mad_expr">[docs]</a><span class="k">def</span> <span class="nf">get_median_and_mad_expr</span><span class="p">(</span>
+    <span class="n">metric_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayNumericExpression</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.4826</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the median and median absolute deviation (MAD) for the given expression.</span>
+
+<span class="sd">    ..note::</span>
+
+<span class="sd">        The default value of k assumes normally distributed data.</span>
+
+<span class="sd">    :param metric_expr: Expression to compute median and MAD for</span>
+<span class="sd">    :param k: The scaling factor for MAD calculation. Default assumes normally distributed data.</span>
+<span class="sd">    :return: Struct with median and MAD</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="n">median</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mad</span><span class="o">=</span><span class="n">k</span> <span class="o">*</span> <span class="n">hl</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))),</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">metric_expr</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="merge_stats_counters_expr"><a class="viewcode-back" href="../../../api_reference/utils/gen_stats.html#gnomad.utils.gen_stats.merge_stats_counters_expr">[docs]</a><span class="k">def</span> <span class="nf">merge_stats_counters_expr</span><span class="p">(</span>
+    <span class="n">stats</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Merge multiple stats counters, assuming that they were computed on non-overlapping data.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">    - Merge stats computed on indel and snv separately</span>
+<span class="sd">    - Merge stats computed on bi-allelic and multi-allelic variants separately</span>
+<span class="sd">    - Merge stats computed on autosomes and sex chromosomes separately</span>
+
+<span class="sd">    :param stats: An array of stats counters to merge</span>
+<span class="sd">    :return: Merged stats Struct</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">add_stats</span><span class="p">(</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Merge two stats counters together.</span>
+
+<span class="sd">        Assumes that all stats counter fields are present in the struct.</span>
+
+<span class="sd">        :param i: accumulator: struct with mean, n and variance</span>
+<span class="sd">        :param j: new element: stats_struct -- needs to contain mean, n and variance</span>
+<span class="sd">        :return: Accumulation over all elements: struct with mean, n and variance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="n">i</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">n_tot</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">n</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">n</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="nb">min</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">min</span><span class="p">),</span>
+            <span class="nb">max</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">max</span><span class="p">),</span>
+            <span class="n">mean</span><span class="o">=</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">mean</span> <span class="o">*</span> <span class="n">i</span><span class="o">.</span><span class="n">n</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">mean</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_tot</span><span class="p">,</span>
+            <span class="n">variance</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">variance</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">variance</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">i</span><span class="o">.</span><span class="n">n</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_tot</span><span class="p">,</span>
+            <span class="n">n</span><span class="o">=</span><span class="n">n_tot</span><span class="p">,</span>
+            <span class="nb">sum</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">sum</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Gather all metrics present in all stats counters</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dropped_metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">stat_expr</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">stat_expr_metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">stat_expr</span><span class="p">)</span>
+        <span class="n">dropped_metrics</span> <span class="o">=</span> <span class="n">dropped_metrics</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">stat_expr_metrics</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">metrics</span><span class="p">))</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">stat_expr_metrics</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dropped_metrics</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;The following metrics will be dropped during stats counter merging as they&quot;</span>
+            <span class="s2">&quot; do not appear in all counters: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dropped_metrics</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Because merging standard deviation requires having the mean and n,</span>
+    <span class="c1"># check that they are also present if `stdev` is. Otherwise remove stdev</span>
+    <span class="k">if</span> <span class="s2">&quot;stdev&quot;</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="n">missing_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing_fields</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot merge `stdev` from given stats counters since they are missing&quot;</span>
+                <span class="s2">&quot; the following fields: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_fields</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">metrics</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;stdev&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create a struct with all possible stats for merging.</span>
+    <span class="c1"># This step helps when folding because we can rely on the struct schema</span>
+    <span class="c1"># Note that for intermediate merging, we compute the variance rather than the stdev</span>
+    <span class="n">all_stats</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="nb">min</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">min</span> <span class="k">if</span> <span class="s2">&quot;min&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+            <span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">max</span> <span class="k">if</span> <span class="s2">&quot;max&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+            <span class="n">mean</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span> <span class="k">if</span> <span class="s2">&quot;mean&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+            <span class="n">variance</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">stdev</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">stdev</span> <span class="k">if</span> <span class="s2">&quot;stdev&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+            <span class="n">n</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">n</span> <span class="k">if</span> <span class="s2">&quot;n&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">sum</span> <span class="k">if</span> <span class="s2">&quot;sum&quot;</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Merge the stats</span>
+    <span class="n">agg_stats</span> <span class="o">=</span> <span class="n">all_stats</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">add_stats</span><span class="p">,</span> <span class="n">all_stats</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Return only the metrics that were present in all independent stats counters</span>
+    <span class="c1"># If `stdev` is present, then compute it from the variance</span>
+    <span class="k">return</span> <span class="n">agg_stats</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">metric</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">agg_stats</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="k">if</span> <span class="n">metric</span> <span class="o">!=</span> <span class="s2">&quot;stdev&quot;</span> <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">agg_stats</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

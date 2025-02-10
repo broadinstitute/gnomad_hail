@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.sex &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.sex</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.sample_qc.sex</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.mixture</span> <span class="kn">import</span> <span class="n">GaussianMixture</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.annotations</span> <span class="kn">import</span> <span class="n">annotate_and_index_source_mt_for_sex_ploidy</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">SEXES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Male&quot;</span><span class="p">:</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">:</span> <span class="s2">&quot;Female&quot;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="adjusted_sex_ploidy_expr"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.adjusted_sex_ploidy_expr">[docs]</a><span class="k">def</span> <span class="nf">adjusted_sex_ploidy_expr</span><span class="p">(</span>
+    <span class="n">locus_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">,</span>
+    <span class="n">gt_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">CallExpression</span><span class="p">,</span>
+    <span class="n">karyotype_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">xy_karyotype_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;XY&quot;</span><span class="p">,</span>
+    <span class="n">xx_karyotype_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;XX&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">CallExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an entry expression to convert XY to haploid on non-PAR X/Y and XX to missing on Y.</span>
+
+<span class="sd">    :param locus_expr: Locus expression.</span>
+<span class="sd">    :param gt_expr: Genotype expression.</span>
+<span class="sd">    :param karyotype_expr: Sex karyotype expression.</span>
+<span class="sd">    :param xy_karyotype_str: String representing XY karyotype. Default is &quot;XY&quot;.</span>
+<span class="sd">    :param xx_karyotype_str: String representing XX karyotype. Default is &quot;XX&quot;.</span>
+<span class="sd">    :return: Genotype adjusted for sex ploidy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># An optimization that annotates the locus&#39;s source matrix table with the</span>
+    <span class="c1"># fields in the case statements below, so they are not re-computed for every entry.</span>
+    <span class="n">col_idx</span><span class="p">,</span> <span class="n">row_idx</span> <span class="o">=</span> <span class="n">annotate_and_index_source_mt_for_sex_ploidy</span><span class="p">(</span>
+        <span class="n">locus_expr</span><span class="p">,</span> <span class="n">karyotype_expr</span><span class="p">,</span> <span class="n">xy_karyotype_str</span><span class="p">,</span> <span class="n">xx_karyotype_str</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">(</span><span class="n">missing_false</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Added to reduce the checks by entry.</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">row_idx</span><span class="o">.</span><span class="n">in_autosome</span><span class="p">,</span> <span class="n">gt_expr</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">((</span><span class="n">row_idx</span><span class="o">.</span><span class="n">y_par</span> <span class="o">|</span> <span class="n">row_idx</span><span class="o">.</span><span class="n">y_nonpar</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">col_idx</span><span class="o">.</span><span class="n">xx</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">missing</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tcall</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="o">~</span><span class="n">row_idx</span><span class="o">.</span><span class="n">in_non_par</span><span class="p">,</span> <span class="n">gt_expr</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">row_idx</span><span class="o">.</span><span class="n">x_nonpar</span> <span class="o">|</span> <span class="n">row_idx</span><span class="o">.</span><span class="n">y_nonpar</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">col_idx</span><span class="o">.</span><span class="n">xy</span> <span class="o">&amp;</span> <span class="n">gt_expr</span><span class="o">.</span><span class="n">is_het</span><span class="p">(),</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">missing</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tcall</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">row_idx</span><span class="o">.</span><span class="n">x_nonpar</span> <span class="o">|</span> <span class="n">row_idx</span><span class="o">.</span><span class="n">y_nonpar</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">col_idx</span><span class="o">.</span><span class="n">xy</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">gt_expr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">phased</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">gt_expr</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="adjust_sex_ploidy"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.adjust_sex_ploidy">[docs]</a><span class="k">def</span> <span class="nf">adjust_sex_ploidy</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">sex_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">male_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;male&quot;</span><span class="p">,</span>
+    <span class="n">female_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;female&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert males to haploid on non-PAR X/Y, sets females to missing on Y.</span>
+
+<span class="sd">    :param mt: Input MatrixTable</span>
+<span class="sd">    :param sex_expr: Expression pointing to sex in MT (if not male_str or female_str, no change)</span>
+<span class="sd">    :param male_str: String for males (default &#39;male&#39;)</span>
+<span class="sd">    :param female_str: String for females (default &#39;female&#39;)</span>
+<span class="sd">    :return: MatrixTable with fixed ploidy for sex chromosomes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_entries</span><span class="p">(</span>
+        <span class="n">GT</span><span class="o">=</span><span class="n">adjusted_sex_ploidy_expr</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="p">,</span> <span class="n">sex_expr</span><span class="p">,</span> <span class="n">male_str</span><span class="p">,</span> <span class="n">female_str</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="gaussian_mixture_model_karyotype_assignment"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment">[docs]</a><span class="k">def</span> <span class="nf">gaussian_mixture_model_karyotype_assignment</span><span class="p">(</span>
+    <span class="n">sex_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">chrx_ploidy_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;chrX_ploidy&quot;</span><span class="p">,</span>
+    <span class="n">chry_ploidy_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;chrY_ploidy&quot;</span><span class="p">,</span>
+    <span class="n">karyotype_output_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gmm&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Annotate the input Table with an X karyotype, Y karyotype, and sex karyotype based on a gaussian mixture model.</span>
+
+<span class="sd">    This function uses two component Gaussian mixture models on `chrx_ploidy_expr` and `chry_ploidy_expr` to assign</span>
+<span class="sd">    an X karyotype and a Y karyotype which are then combined into the sex karyotype.</span>
+
+<span class="sd">    The following annotations are added:</span>
+<span class="sd">        - {karyotype_output_prefix}_x_karyotype</span>
+<span class="sd">        - {karyotype_output_prefix_y_karyotype</span>
+<span class="sd">        - {karyotype_output_prefix}_karyotype = {karyotype_output_prefix}_x_karyotype + {karyotype_output_prefix}_y_karyotype</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This uses a two component Gaussian mixture model so all samples are given one of the following sex karyotypes:</span>
+<span class="sd">        X, XX, XY, YY. It&#39;s recommended that this annotation is only used to split samples into XX and</span>
+<span class="sd">        XY groups that can then be used in `get_ploidy_cutoffs` to determine XX and XY ploidy means and stdevs.</span>
+
+<span class="sd">    :param sex_ht: Input Table with chromosome X and chromosome Y ploidy values.</span>
+<span class="sd">    :param chrx_ploidy_expr: Expression pointing to chromosome X ploidy in `sex_ht`. Default is &#39;chrX_ploidy&#39;.</span>
+<span class="sd">    :param chry_ploidy_expr: Expression pointing to chromosome Y ploidy in `sex_ht`. Default is &#39;chrY_ploidy&#39;.</span>
+<span class="sd">    :param karyotype_output_prefix: String to use as the prefix for the Gaussian mixture model karyotype output. Default is &#39;gmm&#39;.</span>
+<span class="sd">    :return: Input Table with Gaussian mixture model karyotype annotations added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chrx_ploidy_expr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">chrx_ploidy_expr</span> <span class="o">=</span> <span class="n">sex_ht</span><span class="p">[</span><span class="n">chrx_ploidy_expr</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chry_ploidy_expr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">chry_ploidy_expr</span> <span class="o">=</span> <span class="n">sex_ht</span><span class="p">[</span><span class="n">chry_ploidy_expr</span><span class="p">]</span>
+
+    <span class="n">sex_pd</span> <span class="o">=</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="n">chrX_ploidy</span><span class="o">=</span><span class="n">chrx_ploidy_expr</span><span class="p">,</span>
+        <span class="n">chrY_ploidy</span><span class="o">=</span><span class="n">chry_ploidy_expr</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_run_gaussian_mixture_model</span><span class="p">(</span>
+        <span class="n">feature</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">karyotypes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">karyotype_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run Gaussian mixture model on ploidy estimates and infer karyotype.</span>
+
+<span class="sd">        :param feature: Column name of ploidy feature to use in Gaussian mixture model.</span>
+<span class="sd">        :param karyotypes: List of possible karyotypes in order of expected `feature` mean.</span>
+<span class="sd">        :param karyotype_name: Column name to use for karyotype output.</span>
+<span class="sd">        :return: Pandas DataFrame with karyotype assignment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">sex_pd</span><span class="p">[[</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">feature</span><span class="p">]]</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="n">gmm</span> <span class="o">=</span> <span class="n">GaussianMixture</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">gmm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">gmm</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="c1"># Assign cluster to karyotype based on cluster means and the order of</span>
+        <span class="c1"># `karyotypes`</span>
+        <span class="n">cluster_to_karyotype</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">([</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">gmm</span><span class="o">.</span><span class="n">means_</span><span class="p">]),</span> <span class="n">karyotypes</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feature</span><span class="si">}</span><span class="s2">_cluster&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gmm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">karyotype_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">cluster_to_karyotype</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feature</span><span class="si">}</span><span class="s2">_cluster&quot;</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cluster_to_karyotype</span><span class="p">:</span>
+            <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feature</span><span class="si">}</span><span class="s2">_prob_</span><span class="si">{</span><span class="n">cluster_to_karyotype</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="n">x_df</span> <span class="o">=</span> <span class="n">_run_gaussian_mixture_model</span><span class="p">(</span>
+        <span class="s2">&quot;chrX_ploidy&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;XX&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_x_karyotype&quot;</span>
+    <span class="p">)</span>
+    <span class="n">y_df</span> <span class="o">=</span> <span class="n">_run_gaussian_mixture_model</span><span class="p">(</span>
+        <span class="s2">&quot;chrY_ploidy&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_y_karyotype&quot;</span>
+    <span class="p">)</span>
+    <span class="n">xy_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">x_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_x_karyotype&quot;</span><span class="p">],</span>
+            <span class="n">y_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_y_karyotype&quot;</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">xy_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_karyotype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">xy_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_x_karyotype&quot;</span><span class="p">]</span>
+        <span class="o">+</span> <span class="n">xy_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">karyotype_output_prefix</span><span class="si">}</span><span class="s2">_y_karyotype&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">xy_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">xy_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;s&quot;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">sex_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">xy_ht</span><span class="p">[</span><span class="n">sex_ht</span><span class="o">.</span><span class="n">key</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="get_ploidy_cutoffs"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.get_ploidy_cutoffs">[docs]</a><span class="k">def</span> <span class="nf">get_ploidy_cutoffs</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">f_stat_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normal_ploidy_cutoff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">aneuploidy_cutoff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">group_by_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get chromosome X and Y ploidy cutoffs for XY and XX samples.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This assumes the input hail Table has the fields chrX_ploidy, and chrY_ploidy, and f_stat if `f_stat_cutoff` is</span>
+<span class="sd">        set.</span>
+
+<span class="sd">    Return a tuple of sex chromosome ploidy cutoffs: ((x_ploidy_cutoffs), (y_ploidy_cutoffs)).</span>
+<span class="sd">    x_ploidy_cutoffs: (upper cutoff for single X, (lower cutoff for double X, upper cutoff for double X), lower cutoff for triple X)</span>
+<span class="sd">    y_ploidy_cutoffs: ((lower cutoff for single Y, upper cutoff for single Y), lower cutoff for double Y)</span>
+
+<span class="sd">    Uses the normal_ploidy_cutoff parameter to determine the ploidy cutoffs for XX and XY karyotypes.</span>
+<span class="sd">    Uses the aneuploidy_cutoff parameter to determine the cutoffs for sex aneuploidies.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        `f_stat_cutoff` or `group_by_expr` must be supplied. If `f_stat_cutoff` is supplied then f-stat is used to</span>
+<span class="sd">        split the samples into roughly &#39;XX&#39; and &#39;XY&#39;. If `group_by_expr` is supplied instead, then it must include an</span>
+<span class="sd">        annotation grouping samples by &#39;XX&#39; and &#39;XY&#39;. These are both only used to divide samples into XX and XY to</span>
+<span class="sd">        determine means and standard deviations for these categories and are not used in the final karyotype annotation.</span>
+
+<span class="sd">    :param ht: Table with f_stat and sex chromosome ploidies</span>
+<span class="sd">    :param f_stat_cutoff: f-stat to roughly divide &#39;XX&#39; from &#39;XY&#39; samples. Assumes XX samples are below cutoff and XY</span>
+<span class="sd">        are above cutoff.</span>
+<span class="sd">    :param normal_ploidy_cutoff: Number of standard deviations to use when determining sex chromosome ploidy cutoffs</span>
+<span class="sd">        for XX, XY karyotypes.</span>
+<span class="sd">    :param aneuploidy_cutoff: Number of standard deviations to use when sex chromosome ploidy cutoffs for aneuploidies.</span>
+<span class="sd">    :param group_by_expr: Expression grouping samples into &#39;XX&#39; and &#39;XY&#39;. Can be used instead of and `f_stat_cutoff`.</span>
+<span class="sd">    :return: Tuple of ploidy cutoff tuples: ((x_ploidy_cutoffs), (y_ploidy_cutoffs))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group_by_expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group_by_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;One and only one of &#39;f_stat_cutoff&#39; or &#39;group_by_expr&#39; must be supplied!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># If &#39;f_stat_cutoff&#39; is supplied, group the sex chromosome ploidy table by</span>
+    <span class="c1"># f_stat cutoff</span>
+    <span class="k">if</span> <span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">group_by_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">f_stat</span> <span class="o">&lt;</span> <span class="n">f_stat_cutoff</span><span class="p">,</span> <span class="s2">&quot;XX&quot;</span><span class="p">,</span> <span class="s2">&quot;XY&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get mean/stdev for chrX/Y ploidies based on &#39;group_by_expr&#39;</span>
+    <span class="n">sex_stats</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">group_by_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">stats</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">chrX_ploidy</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">stats</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">chrY_ploidy</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;XX&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sex_stats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No samples are grouped as XX!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;XY&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sex_stats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No samples are grouped as XY!&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;XX stats: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;XY stats: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">])</span>
+
+    <span class="n">cutoffs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="n">normal_ploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span>
+                <span class="o">-</span> <span class="p">(</span><span class="n">normal_ploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+                <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">normal_ploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="n">aneuploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">normal_ploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+                <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">normal_ploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="n">aneuploidy_cutoff</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;X ploidy cutoffs: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Y ploidy cutoffs: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">cutoffs</span></div>
+
+
+<div class="viewcode-block" id="get_chr_x_hom_alt_cutoffs"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs">[docs]</a><span class="k">def</span> <span class="nf">get_chr_x_hom_alt_cutoffs</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">chr_x_frac_hom_alt_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">f_stat_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">group_by_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cutoff_stdev</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get cutoffs for the fraction homozygous alternate genotypes on chromosome X in &#39;XY&#39; and &#39;XX&#39; samples.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This assumes the input hail Table has the field &#39;f_stat&#39; if `f_stat_cutoff` is set.</span>
+
+<span class="sd">    Return a tuple of cutoffs for the fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on</span>
+<span class="sd">    chromosome X: ((lower cutoff for more than one X, upper cutoff for more than one X), lower cutoff for single X).</span>
+
+<span class="sd">    Uses the `cutoff_stdev` parameter to determine the fraction of homozygous alternate genotypes</span>
+<span class="sd">    (hom-alt/(hom-alt + het)) on chromosome X cutoffs for &#39;XX&#39; and &#39;XY&#39; karyotypes.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        `f_stat_cutoff` or `group_by_expr` must be supplied. If `f_stat_cutoff` is supplied then f-stat is used to</span>
+<span class="sd">        split the samples into roughly &#39;XX&#39; and &#39;XY&#39;. If `group_by_expr` is supplied instead, then it must include an</span>
+<span class="sd">        annotation grouping samples by &#39;XX&#39; and &#39;XY&#39;. These are both only used to divide samples into XX and XY to</span>
+<span class="sd">        determine means and standard deviations for these categories and are not used in the final karyotype annotation.</span>
+
+<span class="sd">    :param ht: Table with f_stat and fraction of homozygous alternate genotypes on chromosome X.</span>
+<span class="sd">    :param chr_x_frac_hom_alt_expr: Fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X.</span>
+<span class="sd">    :param f_stat_cutoff: f-stat to roughly divide &#39;XX&#39; from &#39;XY&#39; samples. Assumes XX samples are below cutoff and XY</span>
+<span class="sd">        are above cutoff.</span>
+<span class="sd">    :param group_by_expr: Expression grouping samples into &#39;XX&#39; and &#39;XY&#39;. Can be used instead of `f_stat_cutoff`.</span>
+<span class="sd">    :param cutoff_stdev: Number of standard deviations to use when determining sex chromosome ploidy cutoffs</span>
+<span class="sd">        for XX, XY karyotypes.</span>
+<span class="sd">    :return: Tuple of cutoffs: ((lower cutoff for more than one X, upper cutoff for more than one X), lower cutoff for</span>
+<span class="sd">        single X).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group_by_expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group_by_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;One and only one of &#39;f_stat_cutoff&#39; or &#39;group_by_expr&#39; must be supplied!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># If &#39;f_stat_cutoff&#39; is supplied, group the input Table by f_stat cutoff</span>
+    <span class="k">if</span> <span class="n">f_stat_cutoff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">group_by_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">f_stat</span> <span class="o">&lt;</span> <span class="n">f_stat_cutoff</span><span class="p">,</span> <span class="s2">&quot;XX&quot;</span><span class="p">,</span> <span class="s2">&quot;XY&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get mean/stdev based on &#39;group_by_expr&#39;</span>
+    <span class="n">sex_stats</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">group_by_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="n">chrx_homalt</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">stats</span><span class="p">(</span><span class="n">chr_x_frac_hom_alt_expr</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;XX&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sex_stats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No samples are grouped as XX!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;XY&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sex_stats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No samples are grouped as XY!&quot;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;XX stats: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;XY stats: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">])</span>
+
+    <span class="n">cutoffs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">mean</span>
+            <span class="o">-</span> <span class="p">(</span><span class="n">cutoff_stdev</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+            <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">mean</span>
+            <span class="o">+</span> <span class="p">(</span><span class="n">cutoff_stdev</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XX&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">mean</span>
+        <span class="o">-</span> <span class="p">(</span><span class="n">cutoff_stdev</span> <span class="o">*</span> <span class="n">sex_stats</span><span class="p">[</span><span class="s2">&quot;XY&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">chrx_homalt</span><span class="o">.</span><span class="n">stdev</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;chrx_homalt cutoffs: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cutoffs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cutoffs</span></div>
+
+
+<div class="viewcode-block" id="get_sex_expr"><a class="viewcode-back" href="../../../api_reference/sample_qc/sex.html#gnomad.sample_qc.sex.get_sex_expr">[docs]</a><span class="k">def</span> <span class="nf">get_sex_expr</span><span class="p">(</span>
+    <span class="n">chr_x_ploidy</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">chr_y_ploidy</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">x_ploidy_cutoffs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">y_ploidy_cutoffs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">chr_x_frac_hom_alt_expr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">chr_x_frac_hom_alt_cutoffs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a struct with X_karyotype, Y_karyotype, and sex_karyotype.</span>
+
+<span class="sd">    Note that X0 is currently returned as &#39;X&#39;.</span>
+
+<span class="sd">    :param chr_x_ploidy: Chromosome X ploidy (or relative ploidy).</span>
+<span class="sd">    :param chr_y_ploidy: Chromosome Y ploidy (or relative ploidy).</span>
+<span class="sd">    :param x_ploidy_cutoffs: Tuple of X chromosome ploidy cutoffs: (upper cutoff for single X, (lower cutoff for</span>
+<span class="sd">        double X, upper cutoff for double X), lower cutoff for triple X).</span>
+<span class="sd">    :param y_ploidy_cutoffs: Tuple of Y chromosome ploidy cutoffs: ((lower cutoff for single Y, upper cutoff for</span>
+<span class="sd">        single Y), lower cutoff for double Y).</span>
+<span class="sd">    :param chr_x_frac_hom_alt_expr: Fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X.</span>
+<span class="sd">    :param chr_x_frac_hom_alt_cutoffs: Tuple of cutoffs for the fraction of homozygous alternate genotypes</span>
+<span class="sd">        (hom-alt/(hom-alt + het)) on chromosome X: ((lower cutoff for more than one X, upper cutoff for more than one X),</span>
+<span class="sd">        lower cutoff for single X).</span>
+<span class="sd">    :return: Struct containing X_karyotype, Y_karyotype, and sex_karyotype.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">([</span><span class="n">chr_x_frac_hom_alt_expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="n">chr_x_frac_hom_alt_cutoffs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;None or both of `chr_x_frac_hom_alt_expr` and `chr_x_frac_hom_alt_cutoffs`&quot;</span>
+            <span class="s2">&quot; must be set!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">chr_x_frac_hom_alt_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lower_cutoff_for_single_x</span> <span class="o">=</span> <span class="n">chr_x_frac_hom_alt_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">lower_cutoff_for_multiple_x</span> <span class="o">=</span> <span class="n">chr_x_frac_hom_alt_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">upper_cutoff_for_multiple_x</span> <span class="o">=</span> <span class="n">chr_x_frac_hom_alt_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">add_x_condition</span> <span class="o">=</span> <span class="n">chr_x_frac_hom_alt_expr</span> <span class="o">&gt;</span> <span class="n">lower_cutoff_for_single_x</span>
+        <span class="n">add_xx_condition</span> <span class="o">=</span> <span class="p">(</span><span class="n">chr_x_frac_hom_alt_expr</span> <span class="o">&gt;</span> <span class="n">lower_cutoff_for_multiple_x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">chr_x_frac_hom_alt_expr</span> <span class="o">&lt;</span> <span class="n">upper_cutoff_for_multiple_x</span>
+        <span class="p">)</span>
+        <span class="n">add_xxx_condition</span> <span class="o">=</span> <span class="n">chr_x_frac_hom_alt_expr</span> <span class="o">&lt;</span> <span class="n">upper_cutoff_for_multiple_x</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">add_x_condition</span> <span class="o">=</span> <span class="n">add_xx_condition</span> <span class="o">=</span> <span class="n">add_xxx_condition</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">upper_ploidy_cutoff_for_x</span> <span class="o">=</span> <span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">lower_ploidy_cutoff_for_xx</span> <span class="o">=</span> <span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">upper_ploidy_cutoff_for_xx</span> <span class="o">=</span> <span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lower_ploidy_cutoff_for_xxx</span> <span class="o">=</span> <span class="n">x_ploidy_cutoffs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">lower_ploidy_cutoff_for_y</span> <span class="o">=</span> <span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">upper_ploidy_cutoff_for_y</span> <span class="o">=</span> <span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lower_ploidy_cutoff_for_yy</span> <span class="o">=</span> <span class="n">y_ploidy_cutoffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">sex_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+        <span class="n">X_karyotype</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">((</span><span class="n">chr_x_ploidy</span> <span class="o">&lt;</span> <span class="n">upper_ploidy_cutoff_for_x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">add_x_condition</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">chr_x_ploidy</span> <span class="o">&gt;</span> <span class="n">lower_ploidy_cutoff_for_xx</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="n">chr_x_ploidy</span> <span class="o">&lt;</span> <span class="n">upper_ploidy_cutoff_for_xx</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="n">add_xx_condition</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;XX&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">chr_x_ploidy</span> <span class="o">&gt;=</span> <span class="n">lower_ploidy_cutoff_for_xxx</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">add_xxx_condition</span><span class="p">,</span> <span class="s2">&quot;XXX&quot;</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="s2">&quot;ambiguous&quot;</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">Y_karyotype</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">chr_y_ploidy</span> <span class="o">&lt;</span> <span class="n">lower_ploidy_cutoff_for_y</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">chr_y_ploidy</span> <span class="o">&gt;</span> <span class="n">lower_ploidy_cutoff_for_y</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="n">chr_y_ploidy</span> <span class="o">&lt;</span> <span class="n">upper_ploidy_cutoff_for_y</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;Y&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">chr_y_ploidy</span> <span class="o">&gt;=</span> <span class="n">lower_ploidy_cutoff_for_yy</span><span class="p">,</span> <span class="s2">&quot;YY&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="s2">&quot;ambiguous&quot;</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sex_expr</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">sex_karyotype</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">sex_expr</span><span class="o">.</span><span class="n">X_karyotype</span> <span class="o">==</span> <span class="s2">&quot;ambiguous&quot;</span><span class="p">)</span>
+            <span class="o">|</span> <span class="p">(</span><span class="n">sex_expr</span><span class="o">.</span><span class="n">Y_karyotype</span> <span class="o">==</span> <span class="s2">&quot;ambiguous&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;ambiguous&quot;</span><span class="p">,</span>
+            <span class="n">sex_expr</span><span class="o">.</span><span class="n">X_karyotype</span> <span class="o">+</span> <span class="n">sex_expr</span><span class="o">.</span><span class="n">Y_karyotype</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

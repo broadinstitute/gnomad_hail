@@ -1,0 +1,8 @@
+gnomad.sample_qc.platform
+=========================
+
+
+
+.. gnomad_automodulesummary:: gnomad.sample_qc.platform
+
+.. automodule:: gnomad.sample_qc.platform

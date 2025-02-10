@@ -1,0 +1,13 @@
+gnomad.resources
+================
+
+
+
+.. toctree::
+    :maxdepth: 2
+
+    config <config>
+    grch37 <grch37/index>
+    grch38 <grch38/index>
+    import_resources <import_resources>
+    resource_utils <resource_utils>

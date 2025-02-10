@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.plotting &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.plotting</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.plotting</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">bokeh</span>
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">bokeh.layouts</span> <span class="kn">import</span> <span class="n">gridplot</span>
+<span class="kn">from</span> <span class="nn">bokeh.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BooleanFilter</span><span class="p">,</span>
+    <span class="n">CDSView</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">,</span>
+    <span class="n">ColumnDataSource</span><span class="p">,</span>
+    <span class="n">DataRange1d</span><span class="p">,</span>
+    <span class="n">Div</span><span class="p">,</span>
+    <span class="n">Grid</span><span class="p">,</span>
+    <span class="n">HoverTool</span><span class="p">,</span>
+    <span class="n">Legend</span><span class="p">,</span>
+    <span class="n">TabPanel</span><span class="p">,</span>
+    <span class="n">Tabs</span><span class="p">,</span>
+    <span class="n">Title</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">bokeh.palettes</span> <span class="kn">import</span> <span class="n">Spectral8</span><span class="p">,</span> <span class="n">d3</span><span class="p">,</span> <span class="n">viridis</span>  <span class="c1"># pylint: disable=no-name-in-module</span>
+<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">figure</span>
+<span class="kn">from</span> <span class="nn">bokeh.transform</span> <span class="kn">import</span> <span class="n">factor_cmap</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.vep</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CSQ_CODING_HIGH_IMPACT</span><span class="p">,</span>
+    <span class="n">CSQ_CODING_LOW_IMPACT</span><span class="p">,</span>
+    <span class="n">CSQ_CODING_MEDIUM_IMPACT</span><span class="p">,</span>
+    <span class="n">CSQ_NON_CODING</span><span class="p">,</span>
+    <span class="n">CSQ_ORDER</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="c1"># Setting some defaults for Table.show</span>
+<span class="k">if</span> <span class="s2">&quot;old_show&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">():</span>
+    <span class="n">old_show</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">show</span>
+
+<div class="viewcode-block" id="new_show"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.new_show">[docs]</a>    <span class="k">def</span> <span class="nf">new_show</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span> <span class="n">truncate</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>  <span class="c1"># noqa: D103</span>
+        <span class="n">old_show</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">truncate</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span></div>
+
+    <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">show</span> <span class="o">=</span> <span class="n">new_show</span>
+
+<span class="n">TOOLS</span> <span class="o">=</span> <span class="s2">&quot;hover,save,pan,box_zoom,reset,wheel_zoom&quot;</span>
+
+<span class="n">COLOR_CPG</span> <span class="o">=</span> <span class="s2">&quot;#2E9FFE&quot;</span>
+<span class="n">COLOR_TI</span> <span class="o">=</span> <span class="s2">&quot;#458B00&quot;</span>
+<span class="n">COLOR_TV</span> <span class="o">=</span> <span class="s2">&quot;#EA4444&quot;</span>
+<span class="n">ACG</span> <span class="o">=</span> <span class="s2">&quot;#422efe&quot;</span>
+<span class="n">CCG</span> <span class="o">=</span> <span class="s2">&quot;#2e73fe&quot;</span>
+<span class="n">GCG</span> <span class="o">=</span> <span class="s2">&quot;#2ec3fe&quot;</span>
+<span class="n">TCG</span> <span class="o">=</span> <span class="s2">&quot;#2efef7&quot;</span>
+<span class="n">COLOR_METHYLATED_CPG</span> <span class="o">=</span> <span class="s2">&quot;#2E37FE&quot;</span>
+
+<span class="n">variant_type_colors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;CpG&quot;</span><span class="p">:</span> <span class="n">COLOR_CPG</span><span class="p">,</span>
+    <span class="s2">&quot;non-CpG&quot;</span><span class="p">:</span> <span class="n">COLOR_TI</span><span class="p">,</span>
+    <span class="s2">&quot;non-CpG transition&quot;</span><span class="p">:</span> <span class="n">COLOR_TI</span><span class="p">,</span>
+    <span class="s2">&quot;transversion&quot;</span><span class="p">:</span> <span class="n">COLOR_TV</span><span class="p">,</span>
+    <span class="s2">&quot;ACG&quot;</span><span class="p">:</span> <span class="n">ACG</span><span class="p">,</span>
+    <span class="s2">&quot;CCG&quot;</span><span class="p">:</span> <span class="n">CCG</span><span class="p">,</span>
+    <span class="s2">&quot;GCG&quot;</span><span class="p">:</span> <span class="n">GCG</span><span class="p">,</span>
+    <span class="s2">&quot;TCG&quot;</span><span class="p">:</span> <span class="n">TCG</span><span class="p">,</span>
+    <span class="s2">&quot;methylated CpG&quot;</span><span class="p">:</span> <span class="n">COLOR_METHYLATED_CPG</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">COLOR_SYN</span> <span class="o">=</span> <span class="s2">&quot;#AAAAAA&quot;</span>
+<span class="n">COLOR_MIS</span> <span class="o">=</span> <span class="s2">&quot;#FF6103&quot;</span>
+<span class="n">COLOR_LOF</span> <span class="o">=</span> <span class="s2">&quot;#9D1309&quot;</span>
+
+<span class="n">variant_annotation_colors</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">COLOR_LOF</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">CSQ_CODING_HIGH_IMPACT</span><span class="p">}</span>
+<span class="n">variant_annotation_colors</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="n">COLOR_MIS</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">CSQ_CODING_MEDIUM_IMPACT</span><span class="p">})</span>
+<span class="n">variant_annotation_colors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">COLOR_SYN</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">CSQ_CODING_LOW_IMPACT</span> <span class="o">+</span> <span class="n">CSQ_NON_CODING</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">variant_annotation_colors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;stop_lost&quot;</span><span class="p">:</span> <span class="n">COLOR_MIS</span><span class="p">,</span>
+        <span class="s2">&quot;splice_region_variant&quot;</span><span class="p">:</span> <span class="n">COLOR_SYN</span><span class="p">,</span>
+        <span class="s2">&quot;start_lost&quot;</span><span class="p">:</span> <span class="n">COLOR_SYN</span><span class="p">,</span>
+        <span class="s2">&quot;Synonymous&quot;</span><span class="p">:</span> <span class="n">COLOR_SYN</span><span class="p">,</span>
+        <span class="s2">&quot;Missense&quot;</span><span class="p">:</span> <span class="n">COLOR_MIS</span><span class="p">,</span>
+        <span class="s2">&quot;LoF&quot;</span><span class="p">:</span> <span class="n">COLOR_LOF</span><span class="p">,</span>
+        <span class="s2">&quot;PTV&quot;</span><span class="p">:</span> <span class="n">COLOR_LOF</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">variant_annotation_names</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="nb">zip</span><span class="p">(</span><span class="n">CSQ_ORDER</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_variant&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">CSQ_ORDER</span><span class="p">])</span>
+<span class="p">)</span>
+<span class="n">variant_annotation_names</span><span class="p">[</span><span class="s2">&quot;stop_gained&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;nonsense&quot;</span>
+<span class="n">variant_annotation_names</span><span class="p">[</span><span class="s2">&quot;5_prime_UTR_variant&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;5&#39; UTR&quot;</span>
+<span class="n">variant_annotation_names</span><span class="p">[</span><span class="s2">&quot;3_prime_UTR_variant&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;3&#39; UTR&quot;</span>
+
+<span class="n">dataset_colors</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ExAC&quot;</span><span class="p">:</span> <span class="s2">&quot;#4682B4&quot;</span><span class="p">,</span> <span class="s2">&quot;gnomAD&quot;</span><span class="p">:</span> <span class="s2">&quot;#73AB3D&quot;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="plot_hail_hist"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.plot_hail_hist">[docs]</a><span class="k">def</span> <span class="nf">plot_hail_hist</span><span class="p">(</span>
+    <span class="n">hist_data</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Plot&quot;</span><span class="p">,</span>
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+    <span class="n">outlier_fill_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+    <span class="n">line_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+    <span class="n">hover_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mouse&quot;</span><span class="p">,</span>
+    <span class="n">hide_zeros</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bokeh</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot histogram from Hail hist aggregation.</span>
+
+<span class="sd">    `hist_data` can (and should) come straight from ht.aggregate(hl.agg.hist(ht.data, start, end, bins))</span>
+
+<span class="sd">    :param hist_data: Data to plot</span>
+<span class="sd">    :param title: Plot title</span>
+<span class="sd">    :param log: Whether the y-axis should be log</span>
+<span class="sd">    :param fill_color: Color to fill the histogram bars that fall within the hist boundaries</span>
+<span class="sd">    :param outlier_fill_color: Color to fill the histogram bars that fall outside the hist boundaries</span>
+<span class="sd">    :param line_color: Color of the lines around the histogram bars</span>
+<span class="sd">    :param hover_mode: Hover mode; one of &#39;mouse&#39; (default), &#39;vline&#39; or &#39;hline&#39;</span>
+<span class="sd">    :param hide_zeros: Remove hist bars with 0 count</span>
+<span class="sd">    :return: Histogram plot</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">plot_multi_hail_hist</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;hist&quot;</span><span class="p">:</span> <span class="n">hist_data</span><span class="p">},</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">log</span><span class="o">=</span><span class="n">log</span><span class="p">,</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hist&quot;</span><span class="p">:</span> <span class="n">fill_color</span><span class="p">},</span>
+        <span class="n">outlier_fill_color</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hist&quot;</span><span class="p">:</span> <span class="n">outlier_fill_color</span><span class="p">},</span>
+        <span class="n">line_color</span><span class="o">=</span><span class="n">line_color</span><span class="p">,</span>
+        <span class="n">hover_mode</span><span class="o">=</span><span class="n">hover_mode</span><span class="p">,</span>
+        <span class="n">hide_zeros</span><span class="o">=</span><span class="n">hide_zeros</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_multi_hail_hist"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.plot_multi_hail_hist">[docs]</a><span class="k">def</span> <span class="nf">plot_multi_hail_hist</span><span class="p">(</span>
+    <span class="n">hist_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">],</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Plot&quot;</span><span class="p">,</span>
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">outlier_fill_color</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">line_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+    <span class="n">hover_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mouse&quot;</span><span class="p">,</span>
+    <span class="n">hide_zeros</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bokeh</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot multiple histograms on the same plot.</span>
+
+<span class="sd">    Each histogram can (and should) come straight from ht.aggregate(hl.agg.hist(ht.data, start, end, bins))</span>
+
+<span class="sd">    Example usage:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        plot_multi_hail_hist(ht.aggregate(hl.agg.group_by(ht.pop, hl.agg.hist(ht.data, start, end, bins))))</span>
+
+<span class="sd">    :param hist_data: Data to plot</span>
+<span class="sd">    :param title: Plot title</span>
+<span class="sd">    :param log: Whether the y-axis should be log</span>
+<span class="sd">    :param fill_color: Color to fill the histogram bars that fall within the hist boundaries</span>
+<span class="sd">    :param outlier_fill_color: Color to fill the histogram bars that fall outside the hist boundaries</span>
+<span class="sd">    :param line_color: Color of the lines around the histogram bars</span>
+<span class="sd">    :param hover_mode: Hover mode; one of &#39;mouse&#39; (default), &#39;vline&#39; or &#39;hline&#39;</span>
+<span class="sd">    :param hide_zeros: Remove hist bars with 0 count</span>
+<span class="sd">    :param alpha: Alpha value (if None, then 1.0/len(hist_data) is used)</span>
+<span class="sd">    :return: Histogram plot</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">alpha</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist_data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">color_palette</span> <span class="o">=</span> <span class="n">d3</span><span class="p">[</span><span class="s2">&quot;Category10&quot;</span><span class="p">][</span><span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist_data</span><span class="p">))]</span>
+        <span class="n">fill_color</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">hist_name</span><span class="p">:</span> <span class="n">color_palette</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">hist_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hist_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">outlier_fill_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">outlier_fill_color</span> <span class="o">=</span> <span class="n">fill_color</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log</span>
+        <span class="k">else</span> <span class="n">figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">hists</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">hist</span> <span class="ow">in</span> <span class="n">hist_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="n">low</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_freq</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">fill_color</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">bin_freq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hist</span><span class="o">.</span><span class="n">n_smaller</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">hist</span><span class="o">.</span><span class="n">n_smaller</span> <span class="o">+</span> <span class="n">low</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">distance</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outlier_fill_color</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">hist</span><span class="o">.</span><span class="n">n_larger</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">n_larger</span> <span class="o">+</span> <span class="n">low</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">distance</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlier_fill_color</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;bottom&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">low</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">])</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">])</span>
+
+        <span class="n">hist_source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># pylint: disable=unsubscriptable-object</span>
+        <span class="n">hide_zeros_filter</span> <span class="o">=</span> <span class="n">BooleanFilter</span><span class="p">([</span><span class="n">top</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">top</span> <span class="ow">in</span> <span class="n">hist_source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]])</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">CDSView</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">hist_source</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">hide_zeros_filter</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">hide_zeros</span>
+            <span class="k">else</span> <span class="n">CDSView</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">hist_source</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">hists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">label</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+                        <span class="n">top</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span>
+                        <span class="n">bottom</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+                        <span class="n">left</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+                        <span class="n">right</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span>
+                        <span class="n">source</span><span class="o">=</span><span class="n">hist_source</span><span class="p">,</span>
+                        <span class="n">view</span><span class="o">=</span><span class="n">view</span><span class="p">,</span>
+                        <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;color&quot;</span><span class="p">,</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+                        <span class="n">line_color</span><span class="o">=</span><span class="n">line_color</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">tooltips</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;$index&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;bin_edges&quot;</span><span class="p">,</span> <span class="s2">&quot;(@left, @right)&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;@top&quot;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist_data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">tooltips</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;@label&quot;</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span>
+            <span class="n">Legend</span><span class="p">(</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">hists</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span>
+                <span class="n">click_policy</span><span class="o">=</span><span class="s2">&quot;hide&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;above&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="n">tooltips</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">hover_mode</span>
+    <span class="n">num_data_points</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">bin_freq</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">hist_data</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">Title</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">num_data_points</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> data points)&quot;</span><span class="p">),</span> <span class="s2">&quot;above&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="plot_hail_hist_cumulative"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.plot_hail_hist_cumulative">[docs]</a><span class="k">def</span> <span class="nf">plot_hail_hist_cumulative</span><span class="p">(</span>
+    <span class="n">hist_data</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Plot&quot;</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">line_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+    <span class="n">line_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">hover_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mouse&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bokeh</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot cumulative histogram from Hail hist aggregation.</span>
+
+<span class="sd">    `hist_data` can (and should) come straight from ht.aggregate(hl.agg.hist(ht.data, start, end, bins))</span>
+
+<span class="sd">    :param hist_data: Data to plot</span>
+<span class="sd">    :param title: Plot title</span>
+<span class="sd">    :param normalize: Whether to normalize the data (0,1)</span>
+<span class="sd">    :param line_color: Color of the line</span>
+<span class="sd">    :param line_width: Width of the line</span>
+<span class="sd">    :param log: Whether the y-axis should be log</span>
+<span class="sd">    :param hover_mode: Hover mode; one of &#39;mouse&#39; (default), &#39;vline&#39; or &#39;hline&#39;</span>
+<span class="sd">    :return: Histogram plot</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cumulative_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hist_data</span><span class="o">.</span><span class="n">bin_freq</span><span class="p">)</span> <span class="o">+</span> <span class="n">hist_data</span><span class="o">.</span><span class="n">n_smaller</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cumulative_data</span><span class="p">,</span> <span class="p">[</span><span class="n">cumulative_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">hist_data</span><span class="o">.</span><span class="n">n_larger</span><span class="p">])</span>
+    <span class="n">num_data_points</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cumulative_data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+        <span class="n">cumulative_data</span> <span class="o">=</span> <span class="n">cumulative_data</span> <span class="o">/</span> <span class="n">num_data_points</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log</span>
+        <span class="k">else</span> <span class="n">figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">Title</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">num_data_points</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> data points)&quot;</span><span class="p">),</span> <span class="s2">&quot;above&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;$index&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;(x,y)&quot;</span><span class="p">,</span> <span class="s2">&quot;(@x, @y)&quot;</span><span class="p">)]</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">hover_mode</span>
+    <span class="n">data_source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">hist_data</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">cumulative_data</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="n">line_color</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="n">line_width</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">data_source</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="plot_hail_hist_both"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.plot_hail_hist_both">[docs]</a><span class="k">def</span> <span class="nf">plot_hail_hist_both</span><span class="p">(</span>
+    <span class="n">hist_data</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>  <span class="c1"># noqa: D103</span>
+    <span class="n">p1</span> <span class="o">=</span> <span class="n">plot_hail_hist</span><span class="p">(</span><span class="n">hist_data</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">log</span><span class="p">)</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">plot_hail_hist_cumulative</span><span class="p">(</span>
+        <span class="n">hist_data</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2"> (Cumulative)&quot;</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="n">log</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Tabs</span><span class="p">(</span>
+        <span class="n">tabs</span><span class="o">=</span><span class="p">[</span><span class="n">TabPanel</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Raw&quot;</span><span class="p">),</span> <span class="n">TabPanel</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">p2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Cumulative&quot;</span><span class="p">)]</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_font_size"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.set_font_size">[docs]</a><span class="k">def</span> <span class="nf">set_font_size</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">font_size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;12pt&quot;</span><span class="p">):</span>  <span class="c1"># noqa: D103</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">axis_label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">axis_label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">major_label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">major_label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="p">,</span> <span class="s2">&quot;group_text_font_size&quot;</span><span class="p">):</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">group_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="linear_and_log_tabs"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.linear_and_log_tabs">[docs]</a><span class="k">def</span> <span class="nf">linear_and_log_tabs</span><span class="p">(</span><span class="n">plot_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tabs</span><span class="p">:</span>  <span class="c1"># noqa: D103</span>
+    <span class="n">panels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">axis_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">]:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">axis_type</span><span class="o">=</span><span class="n">axis_type</span><span class="p">)</span>
+        <span class="n">panel</span> <span class="o">=</span> <span class="n">TabPanel</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">axis_type</span><span class="p">)</span>
+        <span class="n">panels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">panel</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Tabs</span><span class="p">(</span><span class="n">tabs</span><span class="o">=</span><span class="n">panels</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_hail_file_metadata"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.plot_hail_file_metadata">[docs]</a><span class="k">def</span> <span class="nf">plot_hail_file_metadata</span><span class="p">(</span>
+    <span class="n">t_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Grid</span><span class="p">,</span> <span class="n">Tabs</span><span class="p">,</span> <span class="n">bokeh</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">figure</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Take path to hail Table or MatrixTable (gs://bucket/path/hail.mt), output Grid or Tabs, respectively.</span>
+
+<span class="sd">    Or if an unordered Table is provided, a Figure with file sizes is output.</span>
+<span class="sd">    If metadata file or rows directory is missing, returns None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">panel_size</span> <span class="o">=</span> <span class="mi">600</span>
+    <span class="n">subpanel_size</span> <span class="o">=</span> <span class="mi">150</span>
+
+    <span class="n">files</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">t_path</span><span class="p">)</span>
+    <span class="n">rows_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">)]</span>
+    <span class="n">entries_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;entries&quot;</span><span class="p">)]</span>
+    <span class="c1"># cols_file = [x[&#39;path&#39;] for x in files if x[&#39;path&#39;].endswith(&#39;cols&#39;)]</span>
+    <span class="n">success_file</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;modification_time&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">data_type</span> <span class="o">=</span> <span class="s2">&quot;Table&quot;</span>
+
+    <span class="n">metadata_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;metadata.json.gz&quot;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata_file</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No metadata file found. Exiting...&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">with</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_open</span><span class="p">(</span><span class="n">metadata_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">overall_meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">rows_per_partition</span> <span class="o">=</span> <span class="n">overall_meta</span><span class="p">[</span><span class="s2">&quot;components&quot;</span><span class="p">][</span><span class="s2">&quot;partition_counts&quot;</span><span class="p">][</span><span class="s2">&quot;counts&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows_file</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No rows directory found. Exiting...&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">rows_files</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">rows_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">entries_file</span><span class="p">:</span>
+        <span class="n">data_type</span> <span class="o">=</span> <span class="s2">&quot;MatrixTable&quot;</span>
+        <span class="n">rows_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rows_files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">)]</span>
+        <span class="n">rows_files</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">rows_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">row_partition_bounds</span><span class="p">,</span> <span class="n">row_file_sizes</span> <span class="o">=</span> <span class="n">get_rows_data</span><span class="p">(</span><span class="n">rows_files</span><span class="p">)</span>
+
+    <span class="n">total_file_size</span><span class="p">,</span> <span class="n">row_file_sizes</span><span class="p">,</span> <span class="n">row_scale</span> <span class="o">=</span> <span class="n">scale_file_sizes</span><span class="p">(</span><span class="n">row_file_sizes</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">row_partition_bounds</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Table is not partitioned. Only plotting file sizes&quot;</span><span class="p">)</span>
+        <span class="n">row_file_sizes_hist</span><span class="p">,</span> <span class="n">row_file_sizes_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">row_file_sizes</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span>
+        <span class="p">)</span>
+        <span class="n">p_file_size</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">plot_width</span><span class="o">=</span><span class="n">panel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">panel_size</span><span class="p">)</span>
+        <span class="n">p_file_size</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+            <span class="n">right</span><span class="o">=</span><span class="n">row_file_sizes_hist</span><span class="p">,</span>
+            <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">bottom</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">top</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+            <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+            <span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">p_file_size</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">axis_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;File size (</span><span class="si">{</span><span class="n">row_scale</span><span class="si">}</span><span class="s2">B)&quot;</span>
+        <span class="k">return</span> <span class="n">p_file_size</span>
+
+    <span class="n">all_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;partition_widths&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_partition_bounds</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;partition_bounds&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_partition_bounds</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;spans_chromosome&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Spans chromosomes&quot;</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;Within chromosome&quot;</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_partition_bounds</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;row_file_sizes&quot;</span><span class="p">:</span> <span class="n">row_file_sizes</span><span class="p">,</span>
+        <span class="s2">&quot;row_file_sizes_human&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row_scale</span><span class="si">}</span><span class="s2">B&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_file_sizes</span><span class="p">],</span>
+        <span class="s2">&quot;rows_per_partition&quot;</span><span class="p">:</span> <span class="n">rows_per_partition</span><span class="p">,</span>
+        <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows_per_partition</span><span class="p">))),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">entries_file</span><span class="p">:</span>
+        <span class="n">entries_rows_files</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">entries_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">entries_rows_file</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">entries_rows_files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">entries_rows_file</span><span class="p">:</span>
+            <span class="n">entries_files</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">entries_rows_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">entry_partition_bounds</span><span class="p">,</span> <span class="n">entry_file_sizes</span> <span class="o">=</span> <span class="n">get_rows_data</span><span class="p">(</span><span class="n">entries_files</span><span class="p">)</span>
+            <span class="n">total_entry_file_size</span><span class="p">,</span> <span class="n">entry_file_sizes</span><span class="p">,</span> <span class="n">entry_scale</span> <span class="o">=</span> <span class="n">scale_file_sizes</span><span class="p">(</span>
+                <span class="n">entry_file_sizes</span>
+            <span class="p">)</span>
+            <span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;entry_file_sizes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry_file_sizes</span>
+            <span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;entry_file_sizes_human&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">entry_scale</span><span class="si">}</span><span class="s2">B&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row_file_sizes</span>
+            <span class="p">]</span>
+
+    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">t_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Rows: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s1">&#39;rows_per_partition&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&lt;br/&gt;Partitions:&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s1">&#39;rows_per_partition&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&lt;br/&gt;Size: </span><span class="si">{</span><span class="n">total_file_size</span><span class="si">}</span><span class="s2">&lt;br/&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">success_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">success_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_data</span><span class="p">))</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">panel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">panel_size</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">title</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">axis_label</span> <span class="o">=</span> <span class="s2">&quot;Number of rows&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">axis_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;File size (</span><span class="si">{</span><span class="n">row_scale</span><span class="si">}</span><span class="s2">B)&quot;</span>
+    <span class="n">color_map</span> <span class="o">=</span> <span class="n">factor_cmap</span><span class="p">(</span>
+        <span class="s2">&quot;spans_chromosome&quot;</span><span class="p">,</span>
+        <span class="n">palette</span><span class="o">=</span><span class="n">Spectral8</span><span class="p">,</span>
+        <span class="n">factors</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;spans_chromosome&quot;</span><span class="p">])),</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+        <span class="s2">&quot;rows_per_partition&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;row_file_sizes&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">color_map</span><span class="p">,</span>
+        <span class="n">legend</span><span class="o">=</span><span class="s2">&quot;spans_chromosome&quot;</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;bottom_right&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;@</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;rows_per_partition&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;row_file_sizes_human&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;partition_bounds&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;index&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">p_stats</span> <span class="o">=</span> <span class="n">Div</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">p_rows_per_partition</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span>
+        <span class="n">x_range</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">x_range</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">panel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">subpanel_size</span>
+    <span class="p">)</span>
+    <span class="n">p_file_size</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span>
+        <span class="n">y_range</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">y_range</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">subpanel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">panel_size</span>
+    <span class="p">)</span>
+
+    <span class="n">rows_per_partition_hist</span><span class="p">,</span> <span class="n">rows_per_partition_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+        <span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;rows_per_partition&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span>
+    <span class="p">)</span>
+    <span class="n">p_rows_per_partition</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+        <span class="n">top</span><span class="o">=</span><span class="n">rows_per_partition_hist</span><span class="p">,</span>
+        <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">left</span><span class="o">=</span><span class="n">rows_per_partition_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">right</span><span class="o">=</span><span class="n">rows_per_partition_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+        <span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">row_file_sizes_hist</span><span class="p">,</span> <span class="n">row_file_sizes_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+        <span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;row_file_sizes&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span>
+    <span class="p">)</span>
+    <span class="n">p_file_size</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+        <span class="n">right</span><span class="o">=</span><span class="n">row_file_sizes_hist</span><span class="p">,</span>
+        <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">bottom</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">top</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+        <span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">rows_grid</span> <span class="o">=</span> <span class="n">gridplot</span><span class="p">([[</span><span class="n">p_rows_per_partition</span><span class="p">,</span> <span class="n">p_stats</span><span class="p">],</span> <span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">p_file_size</span><span class="p">]])</span>
+
+    <span class="k">if</span> <span class="s2">&quot;entry_file_sizes&quot;</span> <span class="ow">in</span> <span class="n">all_data</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Statistics for </span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">t_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Rows: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s1">&#39;rows_per_partition&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&lt;br/&gt;Partitions:&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s1">&#39;rows_per_partition&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&lt;br/&gt;Size:&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">total_entry_file_size</span><span class="si">}</span><span class="s2">&lt;br/&gt;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">success_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="n">success_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_data</span><span class="p">))</span>
+        <span class="n">panel_size</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">subpanel_size</span> <span class="o">=</span> <span class="mi">150</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">TOOLS</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">panel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">panel_size</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">axis_label</span> <span class="o">=</span> <span class="s2">&quot;Number of rows&quot;</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">axis_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;File size (</span><span class="si">{</span><span class="n">entry_scale</span><span class="si">}</span><span class="s2">B)&quot;</span>
+        <span class="n">color_map</span> <span class="o">=</span> <span class="n">factor_cmap</span><span class="p">(</span>
+            <span class="s2">&quot;spans_chromosome&quot;</span><span class="p">,</span>
+            <span class="n">palette</span><span class="o">=</span><span class="n">Spectral8</span><span class="p">,</span>
+            <span class="n">factors</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;spans_chromosome&quot;</span><span class="p">])),</span>
+        <span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="s2">&quot;rows_per_partition&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;entry_file_sizes&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color_map</span><span class="p">,</span>
+            <span class="n">legend</span><span class="o">=</span><span class="s2">&quot;spans_chromosome&quot;</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;bottom_right&quot;</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;@</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">&quot;rows_per_partition&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;entry_file_sizes_human&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;partition_bounds&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;index&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="n">p_stats</span> <span class="o">=</span> <span class="n">Div</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">p_rows_per_partition</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span>
+            <span class="n">x_range</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">x_range</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">panel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">subpanel_size</span>
+        <span class="p">)</span>
+        <span class="n">p_rows_per_partition</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+            <span class="n">top</span><span class="o">=</span><span class="n">rows_per_partition_hist</span><span class="p">,</span>
+            <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">left</span><span class="o">=</span><span class="n">rows_per_partition_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">right</span><span class="o">=</span><span class="n">rows_per_partition_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+            <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+            <span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">p_file_size</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span>
+            <span class="n">y_range</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">y_range</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="n">subpanel_size</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="n">panel_size</span>
+        <span class="p">)</span>
+
+        <span class="n">row_file_sizes_hist</span><span class="p">,</span> <span class="n">row_file_sizes_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">all_data</span><span class="p">[</span><span class="s2">&quot;entry_file_sizes&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span>
+        <span class="p">)</span>
+        <span class="n">p_file_size</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+            <span class="n">right</span><span class="o">=</span><span class="n">row_file_sizes_hist</span><span class="p">,</span>
+            <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">bottom</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">top</span><span class="o">=</span><span class="n">row_file_sizes_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+            <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">,</span>
+            <span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;#033649&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">entries_grid</span> <span class="o">=</span> <span class="n">gridplot</span><span class="p">([[</span><span class="n">p_rows_per_partition</span><span class="p">,</span> <span class="n">p_stats</span><span class="p">],</span> <span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">p_file_size</span><span class="p">]])</span>
+
+        <span class="k">return</span> <span class="n">Tabs</span><span class="p">(</span>
+            <span class="n">tabs</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">TabPanel</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">entries_grid</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Entries&quot;</span><span class="p">),</span>
+                <span class="n">TabPanel</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">rows_grid</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rows&quot;</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rows_grid</span></div>
+
+
+<div class="viewcode-block" id="scale_file_sizes"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.scale_file_sizes">[docs]</a><span class="k">def</span> <span class="nf">scale_file_sizes</span><span class="p">(</span><span class="n">file_sizes</span><span class="p">):</span>  <span class="c1"># noqa: D103</span>
+    <span class="n">min_file_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">file_sizes</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.1</span>
+    <span class="n">total_file_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">file_sizes</span><span class="p">)</span>
+    <span class="n">all_scales</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mf">1e12</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mf">1e9</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mf">1e0</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">overall_scale</span><span class="p">,</span> <span class="n">overall_factor</span> <span class="ow">in</span> <span class="n">all_scales</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">total_file_size</span> <span class="o">&gt;</span> <span class="n">overall_factor</span><span class="p">:</span>
+            <span class="n">total_file_size</span> <span class="o">/=</span> <span class="n">overall_factor</span>
+            <span class="k">break</span>
+    <span class="k">for</span> <span class="n">scale</span><span class="p">,</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">all_scales</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">min_file_size</span> <span class="o">&gt;</span> <span class="n">factor</span><span class="p">:</span>
+            <span class="n">file_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">/</span> <span class="n">factor</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">file_sizes</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="n">total_file_size</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">total_file_size</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">overall_scale</span><span class="si">}</span><span class="s2">B&quot;</span>
+    <span class="k">return</span> <span class="n">total_file_size</span><span class="p">,</span> <span class="n">file_sizes</span><span class="p">,</span> <span class="n">scale</span></div>
+
+
+<div class="viewcode-block" id="get_rows_data"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.get_rows_data">[docs]</a><span class="k">def</span> <span class="nf">get_rows_data</span><span class="p">(</span><span class="n">rows_files</span><span class="p">):</span>  <span class="c1"># noqa: D103</span>
+    <span class="n">file_sizes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">partition_bounds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parts_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rows_files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;parts&quot;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">parts_file</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_ls</span><span class="p">(</span><span class="n">parts_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parts_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">/part-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">test_index</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="s2">&quot;path&quot;</span><span class="p">]</span>
+                    <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parts_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">/part-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">test_index</span> <span class="o">==</span> <span class="n">index</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="n">file_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;size_bytes&quot;</span><span class="p">])</span>
+    <span class="n">metadata_file</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rows_files</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;metadata.json.gz&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">metadata_file</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_open</span><span class="p">(</span><span class="n">metadata_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">rows_meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">partition_bounds</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">][</span><span class="s2">&quot;locus&quot;</span><span class="p">][</span><span class="s2">&quot;contig&quot;</span><span class="p">],</span>
+                        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">][</span><span class="s2">&quot;locus&quot;</span><span class="p">][</span><span class="s2">&quot;position&quot;</span><span class="p">],</span>
+                        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="s2">&quot;locus&quot;</span><span class="p">][</span><span class="s2">&quot;contig&quot;</span><span class="p">],</span>
+                        <span class="n">x</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="s2">&quot;locus&quot;</span><span class="p">][</span><span class="s2">&quot;position&quot;</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rows_meta</span><span class="p">[</span><span class="s2">&quot;jRangeBounds&quot;</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">partition_bounds</span><span class="p">,</span> <span class="n">file_sizes</span></div>
+
+
+<div class="viewcode-block" id="pair_plot"><a class="viewcode-back" href="../../../api_reference/utils/plotting.html#gnomad.utils.plotting.pair_plot">[docs]</a><span class="k">def</span> <span class="nf">pair_plot</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">label_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tools</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;save,pan,box_zoom,reset,wheel_zoom,box_select,lasso_select,help&quot;</span><span class="p">,</span>
+    <span class="n">tooltip_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Column</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot each column of `data` against each other and returns a grid of plots.</span>
+
+<span class="sd">    The diagonal contains a histogram of each column, or a density plot if labels are provided.</span>
+<span class="sd">    The lower diagonal contains scatter plots of each column against each other.</span>
+<span class="sd">    The upper diagonal is empty.</span>
+
+<span class="sd">    All columns should be numerical with the exception of the `label_col` if provided.</span>
+<span class="sd">    If a color dict containing provided mapping labels to specific colors can be specified using `color_dict`</span>
+
+<span class="sd">    :param data: Dataframe to plot</span>
+<span class="sd">    :param label_col: Column of the DataFrame containing the labels</span>
+<span class="sd">    :param colors: RGB hex colors. If a dict is provided, it should contain the mapping of label to colors.</span>
+<span class="sd">    :param tools: Tools for the resulting plots</span>
+<span class="sd">    :param tooltip_cols: Additional columns that should be displayed in tooltip</span>
+<span class="sd">    :return: Grid of plots (column of rows)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tooltip_cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tooltip_cols</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">label_col</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">label_col</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">label_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tooltip_cols</span><span class="p">:</span>
+        <span class="n">tooltip_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label_col</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">label_col</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">colors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;`colors_dict` ignored since no `label_col` specified&quot;</span><span class="p">)</span>
+
+    <span class="n">colors_col</span> <span class="o">=</span> <span class="s2">&quot;__pair_plot_color&quot;</span>
+
+    <span class="n">colors_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">label_col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">colors_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">viridis</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">colors</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">label_col</span><span class="p">])</span>
+            <span class="n">color_palette</span> <span class="o">=</span> <span class="n">viridis</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span> <span class="k">if</span> <span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">colors</span>
+            <span class="n">colors_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">l</span><span class="p">:</span> <span class="n">color_palette</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">labels</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">colors_dict</span> <span class="o">=</span> <span class="n">colors</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">colors_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">label_col</span><span class="p">]]</span>
+        <span class="n">tools</span> <span class="o">=</span> <span class="s2">&quot;hover,&quot;</span> <span class="o">+</span> <span class="n">tools</span>
+
+    <span class="n">data_cols</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">colors_col</span><span class="p">,</span> <span class="n">label_col</span><span class="p">]</span> <span class="o">+</span> <span class="n">tooltip_cols</span>
+    <span class="p">]</span>
+    <span class="n">data_ranges</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DataRange1d</span><span class="p">(</span>
+            <span class="n">start</span><span class="o">=</span><span class="n">rmin</span> <span class="o">-</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">rmin</span> <span class="o">-</span> <span class="n">rmax</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="n">rmax</span> <span class="o">+</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">rmin</span> <span class="o">-</span> <span class="n">rmax</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">rmin</span><span class="p">,</span> <span class="n">rmax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">data_cols</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="n">data_cols</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="n">data_source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
+
+    <span class="n">n_cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_cols</span><span class="p">)</span>
+
+    <span class="n">plot_grid</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cols</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_cols</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span>
+                <span class="n">x_axis_label</span><span class="o">=</span><span class="n">data_cols</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">n_cols</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">y_axis_label</span><span class="o">=</span><span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">x_range</span> <span class="o">=</span> <span class="n">data_ranges</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">label_col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+                        <span class="n">data</span><span class="p">[</span><span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="n">density</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span>
+                    <span class="p">)</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span><span class="n">top</span><span class="o">=</span><span class="n">hist</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">right</span><span class="o">=</span><span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">density_data</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">data</span><span class="p">[[</span><span class="n">label_col</span><span class="p">,</span> <span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">]]]</span>
+                        <span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">label_col</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                            <span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+                                <span class="n">df</span><span class="p">[</span><span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">)</span> <span class="ow">in</span> <span class="n">density_data</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                        <span class="n">line_source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                <span class="s2">&quot;hist&quot;</span><span class="p">:</span> <span class="n">hist</span><span class="p">,</span>
+                                <span class="n">label_col</span><span class="p">:</span> <span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="p">),</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+                            <span class="s2">&quot;edges&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;hist&quot;</span><span class="p">,</span>
+                            <span class="n">color</span><span class="o">=</span><span class="n">colors_dict</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
+                            <span class="n">legend</span><span class="o">=</span><span class="n">label_col</span><span class="p">,</span>
+                            <span class="n">source</span><span class="o">=</span><span class="n">line_source</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="p">(</span><span class="n">label_col</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;@</span><span class="si">{</span><span class="n">label_col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">y_range</span> <span class="o">=</span> <span class="n">data_ranges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">label_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span>
+                        <span class="n">data_cols</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                        <span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">source</span><span class="o">=</span><span class="n">data_source</span><span class="p">,</span>
+                        <span class="n">color</span><span class="o">=</span><span class="n">colors_col</span><span class="p">,</span>
+                        <span class="n">legend</span><span class="o">=</span><span class="n">label_col</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span>
+                        <span class="n">data_cols</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">data_cols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">source</span><span class="o">=</span><span class="n">data_source</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors_col</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">tooltip_cols</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span><span class="n">HoverTool</span><span class="p">)</span><span class="o">.</span><span class="n">tooltips</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;@</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tooltip_cols</span>
+                    <span class="p">]</span>
+
+            <span class="n">row</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="n">plot_grid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">gridplot</span><span class="p">(</span><span class="n">plot_grid</span><span class="p">,</span> <span class="n">toolbar_location</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

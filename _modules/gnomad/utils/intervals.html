@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.intervals &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.intervals</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.intervals</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+
+<div class="viewcode-block" id="sort_intervals"><a class="viewcode-back" href="../../../api_reference/utils/intervals.html#gnomad.utils.intervals.sort_intervals">[docs]</a><span class="k">def</span> <span class="nf">sort_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sort an array of intervals by start contig, then start position, then end contig, then end position.</span>
+
+<span class="sd">    :param intervals: Intervals to sort</span>
+<span class="sd">    :return: Sorted interval list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">intervals</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">interval</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">reference_genome</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span><span class="p">),</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">reference_genome</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">contig</span><span class="p">),</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="union_intervals"><a class="viewcode-back" href="../../../api_reference/utils/intervals.html#gnomad.utils.intervals.union_intervals">[docs]</a><span class="k">def</span> <span class="nf">union_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">],</span> <span class="n">is_sorted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a list with the union of all intervals in the input list by merging overlapping intervals.</span>
+
+<span class="sd">    :param intervals: Intervals to merge</span>
+<span class="sd">    :param is_sorted: If set, assumes intervals are already sorted, otherwise will sort.</span>
+<span class="sd">    :return: List of merged intervals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sorted_intervals</span> <span class="o">=</span> <span class="n">intervals</span> <span class="k">if</span> <span class="n">is_sorted</span> <span class="k">else</span> <span class="n">sort_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">)</span>
+    <span class="n">merged_intervals</span> <span class="o">=</span> <span class="n">sorted_intervals</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">interval</span> <span class="ow">in</span> <span class="n">sorted_intervals</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="k">if</span> <span class="n">merged_intervals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span> <span class="o">==</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">merged_intervals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span> <span class="o">&lt;</span> <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">position</span> <span class="o">&lt;=</span> <span class="n">merged_intervals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span><span class="p">:</span>
+                    <span class="n">merged_intervals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">(</span>
+                        <span class="n">merged_intervals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">interval</span><span class="o">.</span><span class="n">end</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">merged_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">merged_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">merged_intervals</span></div>
+
+
+<div class="viewcode-block" id="interval_length"><a class="viewcode-back" href="../../../api_reference/utils/intervals.html#gnomad.utils.intervals.interval_length">[docs]</a><span class="k">def</span> <span class="nf">interval_length</span><span class="p">(</span><span class="n">interval</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the total number of bases in an Interval.</span>
+
+<span class="sd">    :param interval: Input interval</span>
+<span class="sd">    :return: Total length of the interval</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span> <span class="o">!=</span> <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">contig</span><span class="p">:</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">reference_genome</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">ref</span><span class="o">.</span><span class="n">contig_length</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">position</span>
+            <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">ref</span><span class="o">.</span><span class="n">contig_length</span><span class="p">(</span><span class="n">contig</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">ref</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span>
+                    <span class="n">ref</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span><span class="p">)</span>
+                    <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">ref</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">contig</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span> <span class="o">-</span> <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">position</span></div>
+
+
+<div class="viewcode-block" id="pad_intervals"><a class="viewcode-back" href="../../../api_reference/utils/intervals.html#gnomad.utils.intervals.pad_intervals">[docs]</a><span class="k">def</span> <span class="nf">pad_intervals</span><span class="p">(</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">,</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">padding_bp</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add padding to interval(s).</span>
+
+<span class="sd">    :param intervals: Interval(s) to add padding to. This can be a single Interval,</span>
+<span class="sd">        a list of Intervals, or an IntervalExpression.</span>
+<span class="sd">    :param padding_bp: Number of base pairs to add to each side of the interval.</span>
+<span class="sd">    :return: Interval(s) with padding added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_add_padding</span><span class="p">(</span>
+        <span class="n">interval</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add padding to an interval.</span>
+
+<span class="sd">        :param interval: Interval to add padding to.</span>
+<span class="sd">        :return: Interval with padding added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">locus_interval</span><span class="p">(</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">position</span> <span class="o">-</span> <span class="n">padding_bp</span><span class="p">,</span>
+            <span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">padding_bp</span><span class="p">,</span>
+            <span class="n">includes_start</span><span class="o">=</span><span class="n">interval</span><span class="o">.</span><span class="n">includes_start</span><span class="p">,</span>
+            <span class="n">includes_end</span><span class="o">=</span><span class="n">interval</span><span class="o">.</span><span class="n">includes_end</span><span class="p">,</span>
+            <span class="n">reference_genome</span><span class="o">=</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">reference_genome</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_add_padding</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_add_padding</span><span class="p">(</span><span class="n">intervals</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

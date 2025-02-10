@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.evaluation &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.variant_qc.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="compute_ranked_bin"><a class="viewcode-back" href="../../../api_reference/variant_qc/evaluation.html#gnomad.variant_qc.evaluation.compute_ranked_bin">[docs]</a><span class="k">def</span> <span class="nf">compute_ranked_bin</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">score_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">bin_expr</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bin&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="n">compute_snv_indel_separately</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">n_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">desc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a table with a bin for each row based on the ranking of `score_expr`.</span>
+
+<span class="sd">    The bin is computed by dividing the `score_expr` into `n_bins` bins containing approximately equal numbers of elements.</span>
+<span class="sd">    This is done by ranking the rows by `score_expr` (and a random number in cases where multiple variants have the same score)</span>
+<span class="sd">    and then assigning the variant to a bin based on its ranking.</span>
+
+<span class="sd">    If `compute_snv_indel_separately` is True all items in `bin_expr` will be stratified by snv / indels for the ranking and</span>
+<span class="sd">    bin calculation. Because SNV and indel rows are mutually exclusive, they are re-combined into a single annotation. For</span>
+<span class="sd">    example if we have the following four variants and scores and `n_bins` of 2:</span>
+
+<span class="sd">    ========   =======   ======   =================   =================</span>
+<span class="sd">    Variant    Type      Score    bin - `compute_snv_indel_separately`:</span>
+<span class="sd">    --------   -------   ------   -------------------------------------</span>
+<span class="sd">    \          \         \        False               True</span>
+<span class="sd">    ========   =======   ======   =================   =================</span>
+<span class="sd">    Var1       SNV       0.1      1                   1</span>
+<span class="sd">    Var2       SNV       0.2      1                   2</span>
+<span class="sd">    Var3       Indel     0.3      2                   1</span>
+<span class="sd">    Var4       Indel     0.4      2                   2</span>
+<span class="sd">    ========   =======   ======   =================   =================</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The `bin_expr` defines which data the bin(s) should be computed on. E.g., to get biallelic specific binning</span>
+<span class="sd">        and singleton specific binning, the following could be used:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            bin_expr={</span>
+<span class="sd">                &#39;biallelic_bin&#39;: ~ht.was_split,</span>
+<span class="sd">                &#39;singleton_bin&#39;: ht.singleton</span>
+<span class="sd">            }</span>
+
+<span class="sd">    :param ht: Input Table</span>
+<span class="sd">    :param score_expr: Expression containing the score</span>
+<span class="sd">    :param bin_expr: Specific row grouping(s) to perform ranking and binning on (see note)</span>
+<span class="sd">    :param compute_snv_indel_separately: Should all `bin_expr` items be stratified by SNVs / indels</span>
+<span class="sd">    :param n_bins: Number of bins to bin the data into</span>
+<span class="sd">    :param desc: Whether to bin the score in descending order</span>
+<span class="sd">    :return: Table with the requested bin annotations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">compute_snv_indel_separately</span><span class="p">:</span>
+        <span class="c1"># For each bin, add a SNV / indel stratification</span>
+        <span class="n">bin_expr</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">snv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">bin_expr</span> <span class="o">&amp;</span> <span class="n">snv_expr</span>
+            <span class="k">for</span> <span class="n">bin_id</span><span class="p">,</span> <span class="n">bin_expr</span> <span class="ow">in</span> <span class="n">bin_expr</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">snv</span><span class="p">,</span> <span class="n">snv_expr</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;snv&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span>
+                <span class="p">(</span><span class="s2">&quot;indel&quot;</span><span class="p">,</span> <span class="o">~</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;_filter_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">bin_expr</span> <span class="k">for</span> <span class="n">bin_id</span><span class="p">,</span> <span class="n">bin_expr</span> <span class="ow">in</span> <span class="n">bin_expr</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">_score</span><span class="o">=</span><span class="n">score_expr</span><span class="p">,</span>
+        <span class="n">snv</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">_rand</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">rand_unif</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Checkpoint bin Table prior to variant count aggregation.</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ht&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Compute variant counts per group defined by bin_expr. This is used to determine</span>
+    <span class="c1"># bin assignment.</span>
+    <span class="n">bin_group_variant_counts</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">bin_id</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_filter_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+                    <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Sorting the HT by score_expr followed by a random float between 0 and 1. &quot;</span>
+        <span class="s2">&quot;Then adding a row index per grouping defined by bin_expr...&quot;</span>
+    <span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;_score&quot;</span><span class="p">,</span> <span class="s2">&quot;_rand&quot;</span><span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_rank&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+                <span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_filter_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_filter_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;locus&quot;</span><span class="p">,</span> <span class="s2">&quot;alleles&quot;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Binning ranked rows into </span><span class="si">%d</span><span class="s2"> bins...&quot;</span><span class="p">,</span> <span class="n">n_bins</span><span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="s2">&quot;snv&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">bin_id</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">int</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">n_bins</span>
+                        <span class="o">*</span> <span class="p">(</span>
+                            <span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_rank&quot;</span><span class="p">]</span>
+                            <span class="o">/</span> <span class="n">hl</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">bin_group_variant_counts</span><span class="p">[</span><span class="n">bin_id</span><span class="p">])</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">desc</span><span class="p">:</span>
+        <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">bin_id</span><span class="p">:</span> <span class="n">n_bins</span> <span class="o">-</span> <span class="n">bin_ht</span><span class="p">[</span><span class="n">bin_id</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Because SNV and indel rows are mutually exclusive, re-combine them into a single bin.</span>
+    <span class="c1"># Update the global bin_group_variant_counts struct to reflect the change</span>
+    <span class="c1"># in bin names in the table</span>
+    <span class="k">if</span> <span class="n">compute_snv_indel_separately</span><span class="p">:</span>
+        <span class="n">bin_expr_no_snv</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bin_id</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_group_variant_counts</span>
+        <span class="p">}</span>
+        <span class="n">bin_group_variant_counts</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">bin_id</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="n">snv</span><span class="p">:</span> <span class="n">bin_group_variant_counts</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">snv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">snv</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;snv&quot;</span><span class="p">,</span> <span class="s2">&quot;indel&quot;</span><span class="p">]</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr_no_snv</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">bin_id</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                    <span class="n">bin_ht</span><span class="o">.</span><span class="n">snv</span><span class="p">,</span>
+                    <span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_snv&quot;</span><span class="p">],</span>
+                    <span class="n">bin_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">_indel&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">bin_expr_no_snv</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">bin_group_variant_counts</span><span class="o">=</span><span class="n">bin_group_variant_counts</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bin_ht</span></div>
+
+
+<div class="viewcode-block" id="compute_grouped_binned_ht"><a class="viewcode-back" href="../../../api_reference/variant_qc/evaluation.html#gnomad.variant_qc.evaluation.compute_grouped_binned_ht">[docs]</a><span class="k">def</span> <span class="nf">compute_grouped_binned_ht</span><span class="p">(</span>
+    <span class="n">bin_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">checkpoint_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">GroupedTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Group a Table that has been annotated with bins (`compute_ranked_bin` or `create_binned_ht`).</span>
+
+<span class="sd">    The table will be grouped by bin_id (bin, biallelic, etc.), contig, snv, bi_allelic and singleton.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If performing an aggregation following this grouping (such as `score_bin_agg`) then the aggregation</span>
+<span class="sd">        function will need to use `ht._parent` to get the origin Table from the GroupedTable for the aggregation</span>
+
+<span class="sd">    :param bin_ht: Input Table with a `bin_id` annotation</span>
+<span class="sd">    :param checkpoint_path: If provided an intermediate checkpoint table is created with all required annotations before shuffling.</span>
+<span class="sd">    :return: Table grouped by bins(s)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Explode the rank table by bin_id</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">bin_groups</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="n">bin_id</span><span class="o">=</span><span class="n">bin_name</span><span class="p">,</span> <span class="nb">bin</span><span class="o">=</span><span class="n">bin_ht</span><span class="p">[</span><span class="n">bin_name</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">bin_name</span> <span class="ow">in</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">bin_group_variant_counts</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin_groups</span><span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span>
+        <span class="n">bin_id</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin_groups</span><span class="o">.</span><span class="n">bin_id</span><span class="p">,</span> <span class="nb">bin</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin_groups</span><span class="o">.</span><span class="n">bin</span>
+    <span class="p">)</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">checkpoint_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bin_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+
+    <span class="c1"># Group by bin_id, bin and additional stratification desired and compute</span>
+    <span class="c1"># QC metrics per bin</span>
+    <span class="k">return</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+        <span class="n">bin_id</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin_id</span><span class="p">,</span>
+        <span class="n">contig</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span>
+        <span class="n">snv</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bin_ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">bi_allelic</span><span class="o">=~</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">was_split</span><span class="p">,</span>
+        <span class="n">singleton</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">singleton</span><span class="p">,</span>
+        <span class="n">release_adj</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">ac</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="nb">bin</span><span class="o">=</span><span class="n">bin_ht</span><span class="o">.</span><span class="n">bin</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">_set_buffer_size</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_binned_truth_sample_concordance"><a class="viewcode-back" href="../../../api_reference/variant_qc/evaluation.html#gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance">[docs]</a><span class="k">def</span> <span class="nf">compute_binned_truth_sample_concordance</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">binned_score_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">n_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">add_bins</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine the concordance (TP, FP, FN) between a truth sample within the callset and the samples truth data grouped by bins computed using `compute_ranked_bin`.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The input &#39;ht` should contain three row fields:</span>
+<span class="sd">            - score: value to use for binning</span>
+<span class="sd">            - GT: a CallExpression containing the genotype of the evaluation data for the sample</span>
+<span class="sd">            - truth_GT: a CallExpression containing the genotype of the truth sample</span>
+<span class="sd">        The input `binned_score_ht` should contain:</span>
+<span class="sd">             - score: value used to bin the full callset</span>
+<span class="sd">             - bin: the full callset bin</span>
+
+<span class="sd">    &#39;add_bins` can be used to add additional global and truth sample binning to the final binned truth sample</span>
+<span class="sd">    concordance HT. The keys in `add_bins` must be present in `binned_score_ht` and the values in `add_bins`</span>
+<span class="sd">    should be expressions on `ht` that define a subset of variants to bin in the truth sample. An example is if we want</span>
+<span class="sd">    to look at the global and truth sample binning on only bi-allelic variants. `add_bins` could be set to</span>
+<span class="sd">    {&#39;biallelic_bin&#39;: ht.biallelic}.</span>
+
+<span class="sd">    The table is grouped by global/truth sample bin and variant type and contains TP, FP and FN.</span>
+
+<span class="sd">    :param ht: Input HT</span>
+<span class="sd">    :param binned_score_ht: Table with the bin annotation for each variant</span>
+<span class="sd">    :param n_bins: Number of bins to bin the data into</span>
+<span class="sd">    :param add_bins: Dictionary of additional global bin columns (key) and the expr to use for binning the truth sample (value)</span>
+<span class="sd">    :return: Binned truth sample concordance HT</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Annotate score and global bin</span>
+    <span class="n">indexed_binned_score_ht</span> <span class="o">=</span> <span class="n">binned_score_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;global_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">indexed_binned_score_ht</span><span class="p">[</span><span class="n">bin_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">add_bins</span><span class="p">},</span>
+        <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">bin_expr</span> <span class="k">for</span> <span class="n">bin_id</span><span class="p">,</span> <span class="n">bin_expr</span> <span class="ow">in</span> <span class="n">add_bins</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">score</span><span class="o">=</span><span class="n">indexed_binned_score_ht</span><span class="o">.</span><span class="n">score</span><span class="p">,</span>
+        <span class="n">global_bin</span><span class="o">=</span><span class="n">indexed_binned_score_ht</span><span class="o">.</span><span class="n">bin</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;pre_bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ht&quot;</span><span class="p">))</span>
+    <span class="c1"># Annotate the truth sample bin</span>
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">compute_ranked_bin</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span>
+        <span class="n">score_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">,</span>
+        <span class="n">bin_expr</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;truth_sample_bin&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">bool</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+            <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;truth_sample_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">add_bins</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">n_bins</span><span class="o">=</span><span class="n">n_bins</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bin_ht</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+
+    <span class="n">bin_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="s2">&quot;global_bin&quot;</span><span class="p">,</span> <span class="n">ht</span><span class="o">.</span><span class="n">global_bin</span><span class="p">]),</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="s2">&quot;truth_sample_bin&quot;</span><span class="p">,</span> <span class="n">ht</span><span class="o">.</span><span class="n">truth_sample_bin</span><span class="p">]),</span>
+    <span class="p">]</span>
+    <span class="n">bin_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;global_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;global_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]])</span> <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">add_bins</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">bin_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;truth_sample_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;truth_sample_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]])</span>
+            <span class="k">for</span> <span class="n">bin_id</span> <span class="ow">in</span> <span class="n">add_bins</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Explode the global and truth sample bins</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="nb">bin</span><span class="o">=</span><span class="n">bin_list</span><span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">bin</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">bin_id</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">bin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">bin</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">int</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">bin</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="c1"># Compute TP, FP and FN by bin_id, variant type and bin</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;bin_id&quot;</span><span class="p">,</span> <span class="s2">&quot;snv&quot;</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+            <span class="c1"># TP =&gt; allele is found in both data sets</span>
+            <span class="n">tp</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">ht</span><span class="o">.</span><span class="n">truth_GT</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()),</span>
+            <span class="c1"># FP =&gt; allele is found only in test data set</span>
+            <span class="n">fp</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">truth_GT</span><span class="o">.</span><span class="n">is_hom_ref</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="c1"># FN =&gt; allele is found in truth data only</span>
+            <span class="n">fn</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">is_hom_ref</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">ht</span><span class="o">.</span><span class="n">truth_GT</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="n">min_score</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">),</span>
+            <span class="n">max_score</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">),</span>
+            <span class="n">n_alleles</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">repartition</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_truth_sample_ht"><a class="viewcode-back" href="../../../api_reference/variant_qc/evaluation.html#gnomad.variant_qc.evaluation.create_truth_sample_ht">[docs]</a><span class="k">def</span> <span class="nf">create_truth_sample_ht</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">truth_mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">high_confidence_intervals_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute a table comparing a truth sample in callset vs the truth.</span>
+
+<span class="sd">    :param mt: MT of truth sample from callset to be compared to truth</span>
+<span class="sd">    :param truth_mt: MT of truth sample</span>
+<span class="sd">    :param high_confidence_intervals_ht: High confidence interval HT</span>
+<span class="sd">    :return: Table containing both the callset truth sample and the truth data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">split_filter_and_flatten_ht</span><span class="p">(</span>
+        <span class="n">truth_mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">high_confidence_intervals_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split a truth sample MT, filter it to the given high confidence intervals, and then &quot;flatten&quot; it as a HT by annotating GT in a row field.</span>
+
+<span class="sd">        :param truth_mt: Truth sample MT</span>
+<span class="sd">        :param high_confidence_intervals_ht: High confidence intervals</span>
+<span class="sd">        :return: Truth sample table with GT as a row annotation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">count_cols</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;was_split&quot;</span> <span class="ow">in</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+            <span class="n">truth_mt</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">split_multi_hts</span><span class="p">(</span><span class="n">truth_mt</span><span class="p">)</span>
+
+        <span class="n">truth_mt</span> <span class="o">=</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">high_confidence_intervals_ht</span><span class="p">[</span><span class="n">truth_mt</span><span class="o">.</span><span class="n">locus</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">rename_entries</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;GT&quot;</span><span class="p">:</span> <span class="s2">&quot;_GT&quot;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="s2">&quot;adj&quot;</span> <span class="ow">in</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">entry</span><span class="p">:</span>
+            <span class="n">rename_entries</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;adj&quot;</span><span class="p">:</span> <span class="s2">&quot;_adj&quot;</span><span class="p">})</span>
+
+        <span class="n">truth_mt</span> <span class="o">=</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">rename_entries</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">truth_mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">truth_mt</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rename_entries</span><span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+
+    <span class="c1"># Load truth sample MT,</span>
+    <span class="c1"># restrict it to high confidence intervals</span>
+    <span class="c1"># and flatten it to a HT by annotating GT in a row annotation</span>
+    <span class="n">truth_ht</span> <span class="o">=</span> <span class="n">split_filter_and_flatten_ht</span><span class="p">(</span><span class="n">truth_mt</span><span class="p">,</span> <span class="n">high_confidence_intervals_ht</span><span class="p">)</span>
+    <span class="n">truth_ht</span> <span class="o">=</span> <span class="n">truth_ht</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">f</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;truth_</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">truth_ht</span><span class="o">.</span><span class="n">row_value</span><span class="p">})</span>
+
+    <span class="c1">#  Similarly load, filter and flatten callset truth sample MT</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">split_filter_and_flatten_ht</span><span class="p">(</span><span class="n">mt</span><span class="p">,</span> <span class="n">high_confidence_intervals_ht</span><span class="p">)</span>
+
+    <span class="c1"># Outer join of truth and callset truth and annotate the score and global bin</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">truth_ht</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">snv</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="add_rank"><a class="viewcode-back" href="../../../api_reference/variant_qc/evaluation.html#gnomad.variant_qc.evaluation.add_rank">[docs]</a><span class="k">def</span> <span class="nf">add_rank</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">score_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">subrank_expr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add rank based on the `score_expr`. Rank is added for snvs and indels separately.</span>
+
+<span class="sd">    If one or more `subrank_expr` are provided, then subrank is added based on all sites for which the boolean expression is true.</span>
+
+<span class="sd">    In addition, variant counts (snv, indel separately) is added as a global (`rank_variant_counts`).</span>
+
+<span class="sd">    :param ht: input Hail Table containing variants (with QC annotations) to be ranked</span>
+<span class="sd">    :param score_expr: the Table annotation by which ranking should be scored</span>
+<span class="sd">    :param subrank_expr: Any subranking to be added in the form name_of_subrank: subrank_filtering_expr</span>
+<span class="sd">    :return: Table with rankings added</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key</span>
+    <span class="k">if</span> <span class="n">subrank_expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">subrank_expr</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">temp_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_score&quot;</span><span class="p">:</span> <span class="n">score_expr</span><span class="p">}</span>
+    <span class="n">temp_expr</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">expr</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">subrank_expr</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+    <span class="n">rank_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">temp_expr</span><span class="p">,</span> <span class="n">is_snv</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="n">rank_ht</span> <span class="o">=</span> <span class="n">rank_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;_score&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+    <span class="n">scan_expr</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+            <span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span><span class="p">),</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="o">~</span><span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">scan_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+                <span class="n">rank_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                    <span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span><span class="p">,</span>
+                    <span class="n">hl</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span> <span class="o">&amp;</span> <span class="n">rank_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]),</span>
+                    <span class="n">hl</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="o">~</span><span class="n">rank_ht</span><span class="o">.</span><span class="n">is_snv</span> <span class="o">&amp;</span> <span class="n">rank_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">subrank_expr</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">rank_ht</span> <span class="o">=</span> <span class="n">rank_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">scan_expr</span><span class="p">)</span>
+
+    <span class="n">rank_ht</span> <span class="o">=</span> <span class="n">rank_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">*</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+    <span class="n">rank_ht</span> <span class="o">=</span> <span class="n">rank_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">scan_expr</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">rank_ht</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">ht</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

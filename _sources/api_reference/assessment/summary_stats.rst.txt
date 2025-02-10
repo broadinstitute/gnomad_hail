@@ -1,0 +1,8 @@
+gnomad.assessment.summary_stats
+===============================
+
+
+
+.. gnomad_automodulesummary:: gnomad.assessment.summary_stats
+
+.. automodule:: gnomad.assessment.summary_stats

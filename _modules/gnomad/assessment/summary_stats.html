@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.assessment.summary_stats &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.assessment.summary_stats</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.assessment.summary_stats</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.filtering</span> <span class="kn">import</span> <span class="n">filter_low_conf_regions</span><span class="p">,</span> <span class="n">low_conf_regions_expr</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.vep</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LOF_CSQ_SET</span><span class="p">,</span>
+    <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">,</span>
+    <span class="n">filter_vep_to_canonical_transcripts</span><span class="p">,</span>
+    <span class="n">filter_vep_to_mane_select_transcripts</span><span class="p">,</span>
+    <span class="n">get_most_severe_consequence_for_summary</span><span class="p">,</span>
+    <span class="n">process_consequences</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="freq_bin_expr"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.freq_bin_expr">[docs]</a><span class="k">def</span> <span class="nf">freq_bin_expr</span><span class="p">(</span>
+    <span class="n">freq_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">ac_cutoffs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;AC0&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;singleton&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;doubleton&quot;</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">af_cutoffs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="s2">&quot;0.01%&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="s2">&quot;0.1%&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1e-2</span><span class="p">,</span> <span class="s2">&quot;1%&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1e-1</span><span class="p">,</span> <span class="s2">&quot;10%&quot;</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">upper_af</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;95%&quot;</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return frequency string annotations based on input AC or AF.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        - Default index is 0 because function assumes freq_expr was calculated with</span>
+<span class="sd">          `annotate_freq`.</span>
+<span class="sd">        - Frequency index 0 from `annotate_freq` is frequency for all pops calculated</span>
+<span class="sd">          on adj genotypes only.</span>
+
+<span class="sd">    :param freq_expr: Array of structs containing frequency information.</span>
+<span class="sd">    :param index: Which index of freq_expr to use for annotation. Default is 0.</span>
+<span class="sd">    :param ac_cutoffs: List of AC cutoffs to use for binning.</span>
+<span class="sd">    :param af_cutoffs: List of AF cutoffs to use for binning.</span>
+<span class="sd">    :param upper_af: Upper AF cutoff to use for binning.</span>
+<span class="sd">    :return: StringExpression containing bin name based on input AC or AF.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">freq_expr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">):</span>
+        <span class="n">freq_expr</span> <span class="o">=</span> <span class="n">freq_expr</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">ac_cutoffs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ac_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">ac_cutoffs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">c</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;AC</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ac_cutoffs</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">af_cutoffs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">af_cutoffs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">af_cutoffs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">f</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">af_cutoffs</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_af</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">upper_af</span> <span class="o">=</span> <span class="p">(</span><span class="n">upper_af</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">upper_af</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+    <span class="n">freq_bin_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">()</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">freq_expr</span><span class="o">.</span><span class="n">AC</span><span class="p">),</span> <span class="s2">&quot;Missing&quot;</span><span class="p">)</span>
+    <span class="n">prev_af</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">ac</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ac_cutoffs</span><span class="p">):</span>
+        <span class="n">freq_bin_expr</span> <span class="o">=</span> <span class="n">freq_bin_expr</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">freq_expr</span><span class="o">.</span><span class="n">AC</span> <span class="o">==</span> <span class="n">ac</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">prev_af</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">for</span> <span class="n">af</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">af_cutoffs</span><span class="p">):</span>
+        <span class="n">prev_af</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span> <span class="k">if</span> <span class="n">prev_af</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prev_af</span><span class="si">}</span><span class="s2"> - &quot;</span>
+        <span class="n">freq_bin_expr</span> <span class="o">=</span> <span class="n">freq_bin_expr</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">freq_expr</span><span class="o">.</span><span class="n">AF</span> <span class="o">&lt;</span> <span class="n">af</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prev_af</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">prev_af</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">if</span> <span class="n">upper_af</span><span class="p">:</span>
+        <span class="n">freq_bin_expr</span> <span class="o">=</span> <span class="n">freq_bin_expr</span><span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">freq_expr</span><span class="o">.</span><span class="n">AF</span> <span class="o">&gt;</span> <span class="n">upper_af</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;&gt;</span><span class="si">{</span><span class="n">upper_af</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">default_af</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span> <span class="k">if</span> <span class="n">prev_af</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prev_af</span><span class="si">}</span><span class="s2"> - &quot;</span>
+        <span class="n">default_af</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">default_af</span><span class="si">}{</span><span class="n">upper_af</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">default_af</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&gt;</span><span class="si">{</span><span class="n">prev_af</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">return</span> <span class="n">freq_bin_expr</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">default_af</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_summary_counts_dict"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_counts_dict">[docs]</a><span class="k">def</span> <span class="nf">get_summary_counts_dict</span><span class="p">(</span>
+    <span class="n">locus_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">,</span>
+    <span class="n">allele_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="n">lof_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">no_lof_flags_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span>
+    <span class="n">most_severe_csq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">prefix_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return dictionary containing containing counts of multiple variant categories.</span>
+
+<span class="sd">    Categories are:</span>
+<span class="sd">        - Number of variants</span>
+<span class="sd">        - Number of indels</span>
+<span class="sd">        - Number of SNVs</span>
+<span class="sd">        - Number of LoF variants</span>
+<span class="sd">        - Number of LoF variants that pass LOFTEE</span>
+<span class="sd">        - Number of LoF variants that pass LOFTEE without any flgs</span>
+<span class="sd">        - Number of LoF variants annotated as &#39;other splice&#39; (OS) by LOFTEE</span>
+<span class="sd">        - Number of LoF variants that fail LOFTEE</span>
+<span class="sd">        - Number of missense variants</span>
+<span class="sd">        - Number of synonymous variants</span>
+<span class="sd">        - Number of autosomal variants</span>
+<span class="sd">        - Number of allosomal variants</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        Assumes `allele_expr` contains only two variants (multi-allelics have been split).</span>
+
+<span class="sd">    :param locus_expr: LocusExpression.</span>
+<span class="sd">    :param allele_expr: ArrayExpression containing alleles.</span>
+<span class="sd">    :param lof_expr: StringExpression containing LOFTEE annotation.</span>
+<span class="sd">    :param no_lof_flags_expr: BooleanExpression indicating whether LoF variant has any flags.</span>
+<span class="sd">    :param most_severe_csq_expr: StringExpression containing most severe consequence annotation.</span>
+<span class="sd">    :param prefix_str: Desired prefix string for category names. Default is empty str.</span>
+<span class="sd">    :return: Dict of categories and counts per category.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;This function expects that multi-allelic variants have been split!&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">num_variants&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">indels&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_indel</span><span class="p">(</span><span class="n">allele_expr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">allele_expr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">snps&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_snp</span><span class="p">(</span><span class="n">allele_expr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">allele_expr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">LOF&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">lof_expr</span><span class="p">)),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">pass_loftee&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">pass_loftee_no_flag&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">no_lof_flags_expr</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">loftee_os&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;OS&quot;</span><span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">fail_loftee&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;LC&quot;</span><span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">num_missense&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="n">most_severe_csq_expr</span> <span class="o">==</span> <span class="s2">&quot;missense_variant&quot;</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">num_synonymous&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="n">most_severe_csq_expr</span> <span class="o">==</span> <span class="s2">&quot;synonymous_variant&quot;</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">num_autosomal_variants&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">locus_expr</span><span class="o">.</span><span class="n">in_autosome_or_par</span><span class="p">(),</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">),</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix_str</span><span class="si">}</span><span class="s2">num_allosomal_variants&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">locus_expr</span><span class="o">.</span><span class="n">in_x_nonpar</span><span class="p">()</span> <span class="o">|</span> <span class="n">locus_expr</span><span class="o">.</span><span class="n">in_y_nonpar</span><span class="p">(),</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="get_summary_ac_dict"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_ac_dict">[docs]</a><span class="k">def</span> <span class="nf">get_summary_ac_dict</span><span class="p">(</span>
+    <span class="n">ac_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">,</span>
+    <span class="n">lof_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">no_lof_flags_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span>
+    <span class="n">most_severe_csq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return dictionary containing containing total allele counts for variant categories.</span>
+
+<span class="sd">    Categories are:</span>
+<span class="sd">        - All variants</span>
+<span class="sd">        - LoF variants</span>
+<span class="sd">        - LoF variants that pass LOFTEE</span>
+<span class="sd">        - LoF variants that pass LOFTEE without any flags</span>
+<span class="sd">        - LoF variants that are annotate as &#39;other splice&#39; (OS) by LOFTEE</span>
+<span class="sd">        - LoF variants that fail LOFTEE</span>
+<span class="sd">        - Missense variants</span>
+<span class="sd">        - Synonymous variants</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        Assumes `allele_expr` contains only two variants (multi-allelics have been split).</span>
+
+<span class="sd">    :param allele_expr: ArrayExpression containing alleles.</span>
+<span class="sd">    :param lof_expr: StringExpression containing LOFTEE annotation.</span>
+<span class="sd">    :param no_lof_flags_expr: BooleanExpression indicating whether LoF variant has any flags.</span>
+<span class="sd">    :return: Dict of variant categories and their total allele counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;This function expects that multi-allelic variants have been split!&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;total_ac&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">),</span>
+        <span class="s2">&quot;total_ac_LOF&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">lof_expr</span><span class="p">),</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)),</span>
+        <span class="s2">&quot;total_ac_pass_loftee&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)),</span>
+        <span class="s2">&quot;total_ac_pass_loftee_no_flag&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">no_lof_flags_expr</span><span class="p">),</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;total_ac_loftee_os&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;OS&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)),</span>
+        <span class="s2">&quot;total_ac_fail_loftee&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">lof_expr</span> <span class="o">==</span> <span class="s2">&quot;LC&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)),</span>
+        <span class="s2">&quot;total_ac_missense&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">most_severe_csq_expr</span> <span class="o">==</span> <span class="s2">&quot;missense_variant&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;total_ac_synonymous&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">most_severe_csq_expr</span> <span class="o">==</span> <span class="s2">&quot;synonymous_variant&quot;</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ac_expr</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="get_summary_counts"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_counts">[docs]</a><span class="k">def</span> <span class="nf">get_summary_counts</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">freq_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span>
+    <span class="n">filter_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;filters&quot;</span><span class="p">,</span>
+    <span class="n">filter_decoy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">canonical_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mane_select_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a struct with summary counts across variant categories.</span>
+
+<span class="sd">    Summary counts:</span>
+<span class="sd">        - Number of variants</span>
+<span class="sd">        - Number of indels</span>
+<span class="sd">        - Number of SNVs</span>
+<span class="sd">        - Number of LoF variants</span>
+<span class="sd">        - Number of LoF variants that pass LOFTEE (including with LoF flags)</span>
+<span class="sd">        - Number of LoF variants that pass LOFTEE without LoF flags</span>
+<span class="sd">        - Number of OS (other splice) variants annotated by LOFTEE</span>
+<span class="sd">        - Number of LoF variants that fail LOFTEE filters</span>
+
+<span class="sd">    Also annotates Table&#39;s globals with total variant counts.</span>
+
+<span class="sd">    Before calculating summary counts, function:</span>
+<span class="sd">        - Filters out low confidence regions</span>
+<span class="sd">        - Uses the most severe consequence</span>
+<span class="sd">        - Filters to canonical transcripts (if `canonical_only` is True) or MANE Select</span>
+<span class="sd">          transcripts (if `mane_select_only` is True)</span>
+
+<span class="sd">    Assumes that:</span>
+<span class="sd">        - Input HT is annotated with VEP.</span>
+<span class="sd">        - Multiallelic variants have been split and/or input HT contains bi-allelic variants only.</span>
+<span class="sd">        - freq_expr was calculated with `annotate_freq`.</span>
+<span class="sd">        - (Frequency index 0 from `annotate_freq` is frequency for all pops calculated on adj genotypes only.)</span>
+
+<span class="sd">    :param ht: Input Table.</span>
+<span class="sd">    :param freq_field: Name of field in HT containing frequency annotation (array of structs). Default is &quot;freq&quot;.</span>
+<span class="sd">    :param filter_field: Name of field in HT containing variant filter information. Default is &quot;filters&quot;.</span>
+<span class="sd">    :param canonical_only: Whether to filter to canonical transcripts. Default is True.</span>
+<span class="sd">    :param mane_select_only: Whether to filter to MANE Select transcripts. Default is False.</span>
+<span class="sd">    :param filter_decoy: Whether to filter decoy regions. Default is False.</span>
+<span class="sd">    :param index: Which index of freq_expr to use for annotation. Default is 0.</span>
+<span class="sd">    :return: Table grouped by frequency bin and aggregated across summary count categories.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">canonical_only</span> <span class="ow">and</span> <span class="n">mane_select_only</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Only one of `canonical_only` and `mane_select_only` can be True.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking if multi-allelic variants have been split...&quot;</span><span class="p">)</span>
+    <span class="n">max_alleles</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">max_alleles</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Splitting multi-allelics and VEP transcript consequences...&quot;</span><span class="p">)</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">split_multi_hts</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to PASS variants in high confidence regions...&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">((</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">filter_field</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_low_conf_regions</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">filter_decoy</span><span class="o">=</span><span class="n">filter_decoy</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">canonical_only</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to canonical transcripts...&quot;</span><span class="p">)</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_vep_to_canonical_transcripts</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mane_select_only</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to mane select transcripts...&quot;</span><span class="p">)</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_vep_to_mane_select_transcripts</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting VEP summary annotations...&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">get_most_severe_consequence_for_summary</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Annotating with frequency bin information...&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">freq_bin</span><span class="o">=</span><span class="n">freq_bin_expr</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">freq_field</span><span class="p">],</span> <span class="n">index</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Annotating HT globals with total counts/total allele counts per variant&quot;</span>
+        <span class="s2">&quot; category...&quot;</span>
+    <span class="p">)</span>
+    <span class="n">summary_counts</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_summary_counts_dict</span><span class="p">(</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">no_lof_flags</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">most_severe_csq</span><span class="p">,</span>
+                <span class="n">prefix_str</span><span class="o">=</span><span class="s2">&quot;total_&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">summary_ac_counts</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_summary_ac_dict</span><span class="p">(</span>
+                <span class="n">ht</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">AC</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">no_lof_flags</span><span class="p">,</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">most_severe_csq</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+        <span class="n">summary_counts</span><span class="o">=</span><span class="n">summary_counts</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">summary_ac_counts</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;freq_bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">get_summary_counts_dict</span><span class="p">(</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">,</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="p">,</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">no_lof_flags</span><span class="p">,</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">most_severe_csq</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_an_criteria"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_an_criteria">[docs]</a><span class="k">def</span> <span class="nf">get_an_criteria</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">samples_by_sex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">meta_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span>
+    <span class="n">sex_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sex_imputation.sex_karyotype&quot;</span><span class="p">,</span>
+    <span class="n">xy_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;XY&quot;</span><span class="p">,</span>
+    <span class="n">xx_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;XX&quot;</span><span class="p">,</span>
+    <span class="n">freq_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span>
+    <span class="n">freq_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">an_proportion_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate criteria to filter samples based on allele number (AN).</span>
+
+<span class="sd">    Uses allele number as proxy for call rate.</span>
+
+<span class="sd">    :param mt: Input MatrixTable.</span>
+<span class="sd">    :param samples_by_sex: Optional Dictionary containing number of samples (value) for each sample sex (key).</span>
+<span class="sd">    :param meta_root: Name of field in MatrixTable containing sample metadata information. Default is &#39;meta&#39;.</span>
+<span class="sd">    :param sex_field: Name of field in MatrixTable containing sample sex assignment. Defualt is &#39;sex_imputation.sex_karyotype&#39;.</span>
+<span class="sd">    :param xy_str: String marking whether a sample has XY sex. Default is &#39;XY&#39;.</span>
+<span class="sd">    :param xx_str: String marking whether a sample has XX sex. Default is &#39;XX&#39;.</span>
+<span class="sd">    :param freq_field: Name of field in MT that contains frequency information. Default is &#39;freq&#39;.</span>
+<span class="sd">    :param freq_index: Which index of frequency struct to use. Default is 0.</span>
+<span class="sd">    :param an_proportion_cutoff: Desired allele number proportion cutoff. Default is 0.8.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">samples_by_sex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">samples_by_sex</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">aggregate_cols</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">counter</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">meta_root</span><span class="p">][</span><span class="n">sex_field</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">in_autosome_or_par</span><span class="p">(),</span>
+            <span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AN</span>
+            <span class="o">&gt;=</span> <span class="n">an_proportion_cutoff</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples_by_sex</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">in_x_nonpar</span><span class="p">(),</span>
+            <span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AN</span>
+            <span class="o">&gt;=</span> <span class="n">an_proportion_cutoff</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">samples_by_sex</span><span class="p">[</span><span class="n">xy_str</span><span class="p">]</span> <span class="o">+</span> <span class="n">samples_by_sex</span><span class="p">[</span><span class="n">xx_str</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">in_y_nonpar</span><span class="p">(),</span>
+            <span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AN</span>
+            <span class="o">&gt;=</span> <span class="n">an_proportion_cutoff</span> <span class="o">*</span> <span class="n">samples_by_sex</span><span class="p">[</span><span class="n">xy_str</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">or_missing</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_tx_expression_expr"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_tx_expression_expr">[docs]</a><span class="k">def</span> <span class="nf">get_tx_expression_expr</span><span class="p">(</span>
+    <span class="n">key_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span>
+    <span class="n">tx_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">csq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span>
+    <span class="n">gene_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ensg&quot;</span><span class="p">,</span>
+    <span class="n">csq_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;csq&quot;</span><span class="p">,</span>
+    <span class="n">tx_struct</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tx_annotation&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pull appropriate transcript expression annotation struct given a specific locus and alleles (provided in `key_expr`).</span>
+
+<span class="sd">    Assumes that `key_expr` contains a locus and alleles.</span>
+<span class="sd">    Assumes that multi-allelic variants have been split in both `tx_ht` and `key_expr`.</span>
+
+<span class="sd">    :param row_key_expr: StructExpression containing locus and alleles to search in `tx_ht`.</span>
+<span class="sd">    :param tx_ht: Input Table containing transcript expression information.</span>
+<span class="sd">    :param csq_expr: Input StructExpression that contains VEP consequence information.</span>
+<span class="sd">    :param gene_field: Field in `csq_expr` that contains gene ID.</span>
+<span class="sd">    :param csq_field: Field in `csq_expr` that contains `most_severe_consequence` annotation.</span>
+<span class="sd">    :param tx_struct: StructExpression that contains transcript expression information.</span>
+<span class="sd">    :return: StructExpression that contains transcript expression information for given gene ID in `csq_expr`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="p">(</span><span class="n">csq</span><span class="p">[</span><span class="n">gene_field</span><span class="p">]</span> <span class="o">==</span> <span class="n">csq_expr</span><span class="o">.</span><span class="n">gene_id</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">csq</span><span class="p">[</span><span class="n">csq_field</span><span class="p">]</span> <span class="o">==</span> <span class="n">csq_expr</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">),</span>
+        <span class="n">tx_ht</span><span class="p">[</span><span class="n">key_expr</span><span class="p">][</span><span class="n">tx_struct</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_summary_stats_variant_filter_expr"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_stats_variant_filter_expr">[docs]</a><span class="k">def</span> <span class="nf">get_summary_stats_variant_filter_expr</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+    <span class="n">filter_lcr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">SetExpression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">freq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">grpmax_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_af</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_grpmax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_an_proportion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate variant filtering expression for summary stats.</span>
+
+<span class="sd">    The possible filtering groups are:</span>
+
+<span class="sd">        - &#39;no_lcr&#39; if `filter_lcr` is True.</span>
+<span class="sd">        - &#39;variant_qc_pass&#39; if `filter_expr` is provided.</span>
+<span class="sd">        - &#39;max_af&#39; as a struct with a field for each `af` in `max_af` if `max_af` is</span>
+<span class="sd">          provided.</span>
+<span class="sd">        - &#39;max_grpmax&#39; as a struct with a field for each `grpmax` in `max_grpmax` if</span>
+<span class="sd">          `max_grpmax` is provided.</span>
+<span class="sd">        - &#39;min_an&#39; as a struct with a field for each `an_proportion` in</span>
+<span class="sd">          `min_an_proportion` if `min_an_proportion` is provided.</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable.</span>
+<span class="sd">    :param filter_lcr: Whether to filter out low confidence regions. Default is False.</span>
+<span class="sd">    :param filter_expr: SetExpression containing variant filters. Default is None.</span>
+<span class="sd">    :param freq_expr: Float64Expression containing frequency information. Default is</span>
+<span class="sd">        None.</span>
+<span class="sd">    :param grpmax_expr: Float64Expression containing group max frequency</span>
+<span class="sd">        information. Default is None.</span>
+<span class="sd">    :param max_af: Maximum allele frequency cutoff(s). Can be a single float or a list</span>
+<span class="sd">        of floats. Default is None.</span>
+<span class="sd">    :param max_grpmax: Maximum genetic ancestry group max frequency cutoff(s). Can be a</span>
+<span class="sd">        single float or a list of floats. Default is None.</span>
+<span class="sd">    :param min_an_proportion: Minimum allele number proportion (used as a proxy for</span>
+<span class="sd">        call rate). Default is None.</span>
+<span class="sd">    :return: Dict of BooleanExpressions or StructExpressions for filtering variants.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">max_af</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">freq_expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Frequency expression must be provided when filtering by AF!&quot;</span><span class="p">)</span>
+
+    <span class="n">log_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ss_filter_expr</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">filter_lcr</span><span class="p">:</span>
+        <span class="n">log_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;variants not in low confidence regions&quot;</span><span class="p">)</span>
+        <span class="n">ss_filter_expr</span><span class="p">[</span><span class="s2">&quot;no_lcr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">low_conf_regions_expr</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="n">filter_decoy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filter_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;variants that pass all variant QC filters&quot;</span><span class="p">)</span>
+        <span class="n">ss_filter_expr</span><span class="p">[</span><span class="s2">&quot;variant_qc_pass&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">filter_expr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">get_max_filter</span><span class="p">(</span>
+        <span class="n">max_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Float64Expression</span><span class="p">,</span>
+        <span class="n">max_cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;af&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate filtering expression for maximum frequency cutoffs.</span>
+
+<span class="sd">        :param max_expr: Float64Expression containing frequency information.</span>
+<span class="sd">        :param max_cutoff: Maximum frequency cutoff(s). Can be a single float or a</span>
+<span class="sd">            list of floats.</span>
+<span class="sd">        :param name: Name of frequency field. Default is empty str. Default is &#39;af&#39;.</span>
+<span class="sd">        :return: StructExpression containing filtering expression for maximum frequency</span>
+<span class="sd">            cutoffs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">max_cutoff</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_cutoff</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">max_cutoff</span> <span class="o">=</span> <span class="p">[</span><span class="n">max_cutoff</span><span class="p">]</span>
+        <span class="n">log_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;variants with (</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="n">c</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">max_cutoff</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;max_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">max_expr</span> <span class="o">&lt;</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">max_cutoff</span><span class="p">})}</span>
+
+    <span class="n">ss_filter_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_max_filter</span><span class="p">(</span><span class="n">freq_expr</span><span class="p">,</span> <span class="n">max_af</span><span class="p">,</span> <span class="s2">&quot;af&quot;</span><span class="p">))</span>
+    <span class="n">ss_filter_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_max_filter</span><span class="p">(</span><span class="n">grpmax_expr</span><span class="p">,</span> <span class="n">max_grpmax</span><span class="p">,</span> <span class="s2">&quot;grpmax&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">min_an_proportion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;variants that meet a minimum call rate of </span><span class="si">%.2f</span><span class="s2"> (using AN as a call rate &quot;</span>
+            <span class="s2">&quot;proxy)&quot;</span> <span class="o">%</span> <span class="n">min_an_proportion</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ss_filter_expr</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;min_an_</span><span class="si">{</span><span class="n">min_an_proportion</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_an_criteria</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">,</span> <span class="n">an_proportion_cutoff</span><span class="o">=</span><span class="n">min_an_proportion</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding filtering for:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_list</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">ss_filter_expr</span></div>
+
+
+<div class="viewcode-block" id="get_summary_stats_csq_filter_expr"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_stats_csq_filter_expr">[docs]</a><span class="k">def</span> <span class="nf">get_summary_stats_csq_filter_expr</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">],</span>
+    <span class="n">lof_csq_set</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lof_label_set</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lof_no_flags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">lof_any_flags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">additional_csq_sets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">additional_csqs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate consequence filtering expression for summary stats.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        - Assumes that input Table/MatrixTable/StructExpression contains the required</span>
+<span class="sd">          annotations for the requested filtering groups.</span>
+
+<span class="sd">            - &#39;lof&#39; annotation for `lof_csq_set`.</span>
+<span class="sd">            - &#39;no_lof_flags&#39; annotation for `lof_no_flags` and `lof_any_flags`.</span>
+
+<span class="sd">    The possible filtering groups are:</span>
+
+<span class="sd">        - &#39;lof&#39; if `lof_csq_set` is provided.</span>
+<span class="sd">        - &#39;loftee_no_flags&#39; if `lof_no_flags` is True.</span>
+<span class="sd">        - &#39;loftee_with_flags&#39; if `lof_any_flags` is True.</span>
+<span class="sd">        - &#39;loftee_label&#39; as a struct with a field for each `lof_label` in</span>
+<span class="sd">          `lof_label_set` if provided.</span>
+<span class="sd">        - &#39;csq&#39; as a struct with a field for each consequence in `additional_csqs` and</span>
+<span class="sd">          `lof_csq_set` if provided.</span>
+<span class="sd">        - &#39;csq_set&#39; as a struct with a field for each consequence set in</span>
+<span class="sd">          `additional_csq_sets` if provided. This will also have an `lof` field if</span>
+<span class="sd">          `lof_csq_set` is provided.</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable/StructExpression.</span>
+<span class="sd">    :param lof_csq_set: Set of LoF consequence strings. Default is None.</span>
+<span class="sd">    :param lof_label_set: Set of LoF consequence labels. Default is None.</span>
+<span class="sd">    :param lof_no_flags: Whether to filter to variants with no flags. Default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    :param lof_any_flags: Whether to filter to variants with any flags. Default</span>
+<span class="sd">        is False.</span>
+<span class="sd">    :param additional_csq_sets: Dictionary containing additional consequence sets.</span>
+<span class="sd">        Default is None.</span>
+<span class="sd">    :param additional_csqs: Set of additional consequences to keep. Default is None.</span>
+<span class="sd">    :return: Dict of BooleanExpressions or StructExpressions for filtering by</span>
+<span class="sd">        consequence.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lof_no_flags</span> <span class="ow">or</span> <span class="n">lof_any_flags</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;no_lof_flags&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The required &#39;no_lof_flags&#39; annotation is not found in input &quot;</span>
+            <span class="s2">&quot;Table/MatrixTable/StructExpression.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">lof_label_set</span> <span class="ow">and</span> <span class="s2">&quot;lof&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The required &#39;lof&#39; annotation is not found in input &quot;</span>
+            <span class="s2">&quot;Table/MatrixTable/StructExpression.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_filter_by_csq</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+        <span class="n">csq_set</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Set</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">CollectionExpression</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create filtering expression for a set of consequences.</span>
+
+<span class="sd">        :param t: Input Table/MatrixTable.</span>
+<span class="sd">        :param csq_set: Set of consequences to filter.</span>
+<span class="sd">        :return: BooleanExpression for filtering by consequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">csq_set</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">CollectionExpression</span><span class="p">):</span>
+            <span class="n">csq_set</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">csq_set</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">csq_set</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">most_severe_csq</span><span class="p">)</span>
+
+    <span class="c1"># Set up filters for specific consequences or sets of consequences.</span>
+    <span class="n">csq_filters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;csq&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">c</span><span class="p">}</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">lof_csq_set</span> <span class="ow">or</span> <span class="p">[]}),</span>
+            <span class="o">**</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">c</span><span class="p">}</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">additional_csqs</span> <span class="ow">or</span> <span class="p">[]}),</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;csq_set&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="p">({</span><span class="s2">&quot;lof&quot;</span><span class="p">:</span> <span class="n">lof_csq_set</span> <span class="ow">or</span> <span class="p">{}}),</span>
+            <span class="o">**</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span><span class="n">additional_csq_sets</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}),</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Create filtering expressions for each consequence/ consequence set.</span>
+    <span class="n">ss_filter_expr</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">group_name</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">filter_name</span><span class="p">:</span> <span class="n">_create_filter_by_csq</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">csq_set</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">filter_name</span><span class="p">,</span> <span class="n">csq_set</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">csq_filters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Add filtering expressions for LOFTEE labels.</span>
+    <span class="n">ss_filter_expr</span><span class="p">[</span><span class="s2">&quot;loftee_label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">lof_label</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="n">lof_label</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">lof_label</span> <span class="ow">in</span> <span class="n">lof_label_set</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Add filtering expressions variants with no flags or any flags.</span>
+    <span class="k">if</span> <span class="n">lof_no_flags</span><span class="p">:</span>
+        <span class="n">ss_filter_expr</span><span class="p">[</span><span class="s2">&quot;loftee_no_flags&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">no_lof_flags</span>
+    <span class="k">if</span> <span class="n">lof_any_flags</span><span class="p">:</span>
+        <span class="n">ss_filter_expr</span><span class="p">[</span><span class="s2">&quot;loftee_with_flags&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">~</span><span class="n">t</span><span class="o">.</span><span class="n">no_lof_flags</span>
+
+    <span class="k">return</span> <span class="n">ss_filter_expr</span></div>
+
+
+<div class="viewcode-block" id="generate_filter_combinations"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.generate_filter_combinations">[docs]</a><span class="k">def</span> <span class="nf">generate_filter_combinations</span><span class="p">(</span>
+    <span class="n">combos</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]],</span>
+    <span class="n">combo_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate list of all possible filter combinations from a list of filter options.</span>
+
+<span class="sd">    Example input:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        [</span>
+<span class="sd">            {&#39;pass_filters&#39;: [False, True]},</span>
+<span class="sd">            {&#39;pass_filters&#39;: [False, True], &#39;capture&#39;: [&#39;ukb&#39;, &#39;broad&#39;]}</span>
+<span class="sd">        ]</span>
+
+<span class="sd">    Example output:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        [</span>
+<span class="sd">            {&#39;pass_filters&#39;: False},</span>
+<span class="sd">            {&#39;pass_filters&#39;: True},</span>
+<span class="sd">            {&#39;pass_filters&#39;: False, &#39;capture&#39;: &#39;ukb&#39;},</span>
+<span class="sd">            {&#39;pass_filters&#39;: False, &#39;capture&#39;: &#39;broad&#39;},</span>
+<span class="sd">            {&#39;pass_filters&#39;: True, &#39;capture&#39;: &#39;ukb&#39;},</span>
+<span class="sd">            {&#39;pass_filters&#39;: True, &#39;capture&#39;: &#39;broad&#39;},</span>
+<span class="sd">        ]</span>
+
+<span class="sd">    :param combos: List of filter groups and their options.</span>
+<span class="sd">    :param combo_options: Dictionary of filter groups and their options that can be</span>
+<span class="sd">        supplied if `combos` is a list of lists.</span>
+<span class="sd">    :return: List of all possible filter combinations for each filter group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">combos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">combo_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;If `combos` is a list of lists, `combo_options` must be provided.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">combos</span> <span class="o">=</span> <span class="p">[{</span><span class="n">k</span><span class="p">:</span> <span class="n">combo_options</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">}</span> <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">combos</span><span class="p">]</span>
+
+    <span class="c1"># Create combinations of filter options.</span>
+
+    <span class="k">def</span> <span class="nf">_expand_combinations</span><span class="p">(</span><span class="n">filter_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expand filter combinations.</span>
+
+<span class="sd">        :param filter_dict: Dictionary of filter options.</span>
+<span class="sd">        :return: List of dicts of expanded filter options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keys</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">filter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">combo</span><span class="p">))</span> <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)]</span>
+
+    <span class="c1"># Flatten list of combinations.</span>
+    <span class="n">expanded_meta</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">_expand_combinations</span><span class="p">(</span><span class="n">sublist</span><span class="p">)</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">combos</span><span class="p">],</span> <span class="p">[])</span>
+
+    <span class="k">return</span> <span class="n">expanded_meta</span></div>
+
+
+<div class="viewcode-block" id="get_summary_stats_filter_group_meta"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_summary_stats_filter_group_meta">[docs]</a><span class="k">def</span> <span class="nf">get_summary_stats_filter_group_meta</span><span class="p">(</span>
+    <span class="n">all_sum_stat_filters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">common_filter_combos</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">common_filter_override</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lof_filter_combos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lof_filter_override</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_key_rename</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate list of filter group combination metadata for summary stats.</span>
+
+<span class="sd">    This function combines various filter settings for summary statistics and generates</span>
+<span class="sd">    all possible filter combinations. It ensures that the generated combinations include</span>
+<span class="sd">    both common filters and specific loss-of-function (LOF) filters.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        - The &quot;variant_qc&quot; filter group is removed if the value is &quot;none&quot;, which can</span>
+<span class="sd">          lead to a filter group of {} (no filters).</span>
+<span class="sd">        - The `filter_key_rename` parameter can be used to rename keys in the</span>
+<span class="sd">          `all_sum_stat_filters`, `common_filter_override`, or `lof_filter_override`</span>
+<span class="sd">          after creating all combinations.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        Given the following input:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            all_sum_stat_filters = {</span>
+<span class="sd">                &quot;variant_qc&quot;: [&quot;none&quot;, &quot;pass&quot;],</span>
+<span class="sd">                &quot;capture&quot;: [&quot;1&quot;, &quot;2&quot;],</span>
+<span class="sd">                &quot;max_af&quot;: [0.01],</span>
+<span class="sd">                &quot;lof_csq&quot;: [&quot;stop_gained&quot;],</span>
+<span class="sd">                &quot;lof_csq_set&quot;: [&quot;lof&quot;],</span>
+<span class="sd">            }</span>
+<span class="sd">            common_filter_combos = [[&quot;variant_qc&quot;], [&quot;variant_qc&quot;, &quot;capture&quot;]]</span>
+<span class="sd">            common_filter_override = {&quot;variant_qc&quot;: [&quot;pass&quot;], &quot;capture&quot;: [&quot;1&quot;]}</span>
+<span class="sd">            lof_filter_combos = [</span>
+<span class="sd">                [&quot;lof_csq_set&quot;, &quot;loftee_HC&quot;],</span>
+<span class="sd">                [&quot;lof_csq_set&quot;, &quot;loftee_HC&quot;, &quot;loftee_flags&quot;],</span>
+<span class="sd">                [&quot;lof_csq&quot;, &quot;loftee_HC&quot;, &quot;loftee_flags&quot;],</span>
+<span class="sd">            ]</span>
+<span class="sd">            lof_filter_override = {&quot;loftee_HC&quot;: [&quot;HC&quot;], &quot;loftee_flags&quot;: [&quot;with_flags&quot;]}</span>
+<span class="sd">            filter_key_rename = {</span>
+<span class="sd">                &quot;lof_csq&quot;: &quot;csq&quot;,</span>
+<span class="sd">                &quot;loftee_HC&quot;: &quot;loftee_labels&quot;,</span>
+<span class="sd">                &quot;lof_csq_set&quot;: &quot;csq_set&quot;,</span>
+<span class="sd">            }</span>
+
+<span class="sd">        The function will generate the following filter combinations:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            [</span>
+<span class="sd">               # Combinations of all common filter keys and their possible values.</span>
+<span class="sd">                {},</span>
+<span class="sd">                {&#39;capture&#39;: &#39;1&#39;},</span>
+<span class="sd">                {&#39;capture&#39;: &#39;2&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;2&#39;},</span>
+
+<span class="sd">                # Combinations of all requested common filter combinations with all</span>
+<span class="sd">                # possible other filter keys and values.</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;max_af&#39;: &#39;0.01&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;csq&#39;: &#39;stop_gained&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;csq_set&#39;: &#39;lof&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;max_af&#39;: &#39;0.01&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;csq&#39;: &#39;stop_gained&#39;},</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;csq_set&#39;: &#39;lof&#39;},</span>
+
+<span class="sd">                # Combinations of all requested common filter combinations with all</span>
+<span class="sd">                # requested LOF filter combination keys and their requested values.</span>
+<span class="sd">                {&#39;variant_qc&#39;: &#39;pass&#39;, &#39;csq_set&#39;: &#39;lof&#39;, &#39;loftee_labels&#39;: &#39;HC&#39;},</span>
+<span class="sd">                {</span>
+<span class="sd">                    &#39;variant_qc&#39;: &#39;pass&#39;, &#39;csq_set&#39;: &#39;lof&#39;, &#39;loftee_labels&#39;: &#39;HC&#39;,</span>
+<span class="sd">                    &#39;loftee_flags&#39;: &#39;with_flags&#39;</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    &#39;variant_qc&#39;: &#39;pass&#39;, &#39;csq&#39;: &#39;stop_gained&#39;, &#39;loftee_labels&#39;: &#39;HC&#39;,</span>
+<span class="sd">                    &#39;loftee_flags&#39;: &#39;with_flags&#39;</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    &#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;csq_set&#39;: &#39;lof&#39;,</span>
+<span class="sd">                    &#39;loftee_labels&#39;: &#39;HC&#39;</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    &#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;csq_set&#39;: &#39;lof&#39;,</span>
+<span class="sd">                    &#39;loftee_labels&#39;: &#39;HC&#39;, &#39;loftee_flags&#39;: &#39;with_flags&#39;</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    &#39;variant_qc&#39;: &#39;pass&#39;, &#39;capture&#39;: &#39;1&#39;, &#39;csq&#39;: &#39;stop_gained&#39;,</span>
+<span class="sd">                    &#39;loftee_labels&#39;: &#39;HC&#39;, &#39;loftee_flags&#39;: &#39;with_flags&#39;</span>
+<span class="sd">                }</span>
+<span class="sd">            ]</span>
+
+<span class="sd">    :param all_sum_stat_filters: Dictionary of all possible filter types.</span>
+<span class="sd">    :param common_filter_combos: Optional list of lists of common filter keys to use</span>
+<span class="sd">        for creating common filter combinations.</span>
+<span class="sd">    :param common_filter_override: Optional dictionary of filter groups and their</span>
+<span class="sd">        options to override the values in `all_sum_stat_filters` for use with values in</span>
+<span class="sd">        `common_filter_combos`. This is only used if `common_filter_combos` is not None.</span>
+<span class="sd">    :param lof_filter_combos: Optional List of loss-of-function keys in all_sum_stat_filters</span>
+<span class="sd">        to use for creating filter combinations.</span>
+<span class="sd">    :param lof_filter_override: Optional Dictionary of filter groups and their options</span>
+<span class="sd">        to override the values in `all_sum_stat_filters` for use with values in</span>
+<span class="sd">        `lof_combos`. This is only used if `lof_filter_combos` is not None.</span>
+<span class="sd">    :param filter_key_rename: Optional dictionary to rename keys in</span>
+<span class="sd">        `all_sum_stat_filters`, `common_filter_override`, or `lof_filter_override` to</span>
+<span class="sd">        final metadata keys.</span>
+<span class="sd">    :return: Dictionary of filter field to metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">common_filter_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">common_filter_combos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;If `common_combo_override` is provided, `common_filter_combos` must be &quot;</span>
+            <span class="s2">&quot;provided.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">lof_filter_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lof_filter_combos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;If `lof_filter_override` is provided, `lof_filter_combos` must be &quot;</span>
+            <span class="s2">&quot;provided.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Initialize dictionaries and lists to handle cases where the optional parameters</span>
+    <span class="c1"># are not provided.</span>
+    <span class="n">common_filter_override</span> <span class="o">=</span> <span class="n">common_filter_override</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">lof_filter_override</span> <span class="o">=</span> <span class="n">lof_filter_override</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">filter_key_rename</span> <span class="o">=</span> <span class="n">filter_key_rename</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># Generate all possible filter combinations for common filter combinations.</span>
+    <span class="n">all_sum_stat_filters</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">all_sum_stat_filters</span><span class="p">)</span>
+    <span class="n">filter_combinations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">common_filter_combos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filter_combinations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">generate_filter_combinations</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">all_sum_stat_filters</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">}</span>
+                    <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">common_filter_combos</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">common_filter_combos</span> <span class="o">=</span> <span class="n">common_filter_combos</span> <span class="ow">or</span> <span class="p">[[]]</span>
+
+    <span class="c1"># Update the all_sum_stat_filters dictionary with common_filter_override values and</span>
+    <span class="c1"># remove all filters in common_filter_combos from all_sum_stat_filters and</span>
+    <span class="c1"># into a common_filters dictionary.</span>
+    <span class="n">all_sum_stat_filters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">common_filter_override</span><span class="p">)</span>
+    <span class="n">common_filters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">all_sum_stat_filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">common_filter_combos</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Add combinations of common filters with all other filters.</span>
+    <span class="n">filter_combinations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">generate_filter_combinations</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">common_filter_combos</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_sum_stat_filters</span><span class="p">],</span>
+            <span class="p">{</span><span class="o">**</span><span class="n">all_sum_stat_filters</span><span class="p">,</span> <span class="o">**</span><span class="n">common_filters</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">lof_filter_combos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Add combinations of common filters with LOF specific filters.</span>
+        <span class="n">all_sum_stat_filters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lof_filter_override</span><span class="p">)</span>
+        <span class="n">filter_combinations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">generate_filter_combinations</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">f</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">common_filter_combos</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">lof_filter_combos</span><span class="p">],</span>
+                <span class="p">{</span><span class="o">**</span><span class="n">all_sum_stat_filters</span><span class="p">,</span> <span class="o">**</span><span class="n">common_filters</span><span class="p">},</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">filter_combinations</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="n">filter_key_rename</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">filter_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;variant_qc&quot;</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">filter_group</span> <span class="ow">in</span> <span class="n">filter_combinations</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">filter_combinations</span></div>
+
+
+<div class="viewcode-block" id="default_generate_gene_lof_matrix"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.default_generate_gene_lof_matrix">[docs]</a><span class="k">def</span> <span class="nf">default_generate_gene_lof_matrix</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">tx_ht</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">high_expression_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">low_expression_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">filter_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;filters&quot;</span><span class="p">,</span>
+    <span class="n">freq_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span>
+    <span class="n">freq_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">additional_csq_set</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;missense_variant&quot;</span><span class="p">,</span> <span class="s2">&quot;synonymous_variant&quot;</span><span class="p">},</span>
+    <span class="n">all_transcripts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_an</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_to_rare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">pre_loftee</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">lof_csq_set</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">LOF_CSQ_SET</span><span class="p">,</span>
+    <span class="n">remove_ultra_common</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate loss-of-function gene matrix.</span>
+
+<span class="sd">    Used to generate summary metrics on LoF variants.</span>
+
+<span class="sd">    :param mt: Input MatrixTable.</span>
+<span class="sd">    :param tx_ht: Optional Table containing expression levels per transcript.</span>
+<span class="sd">    :param high_expression_cutoff: Minimum mean proportion expressed cutoff for a transcript to be considered highly expressed. Default is 0.9.</span>
+<span class="sd">    :param low_expression_cutoff: Upper mean proportion expressed cutoff for a transcript to lowly expressed. Default is 0.1.</span>
+<span class="sd">    :param filter_field: Name of field in MT that contains variant filters. Default is &#39;filters&#39;.</span>
+<span class="sd">    :param freq_field: Name of field in MT that contains frequency information. Default is &#39;freq&#39;.</span>
+<span class="sd">    :param freq_index: Which index of frequency struct to use. Default is 0.</span>
+<span class="sd">    :param additional_csq_set: Set of additional consequences to keep. Default is {&#39;missense_variant&#39;, &#39;synonymous_variant&#39;}.</span>
+<span class="sd">    :param all_transcripts: Whether to use all transcripts instead of just the transcript with most severe consequence. Default is False.</span>
+<span class="sd">    :param filter_an: Whether to filter using allele number as proxy for call rate. Default is False.</span>
+<span class="sd">    :param filter_to_rare: Whether to filter to rare (AF &lt; 5%) variants. Default is False.</span>
+<span class="sd">    :param pre_loftee: Whether LoF consequences have been annotated with LOFTEE. Default is False.</span>
+<span class="sd">    :param lof_csq_set: Set of LoF consequence strings. Default is {&quot;splice_acceptor_variant&quot;, &quot;splice_donor_variant&quot;, &quot;stop_gained&quot;, &quot;frameshift_variant&quot;}.</span>
+<span class="sd">    :param remove_ultra_common: Whether to remove ultra common (AF &gt; 95%) variants. Default is False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to PASS variants...&quot;</span><span class="p">)</span>
+    <span class="n">filt_criteria</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">filter_field</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">filter_an</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Using AN (as a call rate proxy) to filter to variants that meet a minimum&quot;</span>
+            <span class="s2">&quot; call rate...&quot;</span>
+        <span class="p">)</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">get_an_criteria</span><span class="p">(</span><span class="n">mt</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">remove_ultra_common</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing ultra common (AF &gt; 95%) variants...&quot;</span><span class="p">)</span>
+        <span class="n">filt_criteria</span> <span class="o">&amp;=</span> <span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AF</span> <span class="o">&lt;</span> <span class="mf">0.95</span>
+    <span class="k">if</span> <span class="n">filter_to_rare</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to rare (AF &lt; 5%) variants...&quot;</span><span class="p">)</span>
+        <span class="n">filt_criteria</span> <span class="o">&amp;=</span> <span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AF</span> <span class="o">&lt;</span> <span class="mf">0.05</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">filt_criteria</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">all_transcripts</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Exploding transcript_consequences field...&quot;</span><span class="p">)</span>
+        <span class="n">explode_field</span> <span class="o">=</span> <span class="s2">&quot;transcript_consequences&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Adding most severe (worst) consequence and expoding worst_csq_by_gene&quot;</span>
+            <span class="s2">&quot; field...&quot;</span>
+        <span class="p">)</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">process_consequences</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+        <span class="n">explode_field</span> <span class="o">=</span> <span class="s2">&quot;worst_csq_by_gene&quot;</span>
+
+    <span class="k">if</span> <span class="n">additional_csq_set</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Including these consequences: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">additional_csq_set</span><span class="p">)</span>
+        <span class="n">additional_cats</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">additional_csq_set</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pre_loftee</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to LoF consequences: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">lof_csq_set</span><span class="p">)</span>
+        <span class="n">lof_cats</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">lof_csq_set</span><span class="p">)</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">lof_cats</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+            <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">most_severe_consequence</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">additional_csq_set</span><span class="p">:</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">lof_cats</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">most_severe_consequence</span>
+            <span class="p">)</span> <span class="o">|</span> <span class="n">additional_cats</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">most_severe_consequence</span>
+            <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to LoF variants that pass LOFTEE with no LoF flags...&quot;</span><span class="p">)</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lof_flags</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">additional_csq_set</span><span class="p">:</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">.</span><span class="n">lof_flags</span>
+            <span class="p">)</span> <span class="o">|</span> <span class="n">additional_cats</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">most_severe_consequence</span>
+            <span class="p">)</span>
+
+    <span class="n">csqs</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">vep</span><span class="p">[</span><span class="n">explode_field</span><span class="p">]</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_rows</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">],</span> <span class="n">csqs</span><span class="o">=</span><span class="n">csqs</span><span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">explode_rows</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="p">)</span>
+    <span class="n">annotation_expr</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;gene_id&quot;</span><span class="p">:</span> <span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="o">.</span><span class="n">gene_id</span><span class="p">,</span>
+        <span class="s2">&quot;gene&quot;</span><span class="p">:</span> <span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="o">.</span><span class="n">gene_symbol</span><span class="p">,</span>
+        <span class="s2">&quot;indel&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_indel</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mt</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">&quot;most_severe_consequence&quot;</span><span class="p">:</span> <span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">tx_ht</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding transcript expression annotation...&quot;</span><span class="p">)</span>
+        <span class="n">tx_annotation</span> <span class="o">=</span> <span class="n">get_tx_expression_expr</span><span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">,</span>
+            <span class="n">tx_ht</span><span class="p">,</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">mean_proportion</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;expressed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tx_annotation</span> <span class="o">&gt;=</span> <span class="n">high_expression_cutoff</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tx_annotation</span> <span class="o">&gt;</span> <span class="n">low_expression_cutoff</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">tx_annotation</span><span class="p">),</span> <span class="s2">&quot;low&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="s2">&quot;missing&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;transcript_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="o">.</span><span class="n">transcript_id</span>
+        <span class="n">annotation_expr</span><span class="p">[</span><span class="s2">&quot;canonical&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">csqs</span><span class="o">.</span><span class="n">canonical</span><span class="p">)</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="n">annotation_expr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">mt</span><span class="o">.</span><span class="n">group_rows_by</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">annotation_expr</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="o">.</span><span class="n">aggregate_rows</span><span class="p">(</span>
+            <span class="n">n_sites</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="n">n_sites_array</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">array_sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">AC</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))),</span>
+            <span class="n">classic_caf</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AF</span><span class="p">),</span>
+            <span class="n">max_af</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">][</span><span class="n">freq_index</span><span class="p">]</span><span class="o">.</span><span class="n">AF</span><span class="p">),</span>
+            <span class="n">classic_caf_array</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">array_sum</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">freq_field</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">AF</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">aggregate_entries</span><span class="p">(</span>
+            <span class="n">num_homs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">is_hom_var</span><span class="p">()),</span>
+            <span class="n">num_hets</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">is_het</span><span class="p">()),</span>
+            <span class="n">defined_sites</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_het_hom_summary_dict"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.get_het_hom_summary_dict">[docs]</a><span class="k">def</span> <span class="nf">get_het_hom_summary_dict</span><span class="p">(</span>
+    <span class="n">csq_set</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">most_severe_csq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+    <span class="n">defined_sites_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">,</span>
+    <span class="n">num_homs_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">,</span>
+    <span class="n">num_hets_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">,</span>
+    <span class="n">pop_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Int64Expression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate dictionary containing summary counts.</span>
+
+<span class="sd">    Summary counts are:</span>
+<span class="sd">        - Number of sites with defined genotype calls</span>
+<span class="sd">        - Number of samples with heterozygous calls</span>
+<span class="sd">        - Number of samples with homozygous calls</span>
+
+<span class="sd">    Function has option to generate counts by population.</span>
+
+<span class="sd">    :param csq_set: Set containing transcript consequence string(s).</span>
+<span class="sd">    :param most_severe_csq_expr: StringExpression containing most severe consequence.</span>
+<span class="sd">    :param defined_sites_expr: Int64Expression containing number of sites with defined genotype calls.</span>
+<span class="sd">    :param num_homs_expr: Int64Expression containing number of samples with homozygous genotype calls.</span>
+<span class="sd">    :param num_hets_expr: Int64Expression containing number of samples with heterozygous genotype calls.</span>
+<span class="sd">    :param pop_expr: StringExpression containing sample population labels.</span>
+<span class="sd">    :return: Dictionary of summary annotation names and their values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">csq_filter_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">csq_set</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">most_severe_csq_expr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;no_alt_calls&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">csq_filter_expr</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">defined_sites_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">+</span> <span class="n">num_hets_expr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;obs_het&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_hets_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;obs_hom&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">((</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="s2">&quot;defined&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">((</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">defined_sites_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="s2">&quot;pop_no_alt_calls&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">pop_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">csq_filter_expr</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">defined_sites_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">+</span> <span class="n">num_hets_expr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;pop_obs_het&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">pop_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_hets_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;pop_obs_hom&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">pop_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">((</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_homs_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;pop_defined&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">pop_expr</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">((</span><span class="n">csq_filter_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">defined_sites_expr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="default_generate_gene_lof_summary"><a class="viewcode-back" href="../../../api_reference/assessment/summary_stats.html#gnomad.assessment.summary_stats.default_generate_gene_lof_summary">[docs]</a><span class="k">def</span> <span class="nf">default_generate_gene_lof_summary</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">collapse_indels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">lof_csq_set</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">LOF_CSQ_SET</span><span class="p">,</span>
+    <span class="n">meta_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span>
+    <span class="n">pop_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pop&quot;</span><span class="p">,</span>
+    <span class="n">filter_loftee</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate summary counts for loss-of-function (LoF), missense, and synonymous variants.</span>
+
+<span class="sd">    Also calculates p, proportion of of haplotypes carrying a putative LoF (pLoF) variant,</span>
+<span class="sd">    and observed/expected (OE) ratio of samples with homozygous pLoF variant calls.</span>
+
+<span class="sd">    Summary counts are (all per gene):</span>
+<span class="sd">        - Number of samples with no pLoF variants.</span>
+<span class="sd">        - Number of samples with heterozygous pLoF variants.</span>
+<span class="sd">        - Number of samples with homozygous pLoF variants.</span>
+<span class="sd">        - Total number of sites with genotype calls.</span>
+<span class="sd">        - All of the above stats grouped by population.</span>
+
+<span class="sd">    Assumes MT was created using `default_generate_gene_lof_matrix`.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        Assumes LoF variants in MT were filtered (LOFTEE pass and no LoF flag only).</span>
+<span class="sd">        If LoF variants have not been filtered and `filter_loftee` is True,</span>
+<span class="sd">        expects MT has the row annotation `vep`.</span>
+
+<span class="sd">    :param mt: Input MatrixTable.</span>
+<span class="sd">    :param collapse_indels: Whether to collapse indels. Default is False.</span>
+<span class="sd">    :param tx: Whether input MT has transcript expression data. Default is False.</span>
+<span class="sd">    :param lof_csq_set: Set containing LoF transcript consequence strings. Default is LOF_CSQ_SET.</span>
+<span class="sd">    :param meta_root: String indicating top level name for sample metadata. Default is &#39;meta&#39;.</span>
+<span class="sd">    :param pop_field: String indiciating field with sample population assignment information. Default is &#39;pop&#39;.</span>
+<span class="sd">    :param filter_loftee: Filters to LOFTEE pass variants (and no LoF flags) only. Default is False.</span>
+<span class="sd">    :return: Table with het/hom summary counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">collapse_indels</span><span class="p">:</span>
+        <span class="n">grouping</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gene_id&quot;</span><span class="p">,</span> <span class="s2">&quot;gene&quot;</span><span class="p">,</span> <span class="s2">&quot;most_severe_consequence&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">tx</span><span class="p">:</span>
+            <span class="n">grouping</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;expressed&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">grouping</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;transcript_id&quot;</span><span class="p">,</span> <span class="s2">&quot;canonical&quot;</span><span class="p">])</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mt</span><span class="o">.</span><span class="n">group_rows_by</span><span class="p">(</span><span class="o">*</span><span class="n">grouping</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">aggregate_rows</span><span class="p">(</span>
+                <span class="n">n_sites</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">n_sites</span><span class="p">),</span>
+                <span class="n">n_sites_array</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">array_sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">n_sites_array</span><span class="p">),</span>
+                <span class="n">classic_caf</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">classic_caf</span><span class="p">),</span>
+                <span class="n">max_af</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">max_af</span><span class="p">),</span>
+                <span class="n">classic_caf_array</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">array_sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">classic_caf_array</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">aggregate_entries</span><span class="p">(</span>
+                <span class="n">num_homs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">num_homs</span><span class="p">),</span>
+                <span class="n">num_hets</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">num_hets</span><span class="p">),</span>
+                <span class="n">defined_sites</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">defined_sites</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">filter_loftee</span><span class="p">:</span>
+        <span class="n">lof_ht</span> <span class="o">=</span> <span class="n">get_most_severe_consequence_for_summary</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">rows</span><span class="p">())</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">lof_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">]</span><span class="o">.</span><span class="n">lof</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">lof_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">]</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">lof_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">]</span><span class="o">.</span><span class="n">no_lof_flags</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+        <span class="n">lof</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_het_hom_summary_dict</span><span class="p">(</span>
+                <span class="n">csq_set</span><span class="o">=</span><span class="n">lof_csq_set</span><span class="p">,</span>
+                <span class="n">most_severe_csq_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">,</span>
+                <span class="n">defined_sites_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">defined_sites</span><span class="p">,</span>
+                <span class="n">num_homs_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_homs</span><span class="p">,</span>
+                <span class="n">num_hets_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_hets</span><span class="p">,</span>
+                <span class="n">pop_expr</span><span class="o">=</span><span class="n">mt</span><span class="p">[</span><span class="n">meta_root</span><span class="p">][</span><span class="n">pop_field</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">missense</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_het_hom_summary_dict</span><span class="p">(</span>
+                <span class="n">csq_set</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;missense_variant&quot;</span><span class="p">},</span>
+                <span class="n">most_severe_csq_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">,</span>
+                <span class="n">defined_sites_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">defined_sites</span><span class="p">,</span>
+                <span class="n">num_homs_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_homs</span><span class="p">,</span>
+                <span class="n">num_hets_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_hets</span><span class="p">,</span>
+                <span class="n">pop_expr</span><span class="o">=</span><span class="n">mt</span><span class="p">[</span><span class="n">meta_root</span><span class="p">][</span><span class="n">pop_field</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">synonymous</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_het_hom_summary_dict</span><span class="p">(</span>
+                <span class="n">csq_set</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;synonymous_variant&quot;</span><span class="p">},</span>
+                <span class="n">most_severe_csq_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">,</span>
+                <span class="n">defined_sites_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">defined_sites</span><span class="p">,</span>
+                <span class="n">num_homs_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_homs</span><span class="p">,</span>
+                <span class="n">num_hets_expr</span><span class="o">=</span><span class="n">mt</span><span class="o">.</span><span class="n">num_hets</span><span class="p">,</span>
+                <span class="n">pop_expr</span><span class="o">=</span><span class="n">mt</span><span class="p">[</span><span class="n">meta_root</span><span class="p">][</span><span class="n">pop_field</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">hl</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">no_alt_calls</span><span class="p">)</span> <span class="o">/</span> <span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">defined</span><span class="p">)),</span>
+        <span class="n">pop_p</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">dict</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">pop_defined</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="mi">1</span> <span class="o">-</span> <span class="n">hl</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">pop_no_alt_calls</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">exp_hom_lof</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">defined</span> <span class="o">*</span> <span class="n">ht</span><span class="o">.</span><span class="n">p</span> <span class="o">*</span> <span class="n">ht</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">oe</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">lof</span><span class="o">.</span><span class="n">obs_hom</span> <span class="o">/</span> <span class="n">ht</span><span class="o">.</span><span class="n">exp_hom_lof</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

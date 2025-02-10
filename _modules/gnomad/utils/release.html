@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.release &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.release</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.release</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.grch38.gnomad</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CURRENT_MAJOR_RELEASE</span><span class="p">,</span>
+    <span class="n">GROUPS</span><span class="p">,</span>
+    <span class="n">POPS</span><span class="p">,</span>
+    <span class="n">SEXES</span><span class="p">,</span>
+    <span class="n">SUBSETS</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.vcf</span> <span class="kn">import</span> <span class="n">SORT_ORDER</span><span class="p">,</span> <span class="n">index_globals</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="make_faf_index_dict"><a class="viewcode-back" href="../../../api_reference/utils/release.html#gnomad.utils.release.make_faf_index_dict">[docs]</a><span class="k">def</span> <span class="nf">make_faf_index_dict</span><span class="p">(</span>
+    <span class="n">faf_meta</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;adj&quot;</span><span class="p">],</span>
+    <span class="n">pops</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">POPS</span><span class="p">[</span><span class="n">CURRENT_MAJOR_RELEASE</span><span class="p">][</span><span class="s2">&quot;exomes&quot;</span><span class="p">],</span>
+    <span class="n">sexes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">SEXES</span><span class="p">,</span>
+    <span class="n">label_delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a look-up Dictionary for entries contained in the filter allele frequency annotation array.</span>
+
+<span class="sd">    :param faf_meta: Global annotation containing the set of groupings for each element of the faf array</span>
+<span class="sd">        (e.g., [{&#39;group&#39;: &#39;adj&#39;}, {&#39;group&#39;: &#39;adj&#39;, &#39;pop&#39;: &#39;nfe&#39;}])</span>
+<span class="sd">    :param groups: List of sample groups [adj, raw]. Default is GROUPS</span>
+<span class="sd">    :param pops: List of sample global population names for gnomAD data type. Default is POPS[CURRENT_MAJOR_RELEASE][&quot;exomes&quot;].</span>
+<span class="sd">    :param sexes: List of sample sexes used in VCF export. Default is SEXES</span>
+<span class="sd">    :param label_delimiter: String used as delimiter when making group label combinations</span>
+<span class="sd">    :return: Dictionary of faf annotation population groupings, where values are the corresponding 0-based indices for the</span>
+<span class="sd">        groupings in the faf_meta array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_index</span><span class="p">(</span><span class="n">label_groups</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">index_globals</span><span class="p">(</span><span class="n">faf_meta</span><span class="p">,</span> <span class="n">label_groups</span><span class="p">,</span> <span class="n">label_delimiter</span><span class="p">)</span>
+
+    <span class="n">index_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">index_dict</span></div>
+
+
+<div class="viewcode-block" id="make_freq_index_dict"><a class="viewcode-back" href="../../../api_reference/utils/release.html#gnomad.utils.release.make_freq_index_dict">[docs]</a><span class="k">def</span> <span class="nf">make_freq_index_dict</span><span class="p">(</span>
+    <span class="n">freq_meta</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">GROUPS</span><span class="p">,</span>
+    <span class="n">pops</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">POPS</span><span class="p">[</span><span class="n">CURRENT_MAJOR_RELEASE</span><span class="p">][</span><span class="s2">&quot;exomes&quot;</span><span class="p">],</span>
+    <span class="n">sexes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">SEXES</span><span class="p">,</span>
+    <span class="n">subsets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">SUBSETS</span><span class="p">[</span><span class="n">CURRENT_MAJOR_RELEASE</span><span class="p">],</span>
+    <span class="n">downsamplings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">label_delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a look-up Dictionary for entries contained in the frequency annotation array.</span>
+
+<span class="sd">    .. note:</span>
+
+<span class="sd">        Downsampling groupings are only computed on &#39;adj&#39;-filtered genotypes</span>
+
+<span class="sd">    :param freq_meta: List containing the set of groupings for each element of the freq array</span>
+<span class="sd">        (e.g., [{&#39;group&#39;: &#39;adj&#39;}, {&#39;group&#39;: &#39;adj&#39;, &#39;pop&#39;: &#39;nfe&#39;}])</span>
+<span class="sd">    :param groups: List of sample groups [adj, raw]. Default is GROUPS</span>
+<span class="sd">    :param pops: List of sample global population names for gnomAD data type. Default is POPS[CURRENT_MAJOR_RELEASE][&quot;exomes&quot;].</span>
+<span class="sd">    :param sexes: List of sample sexes used in VCF export. Default is SEXES</span>
+<span class="sd">    :param subsets: List of sample subsets in dataset. Default is SUBSETS[CURRENT_MAJOR_RELEASE]</span>
+<span class="sd">    :param downsamplings: List of downsampling cohort sizes present in global frequency array</span>
+<span class="sd">    :param label_delimiter: String used as delimiter when making group label combinations</span>
+<span class="sd">    :return: Dictionary keyed by the grouping combinations found in the frequency array, where values are the corresponding</span>
+<span class="sd">        0-based indices for the groupings in the freq_meta array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_index</span><span class="p">(</span><span class="n">label_groups</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">index_globals</span><span class="p">(</span><span class="n">freq_meta</span><span class="p">,</span> <span class="n">label_groups</span><span class="p">,</span> <span class="n">label_delimiter</span><span class="p">)</span>
+
+    <span class="n">index_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subsets</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subsets</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subsets</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+        <span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subsets</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">,</span> <span class="n">sex</span><span class="o">=</span><span class="n">sexes</span><span class="p">)),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">downsamplings</span><span class="p">:</span>
+        <span class="n">index_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="o">**</span><span class="n">_get_index</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">downsampling</span><span class="o">=</span><span class="n">downsamplings</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;adj&quot;</span><span class="p">],</span> <span class="n">pop</span><span class="o">=</span><span class="n">pops</span><span class="p">))}</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">index_dict</span></div>
+
+
+<div class="viewcode-block" id="make_freq_index_dict_from_meta"><a class="viewcode-back" href="../../../api_reference/utils/release.html#gnomad.utils.release.make_freq_index_dict_from_meta">[docs]</a><span class="k">def</span> <span class="nf">make_freq_index_dict_from_meta</span><span class="p">(</span>
+    <span class="n">freq_meta</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">label_delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span>
+    <span class="n">sort_order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">SORT_ORDER</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary for accessing frequency array.</span>
+
+<span class="sd">    The dictionary is keyed by the grouping combinations found in the frequency metadata</span>
+<span class="sd">    array, where values are the corresponding 0-based indices for the groupings in the</span>
+<span class="sd">    frequency array. For example, if the `freq_meta` entry [{&#39;pop&#39;: &#39;nfe&#39;}, {&#39;sex&#39;: &#39;XX&#39;}]</span>
+<span class="sd">    corresponds to the 5th entry in the frequency array, the returned dictionary entry</span>
+<span class="sd">    would be {&#39;nfe_XX&#39;: 4}.</span>
+
+<span class="sd">    :param freq_meta: List of dictionaries containing frequency metadata.</span>
+<span class="sd">    :param label_delimiter: Delimiter to use when joining frequency metadata labels.</span>
+<span class="sd">    :param sort_order: List of frequency metadata labels to use when sorting the dictionary.</span>
+<span class="sd">    :return: Dictionary of frequency metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Confirm all groups in freq_meta are in sort_order. Warn user if not.</span>
+    <span class="k">if</span> <span class="n">sort_order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">freq_meta</span><span class="o">.</span><span class="n">flatmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">sort_order</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Found unexpected frequency metadata groupings: </span><span class="si">%s</span><span class="s2">. These groupings&quot;</span>
+                <span class="s2">&quot; are not present in the provided sort_order: </span><span class="si">%s</span><span class="s2">. These groupings&quot;</span>
+                <span class="s2">&quot; will not be included in the returned dictionary.&quot;</span><span class="p">,</span>
+                <span class="n">diff</span><span class="p">,</span>
+                <span class="n">sort_order</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">freq_meta</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">sort_order</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">sort_order</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">index_dict</span><span class="p">[</span>
+                <span class="n">label_delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">f</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                            <span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                            <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sort_order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">if</span> <span class="n">sort_order</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+    <span class="k">return</span> <span class="n">index_dict</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

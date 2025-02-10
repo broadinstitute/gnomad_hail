@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.filtering &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.filtering</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.sample_qc.filtering</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">annoy</span> <span class="kn">import</span> <span class="n">AnnoyIndex</span>
+<span class="kn">from</span> <span class="nn">hail.utils.misc</span> <span class="kn">import</span> <span class="n">divide_null</span><span class="p">,</span> <span class="n">new_temp_file</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.gen_stats</span> <span class="kn">import</span> <span class="n">get_median_and_mad_expr</span><span class="p">,</span> <span class="n">merge_stats_counters_expr</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="compute_qc_metrics_residuals"><a class="viewcode-back" href="../../../api_reference/sample_qc/filtering.html#gnomad.sample_qc.filtering.compute_qc_metrics_residuals">[docs]</a><span class="k">def</span> <span class="nf">compute_qc_metrics_residuals</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">pc_scores</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayNumericExpression</span><span class="p">,</span>
+    <span class="n">qc_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">],</span>
+    <span class="n">use_pc_square</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">n_pcs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">regression_sample_inclusion_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">bool</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">strata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute QC metrics residuals after regressing out PCs (and optionally PC^2).</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The `regression_sample_inclusion_expr` can be used to select a subset of the</span>
+<span class="sd">        samples to include in the regression calculation. Residuals are always computed</span>
+<span class="sd">        for all samples.</span>
+
+<span class="sd">    :param ht: Input sample QC metrics HT.</span>
+<span class="sd">    :param pc_scores: The expression in the input HT that stores the PC scores.</span>
+<span class="sd">    :param qc_metrics: A dictionary with the name of each QC metric to compute</span>
+<span class="sd">        residuals for and their corresponding expression in the input HT.</span>
+<span class="sd">    :param use_pc_square: Whether to  use PC^2 in the regression or not.</span>
+<span class="sd">    :param n_pcs: Numer of PCs to use. If not set, then all PCs in `pc_scores` are used.</span>
+<span class="sd">    :param regression_sample_inclusion_expr: An optional expression to select samples</span>
+<span class="sd">        to include in the regression calculation.</span>
+<span class="sd">    :param strata: Optional dictionary used for stratification. Keys are strata names</span>
+<span class="sd">        and values are filtering expressions. These expressions should refer to</span>
+<span class="sd">        data with discrete types!</span>
+<span class="sd">    :return: Table with QC metrics residuals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">strata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">strata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;all&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="n">collapse_lms</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">collapse_lms</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Annotate QC HT with fields necessary for computation</span>
+    <span class="n">_sample_qc_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">qc_metrics</span><span class="p">,</span>
+        <span class="n">scores</span><span class="o">=</span><span class="n">pc_scores</span><span class="p">,</span>
+        <span class="n">_keep</span><span class="o">=</span><span class="n">regression_sample_inclusion_expr</span><span class="p">,</span>
+        <span class="n">_strata</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">strata</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">]),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># If n_pcs wasn&#39;t provided, use all PCs</span>
+    <span class="k">if</span> <span class="n">n_pcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_pcs</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">)))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Computing regressed QC metrics filters using </span><span class="si">%d</span><span class="s2"> PCs for metrics: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">n_pcs</span><span class="p">,</span>
+        <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qc_metrics</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Prepare regression variables, adding 1.0 first for the intercept</span>
+    <span class="c1"># Adds square of variables if use_pc_square is true</span>
+    <span class="n">x_expr</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_pcs</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">use_pc_square</span><span class="p">:</span>
+        <span class="n">x_expr</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_pcs</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Compute linear regressions</span>
+    <span class="n">lms</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+            <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">_strata</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="n">metric</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">_keep</span><span class="p">,</span>
+                        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">linreg</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">_sample_qc_ht</span><span class="p">[</span><span class="n">metric</span><span class="p">],</span> <span class="n">x</span><span class="o">=</span><span class="n">x_expr</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_sample_qc_ht</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">lms</span><span class="o">=</span><span class="n">lms</span><span class="p">)</span>
+    <span class="n">_sample_qc_ht</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span>
+        <span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;compute_qc_metrics_residuals.lms&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;ht&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute residuals</span>
+    <span class="k">def</span> <span class="nf">get_lm_prediction_expr</span><span class="p">(</span><span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">lm_pred_expr</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">lms</span><span class="p">[</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">_strata</span><span class="p">][</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">beta</span><span class="p">[</span>
+            <span class="mi">0</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">n_pcs</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">lms</span><span class="p">[</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">_strata</span><span class="p">][</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="o">*</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_pc_square</span><span class="p">:</span>
+            <span class="n">lm_pred_expr</span> <span class="o">=</span> <span class="n">lm_pred_expr</span> <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">n_pcs</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">lms</span><span class="p">[</span><span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">_strata</span><span class="p">][</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">beta</span><span class="p">[</span>
+                        <span class="n">i</span> <span class="o">+</span> <span class="n">n_pcs</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="p">]</span>
+                    <span class="o">*</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="o">*</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">lm_pred_expr</span>
+
+    <span class="n">residuals_ht</span> <span class="o">=</span> <span class="n">_sample_qc_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">_residual&quot;</span><span class="p">:</span> <span class="n">_sample_qc_ht</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">-</span> <span class="n">get_lm_prediction_expr</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">collapse_lms</span><span class="p">:</span>
+        <span class="n">residuals_ht</span> <span class="o">=</span> <span class="n">residuals_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+            <span class="n">lms</span><span class="o">=</span><span class="n">residuals_ht</span><span class="o">.</span><span class="n">lms</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="kc">True</span><span class="p">])]</span>
+        <span class="p">)</span>
+    <span class="n">residuals_ht</span> <span class="o">=</span> <span class="n">residuals_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span>
+        <span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;compute_qc_metrics_residuals.residuals&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;ht&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">residuals_ht</span></div>
+
+
+<div class="viewcode-block" id="compute_stratified_metrics_filter"><a class="viewcode-back" href="../../../api_reference/sample_qc/filtering.html#gnomad.sample_qc.filtering.compute_stratified_metrics_filter">[docs]</a><span class="k">def</span> <span class="nf">compute_stratified_metrics_filter</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">qc_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">],</span>
+    <span class="n">strata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lower_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">upper_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">metric_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;qc_metrics_filters&quot;</span><span class="p">,</span>
+    <span class="n">comparison_sample_expr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">CollectionExpression</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute median, MAD, and upper and lower thresholds for each metric used in outlier filtering.</span>
+
+<span class="sd">    :param ht: HT containing relevant sample QC metric annotations.</span>
+<span class="sd">    :param qc_metrics: List of metrics (name and expr) for which to compute the</span>
+<span class="sd">        critical values for filtering outliers.</span>
+<span class="sd">    :param strata: Dictionary of annotations used for stratification. These metrics should be</span>
+<span class="sd">        discrete types!</span>
+<span class="sd">    :param lower_threshold: Lower MAD threshold.</span>
+<span class="sd">    :param upper_threshold: Upper MAD threshold.</span>
+<span class="sd">    :param metric_threshold: Can be used to specify different (lower, upper) thresholds</span>
+<span class="sd">        for one or more metrics.</span>
+<span class="sd">    :param filter_name: Name of resulting filters annotation.</span>
+<span class="sd">    :param comparison_sample_expr: Optional BooleanExpression or CollectionExpression</span>
+<span class="sd">        of sample IDs to use for computation of the metric median, MAD, and upper and</span>
+<span class="sd">        lower thresholds to use for each sample. For instance, this works well with the</span>
+<span class="sd">        output of `determine_nearest_neighbors` or a boolean expression defining</span>
+<span class="sd">        releasable samples.</span>
+<span class="sd">    :return: Table grouped by strata, with upper and lower threshold values computed</span>
+<span class="sd">        for each sample QC metric.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_metric_threshold</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="p">(</span><span class="n">lower_threshold</span><span class="p">,</span> <span class="n">upper_threshold</span><span class="p">)</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">metric_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_metric_threshold</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metric_threshold</span><span class="p">)</span>
+
+    <span class="n">no_strata</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">strata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">no_strata</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">strata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;all&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="n">strata</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="n">select_expr</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;_qc_metrics&quot;</span><span class="p">:</span> <span class="n">qc_metrics</span><span class="p">,</span>
+        <span class="s2">&quot;_strata&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">]),</span>
+    <span class="p">}</span>
+
+    <span class="n">sample_explode</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">comparison_sample_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comparison_sample_expr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">):</span>
+            <span class="n">select_expr</span><span class="p">[</span><span class="s2">&quot;_comparison_qc_metrics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+                <span class="n">comparison_sample_expr</span><span class="p">,</span> <span class="n">qc_metrics</span>
+            <span class="p">)</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">select_expr</span><span class="p">)</span>
+            <span class="n">metric_ann</span> <span class="o">=</span> <span class="s2">&quot;_comparison_qc_metrics&quot;</span>
+            <span class="n">strata_ann</span> <span class="o">=</span> <span class="s2">&quot;_strata&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sample_explode</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">select_expr</span><span class="p">[</span><span class="s2">&quot;_comparison_sample&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">comparison_sample_expr</span>
+            <span class="n">pre_explode_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">select_expr</span><span class="p">)</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">pre_explode_ht</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">pre_explode_ht</span><span class="o">.</span><span class="n">_comparison_sample</span><span class="p">)</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">_comparison_qc_metrics</span><span class="o">=</span><span class="n">ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">_comparison_sample</span><span class="p">]</span><span class="o">.</span><span class="n">_qc_metrics</span><span class="p">,</span>
+                <span class="n">_comparison_strata</span><span class="o">=</span><span class="n">ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">_comparison_sample</span><span class="p">]</span><span class="o">.</span><span class="n">_strata</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">metric_ann</span> <span class="o">=</span> <span class="s2">&quot;_comparison_qc_metrics&quot;</span>
+            <span class="n">strata_ann</span> <span class="o">=</span> <span class="s2">&quot;_comparison_strata&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">select_expr</span><span class="p">)</span>
+        <span class="n">metric_ann</span> <span class="o">=</span> <span class="s2">&quot;_qc_metrics&quot;</span>
+        <span class="n">strata_ann</span> <span class="o">=</span> <span class="s2">&quot;_strata&quot;</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span>
+        <span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;compute_stratified_metrics_filter&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;ht&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">agg_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">[</span><span class="n">strata_ann</span><span class="p">],</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">metric</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                        <span class="n">lower</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">median</span> <span class="o">-</span> <span class="n">_metric_threshold</span><span class="p">[</span><span class="n">metric</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">mad</span><span class="p">,</span>
+                        <span class="n">upper</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">median</span> <span class="o">+</span> <span class="n">_metric_threshold</span><span class="p">[</span><span class="n">metric</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">mad</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">get_median_and_mad_expr</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">metric_ann</span><span class="p">][</span><span class="n">metric</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span>
+            <span class="p">}</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">select_expr</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">sample_explode</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">pre_explode_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">qc_metrics_stats</span><span class="o">=</span><span class="n">agg_expr</span><span class="p">)[</span><span class="n">pre_explode_ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">select_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;qc_metrics_stats&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">qc_metrics_stats</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+            <span class="n">qc_metrics_stats</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">agg_expr</span><span class="p">,</span> <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">metrics_stats_expr</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">qc_metrics_stats</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">_strata</span><span class="p">]</span>
+    <span class="n">select_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;fail_</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">ht</span><span class="o">.</span><span class="n">_qc_metrics</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">metrics_stats_expr</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span>
+            <span class="p">)</span>
+            <span class="o">|</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">_qc_metrics</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">metrics_stats_expr</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">select_expr</span><span class="p">)</span>
+
+    <span class="n">stratified_filters</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+            <span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;fail_</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span> <span class="n">metric</span><span class="p">)</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">qc_metrics</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">filter_name</span><span class="p">:</span> <span class="n">stratified_filters</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">no_strata</span><span class="p">:</span>
+        <span class="n">ann_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;qc_metrics_stats&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">qc_metrics_stats</span><span class="p">[(</span><span class="kc">True</span><span class="p">,)]}</span>
+        <span class="k">if</span> <span class="n">sample_explode</span><span class="p">:</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">ann_expr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="o">**</span><span class="n">ann_expr</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">strata</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">]))</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">qc_metrics</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">qc_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="compute_stratified_sample_qc"><a class="viewcode-back" href="../../../api_reference/sample_qc/filtering.html#gnomad.sample_qc.filtering.compute_stratified_sample_qc">[docs]</a><span class="k">def</span> <span class="nf">compute_stratified_sample_qc</span><span class="p">(</span>
+    <span class="n">mtds</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">],</span>
+    <span class="n">strata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">],</span>
+    <span class="n">tmp_ht_prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">gt_col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run hl.sample_qc on different strata and then also merge the results into a single expression.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Strata should be non-overlapping, e.g. SNV vs indels or bi-allelic vs multi-allelic</span>
+
+<span class="sd">    :param mtds: Input MatrixTable or VariantDataset</span>
+<span class="sd">    :param strata: Strata names and filtering expressions</span>
+<span class="sd">    :param tmp_ht_prefix: Optional path prefix to write the intermediate strata results to (recommended for larger datasets)</span>
+<span class="sd">    :param gt_col: Name of entry field storing the genotype. Default: &#39;GT&#39;</span>
+<span class="sd">    :return: Sample QC table, including strat-specific numbers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_vds</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mtds</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_vds</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">variant_data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mtds</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_rows</span><span class="p">(</span><span class="o">**</span><span class="n">strata</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">gt_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_entries</span><span class="p">(</span><span class="n">GT</span><span class="o">=</span><span class="n">mt</span><span class="p">[</span><span class="n">gt_col</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_entries</span><span class="p">(</span><span class="s2">&quot;GT&quot;</span><span class="p">)</span>
+
+    <span class="n">strat_hts</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">strat</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_vds</span><span class="p">:</span>
+            <span class="n">ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">strat</span><span class="p">])</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+            <span class="n">strat_sample_qc_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">sample_qc</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">filter_variants</span><span class="p">(</span><span class="n">mtds</span><span class="p">,</span> <span class="n">ht</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">strat_sample_qc_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">sample_qc</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">strat</span><span class="p">]))</span><span class="o">.</span><span class="n">cols</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">tmp_ht_prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">strat_sample_qc_ht</span> <span class="o">=</span> <span class="n">strat_sample_qc_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span>
+                <span class="n">tmp_ht_prefix</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">strat</span><span class="si">}</span><span class="s2">.ht&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">strat_sample_qc_ht</span> <span class="o">=</span> <span class="n">strat_sample_qc_ht</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+        <span class="n">strat_hts</span><span class="p">[</span><span class="n">strat</span><span class="p">]</span> <span class="o">=</span> <span class="n">strat_sample_qc_ht</span>
+
+    <span class="n">sample_qc_ht</span> <span class="o">=</span> <span class="n">strat_hts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">is_vds</span><span class="p">:</span>
+        <span class="n">sample_qc_ht</span> <span class="o">=</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">_sample_qc&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">sample_qc_ht</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">row_value</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">strat</span><span class="si">}</span><span class="s2">_sample_qc&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">strat_hts</span><span class="p">[</span><span class="n">strat</span><span class="p">][</span><span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">key</span><span class="p">][</span><span class="n">field</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">row_value</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">strat</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sample_qc_ht</span> <span class="o">=</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">_sample_qc&quot;</span><span class="p">:</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">sample_qc</span><span class="p">},</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">strat</span><span class="si">}</span><span class="s2">_sample_qc&quot;</span><span class="p">:</span> <span class="n">strat_hts</span><span class="p">[</span><span class="n">strat</span><span class="p">][</span><span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">sample_qc</span>
+                <span class="k">for</span> <span class="n">strat</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">strata</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="n">sample_qc_ht</span> <span class="o">=</span> <span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">sample_qc</span><span class="o">=</span><span class="n">merge_sample_qc_expr</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sample_qc_ht</span><span class="o">.</span><span class="n">row_value</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sample_qc_ht</span></div>
+
+
+<div class="viewcode-block" id="merge_sample_qc_expr"><a class="viewcode-back" href="../../../api_reference/sample_qc/filtering.html#gnomad.sample_qc.filtering.merge_sample_qc_expr">[docs]</a><span class="k">def</span> <span class="nf">merge_sample_qc_expr</span><span class="p">(</span>
+    <span class="n">sample_qc_exprs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an expression that merges results from non-overlapping strata of hail.sample_qc.</span>
+
+<span class="sd">    E.g.:</span>
+
+<span class="sd">    - Compute autosomes and sex chromosomes metrics separately, then merge results</span>
+<span class="sd">    - Compute bi-allelic and multi-allelic metrics separately, then merge results</span>
+
+<span class="sd">    Note regarding the merging of ``dp_stats`` and ``gq_stats``:</span>
+<span class="sd">    Because ``n`` is needed to aggregate ``stdev``, ``n_called`` is used for this purpose.</span>
+<span class="sd">    This should work very well on a standard GATK VCF and it essentially assumes that:</span>
+
+<span class="sd">    - samples that are called have `DP` and `GQ` fields</span>
+<span class="sd">    - samples that are not called do not have `DP` and `GQ` fields</span>
+
+<span class="sd">    Even if these assumptions are broken for some genotypes, it shouldn&#39;t matter too much.</span>
+
+<span class="sd">    :param sample_qc_exprs: List of sample QC struct expressions for each stratification</span>
+<span class="sd">    :return: Combined sample QC results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># List of metrics that can be aggregated by summing</span>
+    <span class="n">additive_metrics</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;n_called&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_not_called&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_filtered&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_hom_ref&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_het&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_hom_var&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_non_ref&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_snp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_insertion&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_deletion&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_singleton&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_transition&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_transversion&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_star&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_singleton_ti&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_singleton_tv&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;gq_over_&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GQ</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">GQ</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">10</span><span class="p">)]</span>
+        <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;dp_over_&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DP</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">DP</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">10</span><span class="p">)]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># List of metrics that are ratio of summed metrics (name, nominator, denominator)</span>
+    <span class="n">ratio_metrics</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;call_rate&quot;</span><span class="p">,</span> <span class="s2">&quot;n_called&quot;</span><span class="p">,</span> <span class="s2">&quot;n_not_called&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;r_ti_tv&quot;</span><span class="p">,</span> <span class="s2">&quot;n_transition&quot;</span><span class="p">,</span> <span class="s2">&quot;n_transversion&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;r_ti_tv_singleton&quot;</span><span class="p">,</span> <span class="s2">&quot;n_singleton_ti&quot;</span><span class="p">,</span> <span class="s2">&quot;n_singleton_tv&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;r_het_hom_var&quot;</span><span class="p">,</span> <span class="s2">&quot;n_het&quot;</span><span class="p">,</span> <span class="s2">&quot;n_hom_var&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;r_insertion_deletion&quot;</span><span class="p">,</span> <span class="s2">&quot;n_insertion&quot;</span><span class="p">,</span> <span class="s2">&quot;n_deletion&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># List of metrics that are struct generated by a stats counter</span>
+    <span class="n">stats_metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gq_stats&quot;</span><span class="p">,</span> <span class="s2">&quot;dp_stats&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Gather metrics present in sample qc fields</span>
+    <span class="n">sample_qc_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sample_qc_exprs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">sample_qc_expr</span> <span class="ow">in</span> <span class="n">sample_qc_exprs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">sample_qc_fields</span> <span class="o">=</span> <span class="n">sample_qc_fields</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sample_qc_expr</span><span class="p">))</span>
+
+    <span class="c1"># Merge additive metrics in sample qc fields</span>
+    <span class="n">merged_exprs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">sample_qc_expr</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="k">for</span> <span class="n">sample_qc_expr</span> <span class="ow">in</span> <span class="n">sample_qc_exprs</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">additive_metrics</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">sample_qc_fields</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Merge ratio metrics in sample qc fields</span>
+    <span class="n">merged_exprs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">metric</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">divide_null</span><span class="p">(</span><span class="n">merged_exprs</span><span class="p">[</span><span class="n">nom</span><span class="p">],</span> <span class="n">merged_exprs</span><span class="p">[</span><span class="n">denom</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">nom</span><span class="p">,</span> <span class="n">denom</span> <span class="ow">in</span> <span class="n">ratio_metrics</span>
+            <span class="k">if</span> <span class="n">nom</span> <span class="ow">in</span> <span class="n">sample_qc_fields</span> <span class="ow">and</span> <span class="n">denom</span> <span class="ow">in</span> <span class="n">sample_qc_fields</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Merge stats counter metrics in sample qc fields</span>
+    <span class="c1"># Use n_called as n for DP and GQ stats</span>
+    <span class="k">if</span> <span class="s2">&quot;n_called&quot;</span> <span class="ow">in</span> <span class="n">sample_qc_fields</span><span class="p">:</span>
+        <span class="n">merged_exprs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">metric</span><span class="p">:</span> <span class="n">merge_stats_counters_expr</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">sample_qc_expr</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">sample_qc_expr</span><span class="o">.</span><span class="n">n_called</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">sample_qc_expr</span> <span class="ow">in</span> <span class="n">sample_qc_exprs</span>
+                    <span class="p">]</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">stats_metrics</span>
+                <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">sample_qc_fields</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="o">**</span><span class="n">merged_exprs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="determine_nearest_neighbors"><a class="viewcode-back" href="../../../api_reference/sample_qc/filtering.html#gnomad.sample_qc.filtering.determine_nearest_neighbors">[docs]</a><span class="k">def</span> <span class="nf">determine_nearest_neighbors</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">scores_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayNumericExpression</span><span class="p">,</span>
+    <span class="n">strata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_pcs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_neighbors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">add_neighbor_distances</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">distance_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;euclidean&quot;</span><span class="p">,</span>
+    <span class="n">use_approximation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">n_trees</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine the nearest neighbors of each sample with information in `scores_expr`.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If strata is provided, the nearest neighbors for each sample is limited to the</span>
+<span class="sd">        other samples with the same strata values. If `n_neighbors` is greater than the</span>
+<span class="sd">        number of samples in a stratification grouping, all samples within the</span>
+<span class="sd">        stratification are returned and a warning is raised indicating that any sample</span>
+<span class="sd">        within the stratification group has less than the expected `n_neighbors`.</span>
+
+<span class="sd">    The following annotations are in the returned Table:</span>
+<span class="sd">        - nearest_neighbors</span>
+<span class="sd">        - nearest_neighbor_dists (if `add_neighbor_distances` is True)</span>
+
+<span class="sd">    :param ht: Input Table.</span>
+<span class="sd">    :param scores_expr: Expression in the input HT that stores the PC scores.</span>
+<span class="sd">    :param strata: Optional dictionary used for stratification. Keys are strata names</span>
+<span class="sd">        and values are filtering expressions. These expressions should refer to</span>
+<span class="sd">        data with discrete types!</span>
+<span class="sd">    :param n_pcs: Number of PCs to use. If not set, then all PCs in `scores_expr` are</span>
+<span class="sd">        used.</span>
+<span class="sd">    :param n_neighbors: Number of nearest neighbors to identify for each sample.</span>
+<span class="sd">        Default is 50.</span>
+<span class="sd">    :param n_jobs: Number of threads to use when finding the nearest neighbors. Default</span>
+<span class="sd">        is -1 which uses the number of CPUs on the head node -1.</span>
+<span class="sd">    :param add_neighbor_distances: Whether to return an annotation for the nearest</span>
+<span class="sd">        neighbor distances.</span>
+<span class="sd">    :param distance_metric: Distance metric to use. Default is euclidean. Options</span>
+<span class="sd">        using scikit-learn are: &quot;euclidean&quot;, &quot;cityblock&quot;, &quot;cosine&quot;, &quot;haversine&quot;, &quot;l1&quot;,</span>
+<span class="sd">        &quot;l2&quot;, and &quot;manhattan&quot;. Options using Annoy: &quot;angular&quot;, &quot;euclidean&quot;, &quot;manhattan&quot;,</span>
+<span class="sd">        &quot;hamming&quot;, and &quot;dot&quot;.</span>
+<span class="sd">    :param use_approximation: Whether to use the package Annoy to determine approximate</span>
+<span class="sd">        nearest neighbors instead of using scikit-learn&#39;s `NearestNeighbors`. This</span>
+<span class="sd">        method is faster, but only needed for very large datasets, for instance</span>
+<span class="sd">        &gt; 500,000 samples.</span>
+<span class="sd">    :param n_trees: Number of trees to use in the annoy approximation approach.</span>
+<span class="sd">        `n_trees` is provided during build time and affects the build time and the</span>
+<span class="sd">        index size. A larger value will give more accurate results, but larger indexes.</span>
+<span class="sd">        Default is 10.</span>
+<span class="sd">    :return: Table with an annotation for the nearest neighbors and optionally their</span>
+<span class="sd">        distances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get spark session for conversion of pandas DataFrame to a spark DataFrame.</span>
+    <span class="c1"># This method is faster and uses less memory than hl.Table.from_pandas.</span>
+    <span class="n">spark</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">Env</span><span class="o">.</span><span class="n">spark_session</span><span class="p">()</span>
+
+    <span class="c1"># Annotate HT with fields necessary for nearest neighbors computation.</span>
+    <span class="c1"># Checkpoint before filtering and exporting to pandas dataframes.</span>
+    <span class="n">ann_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scores&quot;</span><span class="p">:</span> <span class="n">scores_expr</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">strata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ann_expr</span><span class="p">[</span><span class="s2">&quot;strata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">strata</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ann_expr</span><span class="p">[</span><span class="s2">&quot;strata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># If `n_pcs` wasn&#39;t provided, use all PCs.</span>
+    <span class="k">if</span> <span class="n">n_pcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_pcs</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">scores_expr</span><span class="p">)))</span>
+
+    <span class="n">_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="n">ann_expr</span><span class="p">)</span>
+    <span class="n">_ht</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">))</span>
+    <span class="n">_ht</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;PC</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">_ht</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pcs</span><span class="p">)})</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checkpointing intermediate Table before converting to pandas...&quot;</span><span class="p">)</span>
+    <span class="n">_ht</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span><span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;determine_nearest_neighbors&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;ht&quot;</span><span class="p">))</span>
+
+    <span class="n">all_strata_vals</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect_as_set</span><span class="p">(</span><span class="n">_ht</span><span class="o">.</span><span class="n">strata</span><span class="p">))</span>
+    <span class="n">all_nbr_hts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">all_strata_vals</span><span class="p">:</span>
+        <span class="n">logger_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">strata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger_str</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, for the following stratification group: </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Finding </span><span class="si">%d</span><span class="s2"> </span><span class="si">%s</span><span class="s2">nearest neighbors, using the </span><span class="si">%s</span><span class="s2"> distance metric</span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="n">n_neighbors</span><span class="p">,</span>
+            <span class="s2">&quot;approximate &quot;</span> <span class="k">if</span> <span class="n">use_approximation</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">distance_metric</span><span class="p">,</span>
+            <span class="n">logger_str</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">scores_pd</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ht</span><span class="o">.</span><span class="n">strata</span> <span class="o">==</span> <span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="n">scores_pd_s</span> <span class="o">=</span> <span class="n">scores_pd</span><span class="o">.</span><span class="n">s</span>
+        <span class="n">scores_pd</span> <span class="o">=</span> <span class="n">scores_pd</span><span class="p">[[</span><span class="sa">f</span><span class="s2">&quot;PC</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pcs</span><span class="p">)]]</span>
+        <span class="c1"># Get the number of rows/samples in the stratification group.</span>
+        <span class="n">group_n</span> <span class="o">=</span> <span class="n">scores_pd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">group_n_neighbors</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_neighbors</span><span class="p">,</span> <span class="n">group_n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_neighbors</span> <span class="o">&gt;</span> <span class="n">group_n</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;The requested number of nearest neighbors (</span><span class="si">%d</span><span class="s2">) is larger than the &quot;</span>
+                <span class="s2">&quot;number of samples in the </span><span class="si">%s</span><span class="s2"> stratification group (</span><span class="si">%d</span><span class="s2">). Only </span><span class="si">%d</span><span class="s2"> &quot;</span>
+                <span class="s2">&quot;neighbors will be returned for all samples in this group.&quot;</span><span class="p">,</span>
+                <span class="n">n_neighbors</span><span class="p">,</span>
+                <span class="n">group</span><span class="p">,</span>
+                <span class="n">group_n</span><span class="p">,</span>
+                <span class="n">group_n</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_approximation</span><span class="p">:</span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">AnnoyIndex</span><span class="p">(</span><span class="n">n_pcs</span><span class="p">,</span> <span class="n">distance_metric</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">scores_pd</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">nbrs</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+            <span class="n">nbrs</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">n_trees</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">)</span>
+
+            <span class="n">indexes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">group_n</span><span class="p">):</span>
+                <span class="n">indexes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">nbrs</span><span class="o">.</span><span class="n">get_nns_by_item</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">group_n_neighbors</span><span class="p">,</span> <span class="n">include_distances</span><span class="o">=</span><span class="n">add_neighbor_distances</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">add_neighbor_distances</span><span class="p">:</span>
+                <span class="n">distances</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">]</span>
+                <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores_pd</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span>
+                <span class="n">n_neighbors</span><span class="o">=</span><span class="n">group_n_neighbors</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">distance_metric</span>
+            <span class="p">)</span>
+            <span class="n">nbrs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+            <span class="n">indexes</span> <span class="o">=</span> <span class="n">nbrs</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">return_distance</span><span class="o">=</span><span class="n">add_neighbor_distances</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">add_neighbor_distances</span><span class="p">:</span>
+                <span class="n">distances</span><span class="p">,</span> <span class="n">indexes</span> <span class="o">=</span> <span class="n">indexes</span>
+
+        <span class="c1"># Format neighbor indexes as a Hail Table.</span>
+        <span class="n">indexes_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span>
+        <span class="n">indexes_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">scores_pd_s</span><span class="p">,</span> <span class="n">indexes_pd</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">indexes_pd</span> <span class="o">=</span> <span class="n">indexes_pd</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;nbrs_index_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">group_n_neighbors</span><span class="p">)}</span>
+        <span class="p">)</span>
+        <span class="n">indexes_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_spark</span><span class="p">(</span><span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">indexes_pd</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;s&quot;</span><span class="p">])</span>
+        <span class="n">indexes_ht</span> <span class="o">=</span> <span class="n">indexes_ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span>
+            <span class="n">nearest_neighbor_idxs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">indexes_ht</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;nbrs_index_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">group_n_neighbors</span><span class="p">)]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">add_neighbor_distances</span><span class="p">:</span>
+            <span class="c1"># Format neighbor distances as a Hail Table.</span>
+            <span class="n">distances_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+            <span class="n">distances_pd</span> <span class="o">=</span> <span class="n">distances_pd</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;nbrs_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">group_n_neighbors</span><span class="p">)}</span>
+            <span class="p">)</span>
+            <span class="n">distances_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">scores_pd_s</span><span class="p">,</span> <span class="n">distances_pd</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">distances_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_spark</span><span class="p">(</span>
+                <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">distances_pd</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;s&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">distances_indexed</span> <span class="o">=</span> <span class="n">distances_ht</span><span class="p">[</span><span class="n">indexes_ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">indexes_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">nearest_neighbor_dists</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">distances_indexed</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;nbrs_</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">group_n_neighbors</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">indexes_ht</span>
+
+        <span class="c1"># Add nearest_neighbors annotation to use instead of indexes.</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">add_index</span><span class="p">()</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">_nearest_neighbor_idxs</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">enumerate</span><span class="p">(</span><span class="n">nbrs_ht</span><span class="o">.</span><span class="n">nearest_neighbor_idxs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">explode_nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;_nearest_neighbor_idxs&quot;</span><span class="p">)</span>
+        <span class="n">nbrs_idx_expr</span> <span class="o">=</span> <span class="n">explode_nbrs_ht</span><span class="o">.</span><span class="n">_nearest_neighbor_idxs</span>
+        <span class="n">explode_nbrs_ht</span> <span class="o">=</span> <span class="n">explode_nbrs_ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span>
+            <span class="n">nbr</span><span class="o">=</span><span class="p">(</span><span class="n">nbrs_idx_expr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">explode_nbrs_ht</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">nbrs_idx_expr</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">explode_nbrs_ht</span> <span class="o">=</span> <span class="n">explode_nbrs_ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+            <span class="n">nearest_neighbors</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">sorted</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">explode_nbrs_ht</span><span class="o">.</span><span class="n">nbr</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">nearest_neighbors</span><span class="o">=</span><span class="n">explode_nbrs_ht</span><span class="p">[</span><span class="n">nbrs_ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">nearest_neighbors</span>
+        <span class="p">)</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;_nearest_neighbor_idxs&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Checkpointing intermediate Table with nearest neighbor information...&quot;</span>
+        <span class="p">)</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">(</span>
+            <span class="n">new_temp_file</span><span class="p">(</span><span class="s2">&quot;determine_nearest_neighbors.strata&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;ht&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">all_nbr_hts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nbrs_ht</span><span class="p">)</span>
+
+    <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">all_nbr_hts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_nbr_hts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Combining all nearest neighbor stratification Tables...&quot;</span><span class="p">)</span>
+        <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="n">all_nbr_hts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="n">nbrs_ht</span> <span class="o">=</span> <span class="n">nbrs_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">n_pcs</span><span class="o">=</span><span class="n">n_pcs</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neighbors</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">nbrs_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">])</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

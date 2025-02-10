@@ -1,0 +1,8 @@
+gnomad.resources.grch37.gnomad_ld
+=================================
+
+
+
+.. gnomad_automodulesummary:: gnomad.resources.grch37.gnomad_ld
+
+.. automodule:: gnomad.resources.grch37.gnomad_ld

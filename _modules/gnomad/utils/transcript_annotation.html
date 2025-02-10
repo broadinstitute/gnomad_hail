@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.transcript_annotation &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.transcript_annotation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.transcript_annotation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utils module containing generic functions that are useful for adding transcript expression-aware annotations.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.filtering</span> <span class="kn">import</span> <span class="n">filter_to_gencode_cds</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.vep</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CSQ_CODING</span><span class="p">,</span>
+    <span class="n">CSQ_SPLICE</span><span class="p">,</span>
+    <span class="n">explode_by_vep_annotation</span><span class="p">,</span>
+    <span class="n">filter_vep_transcript_csqs</span><span class="p">,</span>
+    <span class="n">process_consequences</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;transcript_annotation_utils&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">REPRODUCTIVE_TISSUES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Cervix_Ectocervix&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Cervix_Endocervix&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FallopianTube&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Ovary&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Prostate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Testis&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Uterus&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Vagina&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;List of reproductive tissues in GTEx.&quot;&quot;&quot;</span>
+
+<span class="n">CELL_LINES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Cells_EBV_transformedlymphocytes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Cells_Transformedfibroblasts&quot;</span><span class="p">,</span>  <span class="c1"># Only in v7.</span>
+    <span class="s2">&quot;Cells_Culturedfibroblasts&quot;</span><span class="p">,</span>  <span class="c1"># Only in v10.</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;List of cell lines in GTEx.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="get_tissues_to_exclude"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.get_tissues_to_exclude">[docs]</a><span class="k">def</span> <span class="nf">get_tissues_to_exclude</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+    <span class="n">reproductive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">cell_lines</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">min_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get list of tissues to exclude from pext analyses and mean pext across tissues.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The default value of 100 for the `min_samples` parameter is used because for</span>
+<span class="sd">        small sample sizes, the variation in the number of expressed genes is higher.</span>
+<span class="sd">        For sample sizes over 100, the number of expressed genes reaches saturation,</span>
+<span class="sd">        leading to more stable estimates. See the following study for more</span>
+<span class="sd">        details:</span>
+<span class="sd">        https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-021-08125-9.</span>
+
+<span class="sd">    :param t: Table/MatrixTable with &#39;tissue&#39; annotation for each sample. If a</span>
+<span class="sd">        MatrixTable is input, samples are expected as columns.</span>
+<span class="sd">    :param reproductive: Whether to exclude reproductive tissues. Default is True.</span>
+<span class="sd">    :param cell_lines: Whether to exclude cell lines. Default is True.</span>
+<span class="sd">    :param min_samples: Optional minimum number of samples required for a tissue to be</span>
+<span class="sd">        included. If None, tissues will not be excluded based on sample size. Default</span>
+<span class="sd">        is False.</span>
+<span class="sd">    :return: List of tissues to exclude from pext analyses and mean pext across tissues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">under_min_samples</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">min_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+            <span class="n">num_s_per_tissue</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">aggregate_cols</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">counter</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">tissue</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_s_per_tissue</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">counter</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">tissue</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="n">under_min_samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">num_s_per_tissue</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">min_samples</span><span class="p">]</span>
+
+    <span class="n">tissues_to_exclude</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">REPRODUCTIVE_TISSUES</span> <span class="k">if</span> <span class="n">reproductive</span> <span class="k">else</span> <span class="p">[])</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">CELL_LINES</span> <span class="k">if</span> <span class="n">cell_lines</span> <span class="k">else</span> <span class="p">[])</span>
+        <span class="o">+</span> <span class="n">under_min_samples</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Excluding tissues: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tissues_to_exclude</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tissues_to_exclude</span></div>
+
+
+<div class="viewcode-block" id="summarize_transcript_expression"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.summarize_transcript_expression">[docs]</a><span class="k">def</span> <span class="nf">summarize_transcript_expression</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">transcript_expression_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span> <span class="nb">str</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;transcript_tpm&quot;</span><span class="p">,</span>
+    <span class="n">tissue_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;tissue&quot;</span><span class="p">,</span>
+    <span class="n">summary_agg_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarize a transcript expression MatrixTable by transcript, gene, and tissue.</span>
+
+<span class="sd">    The `summary_agg_func` argument allows the user to specify a Hail aggregation</span>
+<span class="sd">    function to use to summarize the expression by tissue. By default, the median is</span>
+<span class="sd">    used.</span>
+
+<span class="sd">    The returned Table has a row annotation for each tissue containing a struct with the</span>
+<span class="sd">    summarized tissue expression value (&#39;transcript_expression&#39;) and the proportion of</span>
+<span class="sd">    expression of transcript to gene per tissue (&#39;expression_proportion&#39;).</span>
+
+<span class="sd">    Returned Table Schema example::</span>
+
+<span class="sd">        Row fields:</span>
+<span class="sd">            &#39;transcript_id&#39;: str</span>
+<span class="sd">            &#39;gene_id&#39;: str</span>
+<span class="sd">            &#39;tissue_1&#39;: struct {</span>
+<span class="sd">              transcript_expression: float64,</span>
+<span class="sd">              expression_proportion: float64</span>
+<span class="sd">            }</span>
+<span class="sd">            &#39;tissue_2&#39;: struct {</span>
+<span class="sd">              transcript_expression: float64,</span>
+<span class="sd">              expression_proportion: float64</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Key: [&#39;transcript_id&#39;, &#39;gene_id&#39;]</span>
+
+<span class="sd">    :param mt: MatrixTable of transcript (rows) expression quantifications (entry) by</span>
+<span class="sd">        sample (columns).</span>
+<span class="sd">    :param transcript_expression_expr: Entry expression indicating transcript expression</span>
+<span class="sd">        quantification. Default is &#39;transcript_tpm&#39;.</span>
+<span class="sd">    :param tissue_expr: Column expression indicating tissue type. Default is &#39;tissue&#39;.</span>
+<span class="sd">    :param summary_agg_func: Optional aggregation function to use to summarize the</span>
+<span class="sd">        transcript expression quantification by tissue. Example: `hl.agg.mean`. Default</span>
+<span class="sd">        is None, which will use a median aggregation.</span>
+<span class="sd">    :return: A Table of summarized transcript expression by tissue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">summary_agg_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">summary_agg_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transcript_expression_expr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">transcript_expression_expr</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">transcript_expression_expr</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tissue_expr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tissue_expr</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">tissue_expr</span><span class="p">]</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">group_cols_by</span><span class="p">(</span><span class="n">tissue</span><span class="o">=</span><span class="n">tissue_expr</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">tx</span><span class="o">=</span><span class="n">summary_agg_func</span><span class="p">(</span><span class="n">transcript_expression_expr</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;tx&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">})</span><span class="o">.</span><span class="n">make_table</span><span class="p">()</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;transcript_id&quot;</span><span class="p">,</span> <span class="s2">&quot;gene_id&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Annotate with the proportion of expression of transcript to gene per tissue.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">expression_proportion</span><span class="o">=</span><span class="n">get_expression_proportion</span><span class="p">(</span><span class="n">ht</span><span class="p">))</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                <span class="n">transcript_expression</span><span class="o">=</span><span class="n">ht</span><span class="p">[</span><span class="n">t</span><span class="p">],</span>
+                <span class="n">expression_proportion</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">expression_proportion</span><span class="p">[</span><span class="n">t</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">expression_proportion</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="get_expression_proportion"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.get_expression_proportion">[docs]</a><span class="k">def</span> <span class="nf">get_expression_proportion</span><span class="p">(</span><span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the proportion of expression of transcript to gene per tissue.</span>
+
+<span class="sd">    :param ht: Table of summarized transcript expression by tissue.</span>
+<span class="sd">    :return: StructExpression containing the proportion of expression of transcript to</span>
+<span class="sd">        gene per tissue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tissues</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">row_value</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the sum of transcript expression by gene per tissue.</span>
+    <span class="n">gene_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;gene_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">tissue</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">tissue</span><span class="p">])</span> <span class="k">for</span> <span class="n">tissue</span> <span class="ow">in</span> <span class="n">tissues</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Return the proportion of expression of transcript to gene per tissue.</span>
+    <span class="n">gene</span> <span class="o">=</span> <span class="n">gene_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">tissue</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">divide_null</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">tissue</span><span class="p">],</span> <span class="n">gene</span><span class="p">[</span><span class="n">tissue</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">tissue</span> <span class="ow">in</span> <span class="n">tissues</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_expression_ht_by_tissues"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues">[docs]</a><span class="k">def</span> <span class="nf">filter_expression_ht_by_tissues</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tissues_to_keep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a Table with a row annotation for each tissue to only include specified tissues.</span>
+
+<span class="sd">    :param ht: Table with a row annotation for each tissue.</span>
+<span class="sd">    :param tissues_to_keep: Optional list of tissues to keep in the Table. Default is</span>
+<span class="sd">        all non-key rows in the Table.</span>
+<span class="sd">    :param tissues_to_exclude: Optional list of tissues to exclude from the Table.</span>
+<span class="sd">    :return: Table with only specified tissues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tissues_to_keep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tissues_to_exclude</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;No tissues_to_keep or tissues_to_exclude specified. Returning input Table.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ht</span>
+
+    <span class="k">if</span> <span class="n">tissues_to_keep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tissues</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">row_value</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tissues_to_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering tissues: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tissues_to_exclude</span><span class="p">)</span>
+        <span class="n">tissues</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tissues</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tissues_to_exclude</span><span class="p">]</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">tissues</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="tissue_expression_ht_to_array"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.tissue_expression_ht_to_array">[docs]</a><span class="k">def</span> <span class="nf">tissue_expression_ht_to_array</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tissues_to_keep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">annotations_to_extract</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;transcript_expression&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;expression_proportion&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a Table with a row annotation for each tissue to a Table with tissues as an array.</span>
+
+<span class="sd">    The output is a Table with one of the two formats:</span>
+<span class="sd">        - An annotation of &#39;tissue_expression&#39; containing an array of structs by</span>
+<span class="sd">          tissue, where each element of the array is the Table&#39;s row value for a given</span>
+<span class="sd">          tissue.</span>
+
+<span class="sd">            Example::</span>
+
+<span class="sd">                tissue_expression&#39;: array&lt;struct {</span>
+<span class="sd">                    transcript_expression: float64,</span>
+<span class="sd">                    expression_proportion: float64</span>
+<span class="sd">                }&gt;</span>
+
+<span class="sd">        - One array annotation for each field defined in the &#39;annotations_to_extract&#39;</span>
+<span class="sd">          argument, where each array is an array of the given field values by tissue.</span>
+
+<span class="sd">            Example::</span>
+
+<span class="sd">                &#39;transcript_expression&#39;: array&lt;float64&gt;</span>
+<span class="sd">                &#39;expression_proportion&#39;: array&lt;float64&gt;</span>
+
+<span class="sd">    The order of tissues in the array is indicated by the &quot;tissues&quot; global annotation.</span>
+
+<span class="sd">    :param ht: Table with a row annotation for each tissue.</span>
+<span class="sd">    :param tissues_to_keep: Optional list of tissues to keep in the tissue expression</span>
+<span class="sd">        array. Default is all non-key rows in the Table.</span>
+<span class="sd">    :param tissues_to_exclude: Optional list of tissues to exclude from the</span>
+<span class="sd">        tissue expression array.</span>
+<span class="sd">    :param annotations_to_extract: Optional list of tissue struct fields to extract</span>
+<span class="sd">        into top level array annotations. If None, the returned Table will contain a</span>
+<span class="sd">        single top level annotation &#39;tissue_expression&#39; that contains an array of</span>
+<span class="sd">        structs by tissue. Default is (&#39;transcript_expression&#39;, &#39;expression_proportion&#39;).</span>
+<span class="sd">    :return: Table with requested tissue struct annotations pulled into arrays of</span>
+<span class="sd">        tissue values and a &#39;tissues&#39; global annotation indicating the order of tissues</span>
+<span class="sd">        in the arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_expression_ht_by_tissues</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">tissues_to_keep</span><span class="p">,</span> <span class="n">tissues_to_exclude</span><span class="p">)</span>
+
+    <span class="n">tissues</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">row_value</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select_globals</span><span class="p">(</span><span class="n">tissues</span><span class="o">=</span><span class="n">tissues</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">tissue_expression</span><span class="o">=</span><span class="p">[</span><span class="n">ht</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tissues</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">annotations_to_extract</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">a</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">tissue_expression</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">a</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations_to_extract</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="tx_filter_variants_by_csqs"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs">[docs]</a><span class="k">def</span> <span class="nf">tx_filter_variants_by_csqs</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">filter_to_cds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">gencode_ht</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_to_genes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">match_by_gene_symbol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_to_csqs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ignore_splicing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_to_protein_coding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">include_polyphen_prioritization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepare a Table of variants with VEP transcript consequences for annotation.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        When `filter_to_cds` is set to True, the returned Table will be further</span>
+<span class="sd">        filtered by defined &#39;amino_acids&#39; annotation, which is to filter out certain</span>
+<span class="sd">        consequences, such as &#39;stop_retained_variant&#39;, that are kept by all CDS</span>
+<span class="sd">        intervals but don&#39;t belong to CDS of the transcript they fall on.</span>
+
+<span class="sd">    :param ht: Table of variants with &#39;vep&#39; annotations.</span>
+<span class="sd">    :param gencode_ht: Optional Gencode resource Table containing CDS interval</span>
+<span class="sd">        information. This is only used when `filter_to_cds` is set to True. Default is</span>
+<span class="sd">        None, which will use the default version of the Gencode Table resource for</span>
+<span class="sd">        the reference build of the input Table `ht`.</span>
+<span class="sd">    :param filter_to_cds: Whether to filter to CDS regions. Default is True. And it</span>
+<span class="sd">        will be further filtered by defined &#39;amino_acids&#39; annotation.</span>
+<span class="sd">    :param filter_to_genes: Optional list of genes to filter to. Default is None.</span>
+<span class="sd">    :param match_by_gene_symbol: Whether to match by gene symbol instead of gene ID.</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    :param filter_to_csqs: Optional list of consequences to filter to. Default is None.</span>
+<span class="sd">    :param ignore_splicing: If True, ignore splice consequences. Default is True.</span>
+<span class="sd">    :param filter_to_protein_coding: Whether to filter to protein coding transcripts.</span>
+<span class="sd">        Default is True.</span>
+<span class="sd">    :param vep_root: Name used for root VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param include_polyphen_prioritization: Whether to include PolyPhen prioritization</span>
+<span class="sd">        when processing VEP consequences. Default is False.</span>
+<span class="sd">    :return: Table of variants with preprocessed/filtered transcript consequences</span>
+<span class="sd">        prepared for annotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">additional_filtering_criteria</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">filter_to_cds</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to CDS regions...&quot;</span><span class="p">)</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_to_gencode_cds</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">gencode_ht</span><span class="o">=</span><span class="n">gencode_ht</span><span class="p">)</span>
+        <span class="n">additional_filtering_criteria</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">amino_acids</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">amino_acids</span> <span class="o">!=</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">ignore_splicing</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering VEP consequences to exclude splice consequences...&quot;</span><span class="p">)</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">vep_root</span><span class="p">:</span> <span class="n">ht</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">transcript_consequences</span><span class="o">=</span><span class="n">ht</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span>
+                    <span class="o">.</span><span class="n">transcript_consequences</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="n">csq</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                            <span class="n">consequence_terms</span><span class="o">=</span><span class="n">csq</span><span class="o">.</span><span class="n">consequence_terms</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">~</span><span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">CSQ_SPLICE</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">consequence_terms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing VEP consequences...&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">process_consequences</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span>
+        <span class="n">vep_root</span><span class="o">=</span><span class="n">vep_root</span><span class="p">,</span>
+        <span class="n">has_polyphen</span><span class="o">=</span><span class="n">include_polyphen_prioritization</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filter_vep_transcript_csqs</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span>
+        <span class="n">vep_root</span><span class="o">=</span><span class="n">vep_root</span><span class="p">,</span>
+        <span class="n">synonymous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">canonical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">protein_coding</span><span class="o">=</span><span class="n">filter_to_protein_coding</span><span class="p">,</span>
+        <span class="n">csqs</span><span class="o">=</span><span class="n">filter_to_csqs</span><span class="p">,</span>
+        <span class="n">genes</span><span class="o">=</span><span class="n">filter_to_genes</span><span class="p">,</span>
+        <span class="n">match_by_gene_symbol</span><span class="o">=</span><span class="n">match_by_gene_symbol</span><span class="p">,</span>
+        <span class="n">additional_filtering_criteria</span><span class="o">=</span><span class="n">additional_filtering_criteria</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tx_annotate_variants"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.tx_annotate_variants">[docs]</a><span class="k">def</span> <span class="nf">tx_annotate_variants</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tx_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude_from_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">vep_annotation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;transcript_consequences&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Annotate variants with transcript-based expression values or expression proportion from GTEx.</span>
+
+<span class="sd">    :param ht: Table of variants to annotate, it should contain the nested fields:</span>
+<span class="sd">        `{vep_root}.{vep_annotation}`.</span>
+<span class="sd">    :param tx_ht: Table of transcript expression information.</span>
+<span class="sd">    :param tissues_to_exclude: Optional list of tissues to exclude from the output.</span>
+<span class="sd">        Default is None.</span>
+<span class="sd">    :param tissues_to_exclude_from_mean: Optional list of tissues to exclude when</span>
+<span class="sd">        calculating the mean expression proportion across all tissues. Default is None.</span>
+<span class="sd">    :param vep_root: Name used for root VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param vep_annotation: Name of annotation under vep_root, one of the processed</span>
+<span class="sd">        consequences: [&quot;transcript_consequences&quot;, &quot;worst_csq_by_gene&quot;,</span>
+<span class="sd">        &quot;worst_csq_for_variant&quot;, &quot;worst_csq_by_gene_canonical&quot;,</span>
+<span class="sd">        &quot;worst_csq_for_variant_canonical&quot;]. For example, if you want to annotate</span>
+<span class="sd">        each variant with the worst consequence in each gene it falls on and the</span>
+<span class="sd">        transcript expression, you would use &quot;worst_csq_by_gene&quot;. Default is</span>
+<span class="sd">        &quot;transcript_consequences&quot;.</span>
+<span class="sd">    :return: Input Table with transcript expression information annotated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Filter to tissues of interest.</span>
+    <span class="k">if</span> <span class="n">tissues_to_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tx_ht</span> <span class="o">=</span> <span class="n">filter_expression_ht_by_tissues</span><span class="p">(</span>
+            <span class="n">tx_ht</span><span class="p">,</span> <span class="n">tissues_to_exclude</span><span class="o">=</span><span class="n">tissues_to_exclude</span>
+        <span class="p">)</span>
+    <span class="n">tissues_to_exclude_from_mean</span> <span class="o">=</span> <span class="n">tissues_to_exclude_from_mean</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">tissues</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tx_ht</span><span class="o">.</span><span class="n">row_value</span><span class="p">)</span>
+    <span class="n">exp_prop_mean_tissues</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tissues</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tissues_to_exclude_from_mean</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Calculate the mean expression proportion across all desired tissues.</span>
+    <span class="n">tx_ht</span> <span class="o">=</span> <span class="n">tx_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">exp_prop_mean</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">tx_ht</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">expression_proportion</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">exp_prop_mean_tissues</span><span class="p">],</span>
+            <span class="n">filter_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Explode the processed transcript consequences to be able to key by</span>
+    <span class="c1"># transcript ID.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">explode_by_vep_annotation</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">vep_annotation</span><span class="o">=</span><span class="n">vep_annotation</span><span class="p">,</span> <span class="n">vep_root</span><span class="o">=</span><span class="n">vep_root</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">ht</span><span class="p">[</span><span class="n">vep_annotation</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">tx_ht</span><span class="p">[</span><span class="n">ht</span><span class="p">[</span><span class="n">vep_annotation</span><span class="p">]</span><span class="o">.</span><span class="n">transcript_id</span><span class="p">,</span> <span class="n">ht</span><span class="p">[</span><span class="n">vep_annotation</span><span class="p">]</span><span class="o">.</span><span class="n">gene_id</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+        <span class="n">tissues</span><span class="o">=</span><span class="n">tissues</span><span class="p">,</span>
+        <span class="c1"># NOTE: `exp_prop_mean_tissues` global will be the same as `tissues`</span>
+        <span class="c1"># if no tissues were specified in `tissues_to_exclude_from_mean` argument</span>
+        <span class="n">exp_prop_mean_tissues</span><span class="o">=</span><span class="n">exp_prop_mean_tissues</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="tx_aggregate_variants"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.tx_aggregate_variants">[docs]</a><span class="k">def</span> <span class="nf">tx_aggregate_variants</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">additional_group_by</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;alleles&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gene_symbol&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;most_severe_consequence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lof&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lof_flags&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Aggregate transcript-based expression values or expression proportion from GTEx.</span>
+
+<span class="sd">    :param ht: Table of variants annotated with transcript expression information.</span>
+<span class="sd">    :param additional_group_by: Optional list of additional fields to group by before</span>
+<span class="sd">        sum aggregation. If None, the returned Table will be grouped by only &quot;locus&quot;</span>
+<span class="sd">        and &quot;gene_id&quot; before the sum aggregation.</span>
+<span class="sd">    :return: Table of variants with transcript expression information aggregated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tissues</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">tissues</span><span class="p">)</span>
+
+    <span class="n">grouping</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;locus&quot;</span><span class="p">,</span> <span class="s2">&quot;gene_id&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">additional_group_by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">grouping</span> <span class="o">=</span> <span class="n">grouping</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">additional_group_by</span><span class="p">)</span>
+
+    <span class="c1"># Previous steps of the transcript annotation pipeline require that the input ht is</span>
+    <span class="c1"># keyed by locus and alleles so that the correct transcripts are retained when</span>
+    <span class="c1"># filtering variants by transcript (with `tx_filter_variants_by_csqs`) and exploding</span>
+    <span class="c1"># the VEP annotation (in `tx_annotate_variants`). However, if &quot;alleles&quot; is not</span>
+    <span class="c1"># present in the additional_group_by, a transcript that is associated with multiple</span>
+    <span class="c1"># alleles at a locus may not be represented correctly after deduplicating locus and</span>
+    <span class="c1"># transcript combinations with a distinct operation, since this operation</span>
+    <span class="c1"># deduplicates by selecting a random row. To ensure the desired values are selected</span>
+    <span class="c1"># during `distinct()` filter, we re-key the tx_ht by locus, gene_id, transcript_id,</span>
+    <span class="c1"># and any additional_group_by fields prior to running `distinct()&#39;.</span>
+    <span class="k">if</span> <span class="s2">&quot;alleles&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">additional_group_by</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">*</span><span class="n">grouping</span><span class="p">,</span> <span class="s2">&quot;transcript_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+
+    <span class="c1"># Aggregate the transcript expression information by locus, gene_id and</span>
+    <span class="c1"># annotations in additional_group_by.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="o">*</span><span class="n">grouping</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">exp_prop_mean</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">exp_prop_mean</span><span class="p">),</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">a</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ht</span><span class="p">[</span><span class="n">t</span><span class="p">]})</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tissues</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># If &#39;alleles&#39; is in the Table, key by &#39;locus&#39; and &#39;alleles&#39;.</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;locus&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">&quot;alleles&quot;</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;alleles&quot;</span><span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="perform_tx_annotation_pipeline"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline">[docs]</a><span class="k">def</span> <span class="nf">perform_tx_annotation_pipeline</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tx_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tissues_to_exclude_from_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">vep_annotation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;transcript_consequences&quot;</span><span class="p">,</span>
+    <span class="n">filter_to_csqs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">CSQ_CODING</span><span class="p">,</span>
+    <span class="n">additional_group_by</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;alleles&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gene_symbol&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;most_severe_consequence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lof&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lof_flags&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    One-stop usage of `tx_filter_variants_by_csqs`, `tx_annotate_variants` and `tx_aggregate_variants`.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The default `additional_group_by` is used to create the gnomAD annotation-level</span>
+<span class="sd">        pext release, and only `additional_group_by=[&quot;gene_symbol&quot;]` is used to create</span>
+<span class="sd">        the gnomAD base-level pext release.</span>
+
+<span class="sd">    :param ht: Table of variants to annotate, it should contain the nested fields:</span>
+<span class="sd">        `{vep_root}.{vep_annotation}`.</span>
+<span class="sd">    :param tx_ht: Table of transcript expression information.</span>
+<span class="sd">    :param tissues_to_exclude: Optional list of tissues to exclude from the output.</span>
+<span class="sd">        Default is None.</span>
+<span class="sd">    :param tissues_to_exclude_from_mean: Optional list of tissues to exclude when</span>
+<span class="sd">        calculating the mean expression proportion across all tissues. Default is None.</span>
+<span class="sd">    :param vep_root: Name used for root VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param vep_annotation: Name of annotation under vep_root. Default is</span>
+<span class="sd">        &#39;transcript_consequences&#39;.</span>
+<span class="sd">    :param filter_to_csqs: Optional list of consequences to filter to. Default is None.</span>
+<span class="sd">    :param additional_group_by: Optional list of additional fields to group by before</span>
+<span class="sd">        sum aggregation. If None, the returned Table will be grouped by only &quot;locus&quot;</span>
+<span class="sd">        and &quot;gene_id&quot; before the sum aggregation.</span>
+<span class="sd">    :return: Table of variants with transcript expression information aggregated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tx_ht</span> <span class="o">=</span> <span class="n">tx_annotate_variants</span><span class="p">(</span>
+        <span class="n">tx_filter_variants_by_csqs</span><span class="p">(</span>
+            <span class="n">ht</span><span class="p">,</span> <span class="n">vep_root</span><span class="o">=</span><span class="n">vep_root</span><span class="p">,</span> <span class="n">filter_to_csqs</span><span class="o">=</span><span class="n">filter_to_csqs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">),</span>
+        <span class="n">tx_ht</span><span class="p">,</span>
+        <span class="n">tissues_to_exclude</span><span class="o">=</span><span class="n">tissues_to_exclude</span><span class="p">,</span>
+        <span class="n">tissues_to_exclude_from_mean</span><span class="o">=</span><span class="n">tissues_to_exclude_from_mean</span><span class="p">,</span>
+        <span class="n">vep_root</span><span class="o">=</span><span class="n">vep_root</span><span class="p">,</span>
+        <span class="n">vep_annotation</span><span class="o">=</span><span class="n">vep_annotation</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">tx_ht</span> <span class="o">=</span> <span class="n">tx_aggregate_variants</span><span class="p">(</span><span class="n">tx_ht</span><span class="p">,</span> <span class="n">additional_group_by</span><span class="o">=</span><span class="n">additional_group_by</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tx_ht</span></div>
+
+
+<span class="c1">########################################################################################</span>
+<span class="c1"># Functions for preparing transcript expression data for the gnomAD browser.</span>
+<span class="c1">########################################################################################</span>
+<div class="viewcode-block" id="clean_tissue_name_for_browser"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.clean_tissue_name_for_browser">[docs]</a><span class="k">def</span> <span class="nf">clean_tissue_name_for_browser</span><span class="p">(</span><span class="n">tissue_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clean and formats a tissue name for browser compatibility.</span>
+
+<span class="sd">    This function converts uppercase letters to lowercase and adds underscores</span>
+<span class="sd">    between words where necessary. Additionally, it replaces certain combined</span>
+<span class="sd">    words with their corresponding formatted versions.</span>
+
+<span class="sd">    :param tissue_name: Tissue name to clean and format.</span>
+<span class="sd">    :return: Cleaned and formatted tissue name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formatted_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">tissue_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">formatted_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;_&quot;</span><span class="p">:</span>
+                <span class="n">formatted_name</span> <span class="o">+=</span> <span class="s2">&quot;_&quot;</span>
+            <span class="n">formatted_name</span> <span class="o">+=</span> <span class="n">char</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">formatted_name</span> <span class="o">+=</span> <span class="n">char</span>
+
+    <span class="c1"># Dictionary of tissue names that need to be reformatted that will not be formatted</span>
+    <span class="c1"># correctly with for loop above.</span>
+    <span class="n">replacements</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;basalganglia&quot;</span><span class="p">:</span> <span class="s2">&quot;basal_ganglia&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;nucleusaccumbens&quot;</span><span class="p">:</span> <span class="s2">&quot;nucleus_accumbens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;spinalcord&quot;</span><span class="p">:</span> <span class="s2">&quot;spinal_cord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cervicalc&quot;</span><span class="p">:</span> <span class="s2">&quot;cervical_c&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;substantianigra&quot;</span><span class="p">:</span> <span class="s2">&quot;substantia_nigra&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;culturedfibroblasts&quot;</span><span class="p">:</span> <span class="s2">&quot;cultured_fibroblasts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lowerleg&quot;</span><span class="p">:</span> <span class="s2">&quot;lower_leg&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;transformedlymphocytes&quot;</span><span class="p">:</span> <span class="s2">&quot;transformed_lymphocytes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;anteriorcingulatecortex&quot;</span><span class="p">:</span> <span class="s2">&quot;anterior_cingulate_cortex&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;b_a24&quot;</span><span class="p">:</span> <span class="s2">&quot;ba24&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;b_a9&quot;</span><span class="p">:</span> <span class="s2">&quot;ba9&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;e_b_v&quot;</span><span class="p">:</span> <span class="s2">&quot;ebv&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">original</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">replacements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">formatted_name</span> <span class="o">=</span> <span class="n">formatted_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">replacement</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">formatted_name</span></div>
+
+
+<div class="viewcode-block" id="create_tx_annotation_by_region"><a class="viewcode-back" href="../../../api_reference/utils/transcript_annotation.html#gnomad.utils.transcript_annotation.create_tx_annotation_by_region">[docs]</a><span class="k">def</span> <span class="nf">create_tx_annotation_by_region</span><span class="p">(</span><span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create transcript annotation by region for loading into the gnomAD browser.</span>
+
+<span class="sd">    This function processes a Hail Table to create transcript annotations by region.</span>
+<span class="sd">    It calculates the mean expression proportion, handles missing values, and organizes</span>
+<span class="sd">    the data by genomic regions. Regions are split based on changes in the following</span>
+<span class="sd">    fields: &#39;gene_id&#39;, &#39;exp_prop_mean&#39;, and &#39;tissues&#39;.</span>
+
+<span class="sd">    .. table:: Input Hail Table</span>
+<span class="sd">        :widths: auto</span>
+
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | locus    | gene_id | exp_prop_mean | tissue1 | tissue2 |</span>
+<span class="sd">        +==========+=========+===============+=========+=========+</span>
+<span class="sd">        | chr1:1   | gene1   | 0.5           | 0.2     | 0.3     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | chr1:2   | gene1   | 0.5           | 0.2     | 0.3     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | chr1:3   | gene1   | 0.6           | 0.3     | 0.4     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | chr1:4   | gene2   | 0.7           | 0.5     | 0.6     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | chr1:5   | gene2   | 0.7           | 0.5     | 0.6     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+<span class="sd">        | chr1:6   | gene2   | 0.8           | 0.6     | 0.7     |</span>
+<span class="sd">        +----------+---------+---------------+---------+---------+</span>
+
+<span class="sd">    .. table:: Output Hail Table</span>
+<span class="sd">        :widths: auto</span>
+
+<span class="sd">        +---------+--------------------------------------------------------------+</span>
+<span class="sd">        | gene_id | regions                                                      |</span>
+<span class="sd">        +=========+==============================================================+</span>
+<span class="sd">        | gene1   | [{&#39;chrom&#39;: &#39;chr1&#39;, &#39;start&#39;: 1, &#39;stop&#39;: 2, &#39;mean&#39;: 0.5,       |</span>
+<span class="sd">        |         | &#39;tissues&#39;: {&#39;tissue1&#39;: 0.2, &#39;tissue2&#39;: 0.3}},                |</span>
+<span class="sd">        |         | {&#39;chrom&#39;: &#39;chr1&#39;, &#39;start&#39;: 3, &#39;stop&#39;: 3, &#39;mean&#39;: 0.6,        |</span>
+<span class="sd">        |         | &#39;tissues&#39;: {&#39;tissue1&#39;: 0.3, &#39;tissue2&#39;: 0.4}}]                |</span>
+<span class="sd">        +---------+--------------------------------------------------------------+</span>
+<span class="sd">        | gene2   | [{&#39;chrom&#39;: &#39;chr1&#39;, &#39;start&#39;: 4, &#39;stop&#39;: 5, &#39;mean&#39;: 0.7,       |</span>
+<span class="sd">        |         | &#39;tissues&#39;: {&#39;tissue1&#39;: 0.5, &#39;tissue2&#39;: 0.6}},                |</span>
+<span class="sd">        |         | {&#39;chrom&#39;: &#39;chr1&#39;, &#39;start&#39;: 6, &#39;stop&#39;: 6, &#39;mean&#39;: 0.8,        |</span>
+<span class="sd">        |         | &#39;tissues&#39;: {&#39;tissue1&#39;: 0.6, &#39;tissue2&#39;: 0.7}}                 |</span>
+<span class="sd">        +---------+--------------------------------------------------------------+</span>
+
+<span class="sd">    :param ht: Input Hail Table with transcript expression information.</span>
+<span class="sd">    :return: Hail Table with transcript annotations by region.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get a list of tissues and drop the &#39;tissues&#39; field from the Table.</span>
+    <span class="n">tissues</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">tissues</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select_globals</span><span class="p">()</span>
+
+    <span class="c1"># Slightly restructure fields and replace NaNs and missing values with 0s.</span>
+    <span class="n">set_nan_to_zero</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">|</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_nan</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="s2">&quot;gene_id&quot;</span><span class="p">,</span>
+        <span class="n">chrom</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span>
+        <span class="n">pos</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">mean</span><span class="o">=</span><span class="n">set_nan_to_zero</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">exp_prop_mean</span><span class="p">),</span>
+        <span class="n">tissues</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">set_nan_to_zero</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tissues</span><span class="p">}),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Order by gene_id and position, then drop the locus field.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">gene_id</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">asc</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">))</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;locus&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Key by all fields except &#39;pos&#39; and collect by key into a field named &#39;pos&#39;.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row_value</span> <span class="k">if</span> <span class="n">r</span> <span class="o">!=</span> <span class="s2">&quot;pos&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">collect_by_key</span><span class="p">(</span><span class="s2">&quot;pos&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Annotate with &#39;start&#39; and &#39;stop&#39; positions for regions by merging adjacent</span>
+    <span class="c1"># positions.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">pos</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                <span class="n">j</span><span class="o">.</span><span class="n">pos</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">j</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">pos</span><span class="p">)),</span>
+                <span class="n">i</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">j</span><span class="o">.</span><span class="n">pos</span><span class="p">)),</span>
+            <span class="p">),</span>
+            <span class="p">[(</span><span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span><span class="p">)],</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+        <span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;pos&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Key by &#39;gene_id&#39; and transform &#39;pos&#39; into &#39;start&#39; and &#39;stop&#39; fields.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;gene_id&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stop</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Select fields in preferred order and collect by key into a field named &#39;regions&#39;.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;chrom&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;tissues&quot;</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">collect_by_key</span><span class="p">(</span><span class="s2">&quot;regions&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

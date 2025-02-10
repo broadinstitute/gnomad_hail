@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.ancestry &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.ancestry</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.sample_qc.ancestry</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">onnx</span>
+<span class="kn">import</span> <span class="nn">onnxruntime</span> <span class="k">as</span> <span class="nn">rt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">skl2onnx</span> <span class="kn">import</span> <span class="n">convert_sklearn</span>
+<span class="kn">from</span> <span class="nn">skl2onnx.common.data_types</span> <span class="kn">import</span> <span class="n">FloatTensorType</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.filtering</span> <span class="kn">import</span> <span class="n">filter_to_autosomes</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">POP_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;afr&quot;</span><span class="p">:</span> <span class="s2">&quot;African/African-American&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ami&quot;</span><span class="p">:</span> <span class="s2">&quot;Amish&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;amr&quot;</span><span class="p">:</span> <span class="s2">&quot;Admixed American&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;asj&quot;</span><span class="p">:</span> <span class="s2">&quot;Ashkenazi Jewish&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eas&quot;</span><span class="p">:</span> <span class="s2">&quot;East Asian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eur&quot;</span><span class="p">:</span> <span class="s2">&quot;European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fin&quot;</span><span class="p">:</span> <span class="s2">&quot;Finnish&quot;</span><span class="p">,</span>
+    <span class="c1"># NOTE: mde is kept for historical purposes, in gnomAD v3.1 mid was used instead</span>
+    <span class="s2">&quot;mde&quot;</span><span class="p">:</span> <span class="s2">&quot;Middle Eastern&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mid&quot;</span><span class="p">:</span> <span class="s2">&quot;Middle Eastern&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nfe&quot;</span><span class="p">:</span> <span class="s2">&quot;Non-Finnish European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oth&quot;</span><span class="p">:</span> <span class="s2">&quot;Other&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;remaining&quot;</span><span class="p">:</span> <span class="s2">&quot;Remaining individuals&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sas&quot;</span><span class="p">:</span> <span class="s2">&quot;South Asian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;uniform&quot;</span><span class="p">:</span> <span class="s2">&quot;Uniform&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sas_non_consang&quot;</span><span class="p">:</span> <span class="s2">&quot;South Asian (F &lt; 0.05)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;consanguineous&quot;</span><span class="p">:</span> <span class="s2">&quot;South Asian (F &gt; 0.05)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;exac&quot;</span><span class="p">:</span> <span class="s2">&quot;ExAC&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bgr&quot;</span><span class="p">:</span> <span class="s2">&quot;Bulgarian (Eastern European)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;est&quot;</span><span class="p">:</span> <span class="s2">&quot;Estonian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gbr&quot;</span><span class="p">:</span> <span class="s2">&quot;British&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nwe&quot;</span><span class="p">:</span> <span class="s2">&quot;North-Western European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;seu&quot;</span><span class="p">:</span> <span class="s2">&quot;Southern European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;swe&quot;</span><span class="p">:</span> <span class="s2">&quot;Swedish&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kor&quot;</span><span class="p">:</span> <span class="s2">&quot;Korean&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sgp&quot;</span><span class="p">:</span> <span class="s2">&quot;Singaporean&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;jpn&quot;</span><span class="p">:</span> <span class="s2">&quot;Japanese&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oea&quot;</span><span class="p">:</span> <span class="s2">&quot;Other East Asian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oeu&quot;</span><span class="p">:</span> <span class="s2">&quot;Other European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;onf&quot;</span><span class="p">:</span> <span class="s2">&quot;Other Non-Finnish European&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unk&quot;</span><span class="p">:</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">POP_COLORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;afr&quot;</span><span class="p">:</span> <span class="s2">&quot;#941494&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ami&quot;</span><span class="p">:</span> <span class="s2">&quot;#FFC0CB&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;amr&quot;</span><span class="p">:</span> <span class="s2">&quot;#ED1E24&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;asj&quot;</span><span class="p">:</span> <span class="s2">&quot;#FF7F50&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eas&quot;</span><span class="p">:</span> <span class="s2">&quot;#108C44&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eur&quot;</span><span class="p">:</span> <span class="s2">&quot;#6AA5CD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fin&quot;</span><span class="p">:</span> <span class="s2">&quot;#002F6C&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mde&quot;</span><span class="p">:</span> <span class="s2">&quot;#33CC33&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nfe&quot;</span><span class="p">:</span> <span class="s2">&quot;#6AA5CD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oth&quot;</span><span class="p">:</span> <span class="s2">&quot;#ABB9B9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sas&quot;</span><span class="p">:</span> <span class="s2">&quot;#FF9912&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;uniform&quot;</span><span class="p">:</span> <span class="s2">&quot;pink&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;consanguineous&quot;</span><span class="p">:</span> <span class="s2">&quot;pink&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sas_non_consang&quot;</span><span class="p">:</span> <span class="s2">&quot;orange&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;exac&quot;</span><span class="p">:</span> <span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bgr&quot;</span><span class="p">:</span> <span class="s2">&quot;#66C2A5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;est&quot;</span><span class="p">:</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gbr&quot;</span><span class="p">:</span> <span class="s2">&quot;#C60C30&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nwe&quot;</span><span class="p">:</span> <span class="s2">&quot;#C60C30&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;seu&quot;</span><span class="p">:</span> <span class="s2">&quot;#3CA021&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;swe&quot;</span><span class="p">:</span> <span class="s2">&quot;purple&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kor&quot;</span><span class="p">:</span> <span class="s2">&quot;#4891D9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sgp&quot;</span><span class="p">:</span> <span class="s2">&quot;darkred&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;jpn&quot;</span><span class="p">:</span> <span class="s2">&quot;#BC002D&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oea&quot;</span><span class="p">:</span> <span class="s2">&quot;#108C44&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;oeu&quot;</span><span class="p">:</span> <span class="s2">&quot;#6AA5CD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;onf&quot;</span><span class="p">:</span> <span class="s2">&quot;#6AA5CD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unk&quot;</span><span class="p">:</span> <span class="s2">&quot;#ABB9B9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;remaining&quot;</span><span class="p">:</span> <span class="s2">&quot;#ABB9B9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="s2">&quot;#ABB9B9&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="pc_project"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.pc_project">[docs]</a><span class="k">def</span> <span class="nf">pc_project</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">loadings_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">loading_location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;loadings&quot;</span><span class="p">,</span>
+    <span class="n">af_location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pca_af&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Project samples in `mt` on pre-computed PCs.</span>
+
+<span class="sd">    :param mt: MT containing the samples to project</span>
+<span class="sd">    :param loadings_ht: HT containing the PCA loadings and allele frequencies used for the PCA</span>
+<span class="sd">    :param loading_location: Location of expression for loadings in `loadings_ht`</span>
+<span class="sd">    :param af_location: Location of expression for allele frequency in `loadings_ht`</span>
+<span class="sd">    :return: Table with scores calculated from loadings in column `scores`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_variants</span> <span class="o">=</span> <span class="n">loadings_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+        <span class="n">pca_loadings</span><span class="o">=</span><span class="n">loadings_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">][</span><span class="n">loading_location</span><span class="p">],</span>
+        <span class="n">pca_af</span><span class="o">=</span><span class="n">loadings_ht</span><span class="p">[</span><span class="n">mt</span><span class="o">.</span><span class="n">row_key</span><span class="p">][</span><span class="n">af_location</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">pca_loadings</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">gt_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">n_alt_alleles</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span><span class="p">)</span> <span class="o">/</span> <span class="n">hl</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="n">n_variants</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mt</span><span class="o">.</span><span class="n">pca_af</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_cols</span><span class="p">(</span><span class="n">scores</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">array_sum</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">pca_loadings</span> <span class="o">*</span> <span class="n">gt_norm</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">cols</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;scores&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="apply_onnx_classification_model"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.apply_onnx_classification_model">[docs]</a><span class="k">def</span> <span class="nf">apply_onnx_classification_model</span><span class="p">(</span>
+    <span class="n">data_pd</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">fit</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">ModelProto</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply an ONNX classification model `fit` to a pandas dataframe `data_pd`.</span>
+
+<span class="sd">    :param data_pd: Pandas dataframe containing the data to be classified.</span>
+<span class="sd">    :param fit: ONNX model to be applied.</span>
+<span class="sd">    :return: Tuple of classification and probabilities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">ModelProto</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The model supplied is not an onnx model!&quot;</span><span class="p">)</span>
+
+    <span class="n">sess</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span>
+        <span class="n">fit</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">(),</span> <span class="n">providers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">input_name</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">label_name</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">prob_name</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">classification</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">label_name</span><span class="p">],</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">data_pd</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)})[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">prob_name</span><span class="p">],</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">data_pd</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)})[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">probs</span><span class="o">.</span><span class="n">add_prefix</span><span class="p">(</span><span class="s2">&quot;prob_&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">classification</span><span class="p">,</span> <span class="n">probs</span></div>
+
+
+<div class="viewcode-block" id="apply_sklearn_classification_model"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.apply_sklearn_classification_model">[docs]</a><span class="k">def</span> <span class="nf">apply_sklearn_classification_model</span><span class="p">(</span>
+    <span class="n">data_pd</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">fit</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply an sklearn classification model `fit` to a pandas dataframe `data_pd`.</span>
+
+<span class="sd">    :param data_pd: Pandas dataframe containing the data to be classified.</span>
+<span class="sd">    :param fit: Sklearn model to be applied.</span>
+<span class="sd">    :return: Tuple of classification and probabilities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_is_fitted</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">check_is_fitted</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The supplied model is not an sklearn model!&quot;</span><span class="p">)</span>
+
+    <span class="n">classification</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data_pd</span><span class="p">)</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">data_pd</span><span class="p">)</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;prob_</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">fit</span><span class="o">.</span><span class="n">classes_</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">classification</span><span class="p">,</span> <span class="n">probs</span></div>
+
+
+<div class="viewcode-block" id="convert_sklearn_rf_to_onnx"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.convert_sklearn_rf_to_onnx">[docs]</a><span class="k">def</span> <span class="nf">convert_sklearn_rf_to_onnx</span><span class="p">(</span>
+    <span class="n">fit</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target_opset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">onnx</span><span class="o">.</span><span class="n">ModelProto</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a sklearn random forest model to ONNX.</span>
+
+<span class="sd">    :param fit: Sklearn random forest model to be converted.</span>
+<span class="sd">    :param target_opset: An optional target ONNX opset version to convert the model to.</span>
+<span class="sd">    :return: ONNX model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_is_fitted</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">check_is_fitted</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The supplied model is not an sklearn model!&quot;</span><span class="p">)</span>
+
+    <span class="n">initial_type</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;float_input&quot;</span><span class="p">,</span> <span class="n">FloatTensorType</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">n_features_in_</span><span class="p">]))]</span>
+    <span class="n">onx</span> <span class="o">=</span> <span class="n">convert_sklearn</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">initial_types</span><span class="o">=</span><span class="n">initial_type</span><span class="p">,</span> <span class="n">target_opset</span><span class="o">=</span><span class="n">target_opset</span><span class="p">)</span>
+
+    <span class="n">domains</span> <span class="o">=</span> <span class="n">onx</span><span class="o">.</span><span class="n">opset_import</span>
+    <span class="n">opset_version</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">dom</span> <span class="ow">in</span> <span class="n">domains</span><span class="p">:</span>
+        <span class="n">opset_version</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;domain: </span><span class="si">{</span><span class="n">dom</span><span class="o">.</span><span class="n">domain</span><span class="si">}</span><span class="s2">, version: </span><span class="si">{</span><span class="n">dom</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;sklearn model converted to onnx model with the following opset version: </span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">opset_version</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">onx</span></div>
+
+
+<div class="viewcode-block" id="assign_population_pcs"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.assign_population_pcs">[docs]</a><span class="k">def</span> <span class="nf">assign_population_pcs</span><span class="p">(</span>
+    <span class="n">pop_pca_scores</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+    <span class="n">pc_cols</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">known_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;known_pop&quot;</span><span class="p">,</span>
+    <span class="n">fit</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Type should be RandomForestClassifier but we do not want to import sklearn.RandomForestClassifier outside</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+    <span class="n">prop_train</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+    <span class="n">n_estimators</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">min_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pop&quot;</span><span class="p">,</span>
+    <span class="n">missing_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;oth&quot;</span><span class="p">,</span>
+    <span class="n">pc_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;scores&quot;</span><span class="p">,</span>
+    <span class="n">convert_model_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">apply_model_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">apply_sklearn_classification_model</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">Any</span>
+<span class="p">]:</span>  <span class="c1"># 2nd element of the tuple should be RandomForestClassifier but we do not want to import sklearn.RandomForestClassifier outside</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use a random forest model to assign population labels based on the results of PCA.</span>
+
+<span class="sd">    Default values for model and assignment parameters are those used in gnomAD.</span>
+
+<span class="sd">    As input, this function can either take:</span>
+<span class="sd">        - A Hail Table (typically the output of `hwe_normalized_pca`). In this case,</span>
+<span class="sd">            - `pc_cols` should be one of::</span>
+<span class="sd">                - A list of integers where each element is one of the PCs to use.</span>
+<span class="sd">                - A list of strings where each element is one of the PCs to use.</span>
+<span class="sd">                - An ArrayExpression of Floats where each element is one of the PCs.</span>
+<span class="sd">                  to use</span>
+<span class="sd">            - A Hail Table will be returned as output.</span>
+<span class="sd">        - A Pandas DataFrame. In this case:</span>
+<span class="sd">            - Each PC should be in a separate column and `pc_cols` is the list of all</span>
+<span class="sd">              the columns containing the PCs to use.</span>
+<span class="sd">            - A pandas DataFrame is returned as output.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If you have a Pandas Dataframe and have all PCs as an array in a single column,</span>
+<span class="sd">        the `expand_pd_array_col`can be used to expand this column into multiple `PC`</span>
+<span class="sd">        columns.</span>
+
+<span class="sd">    :param pop_pca_scores: Input Hail Table or Pandas Dataframe.</span>
+<span class="sd">    :param pc_cols: List of which PCs to use/columns storing the PCs to use. Values</span>
+<span class="sd">        provided should be 1-based and should be a list of integers when passing in a</span>
+<span class="sd">        Hail Table (i.e. [1, 2, 4, 5]) or a list of strings when passing in a Pandas</span>
+<span class="sd">        Dataframe (i.e. [&quot;PC1&quot;, &quot;PC2&quot;, &quot;PC4&quot;, &quot;PC5&quot;]). When passing a HT this can also</span>
+<span class="sd">        be an ArrayExpression containing all the PCs to use.</span>
+<span class="sd">    :param known_col: Column storing the known population labels.</span>
+<span class="sd">    :param fit: Fit from a previously trained random forest model (i.e., the output</span>
+<span class="sd">        from a previous RandomForestClassifier() call).</span>
+<span class="sd">    :param seed: Random seed.</span>
+<span class="sd">    :param prop_train: Proportion of known data used for training.</span>
+<span class="sd">    :param n_estimators: Number of trees to use in the RF model.</span>
+<span class="sd">    :param min_prob: Minimum probability of belonging to a given population for the</span>
+<span class="sd">        population to be set (otherwise set to `None`).</span>
+<span class="sd">    :param output_col: Output column storing the assigned population.</span>
+<span class="sd">    :param missing_label: Label for samples for which the assignment probability is</span>
+<span class="sd">        smaller than `min_prob`.</span>
+<span class="sd">    :param pc_expr: Column storing the list of PCs. Only used if `pc_cols` is a List of</span>
+<span class="sd">        integers. Default is scores.</span>
+<span class="sd">    :param convert_model_func: Optional function to convert the model to ONNX format.</span>
+<span class="sd">        Default is no conversion.</span>
+<span class="sd">    :param apply_model_func: Function to apply the model to the data. Default is</span>
+<span class="sd">        `apply_sklearn_classification_model`, which will apply a sklearn classification</span>
+<span class="sd">        model to the data. This default will work if no `fit` is set, or the supplied</span>
+<span class="sd">        `fit` is a sklearn classification model.</span>
+<span class="sd">    :return: Hail Table or Pandas Dataframe (depending on input) containing sample IDs</span>
+<span class="sd">        and imputed population labels, trained random forest model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
+
+    <span class="n">hail_input</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pop_pca_scores</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hail_input</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pc_cols</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pc_cols</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Using a Hail Table with a list of PC cols to use (pc_cols) &quot;</span>
+                    <span class="s2">&quot;requires all values of the pc_cols list to be integers.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pc_expr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">pc_expr</span> <span class="o">=</span> <span class="n">pop_pca_scores</span><span class="p">[</span><span class="n">pc_expr</span><span class="p">]</span>
+            <span class="n">pcs_to_pull</span> <span class="o">=</span> <span class="p">[</span><span class="n">pc_expr</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pc_cols</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pc_col_len</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="nb">filter</span><span class="p">(</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">pop_pca_scores</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect_as_set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">pc_cols</span><span class="p">))),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pc_col_len</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;More than one length was found among the &#39;pc_cols&#39; &quot;</span>
+                    <span class="s2">&quot;ArrayExpression values. The length must be consistent!&quot;</span>
+                <span class="p">)</span>
+            <span class="n">pcs_to_pull</span> <span class="o">=</span> <span class="n">pc_cols</span>
+            <span class="n">pc_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pc_col_len</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fit</span><span class="p">:</span>
+            <span class="n">pop_pca_scores</span> <span class="o">=</span> <span class="n">pop_pca_scores</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">known_col</span><span class="p">,</span> <span class="n">pca_scores</span><span class="o">=</span><span class="n">pcs_to_pull</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pop_pca_scores</span> <span class="o">=</span> <span class="n">pop_pca_scores</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pca_scores</span><span class="o">=</span><span class="n">pcs_to_pull</span><span class="p">)</span>
+
+        <span class="n">pop_pc_pd</span> <span class="o">=</span> <span class="n">pop_pca_scores</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+        <span class="c1"># Explode the PC array</span>
+        <span class="n">pc_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;PC</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pc_cols</span><span class="p">]</span>
+        <span class="n">pop_pc_pd</span><span class="p">[</span><span class="n">pc_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pop_pc_pd</span><span class="p">[</span><span class="s2">&quot;pca_scores&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pc_cols</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Using a Pandas DataFrame with pc_cols requires all values of the&quot;</span>
+                <span class="s2">&quot; pc_cols list to be strings.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">pop_pc_pd</span> <span class="o">=</span> <span class="n">pop_pca_scores</span>
+
+    <span class="c1"># Split training data into subsamples for fitting and evaluating.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fit</span><span class="p">:</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">pop_pc_pd</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">pop_pc_pd</span><span class="p">[</span><span class="n">known_col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()]</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">train_subsample_ridx</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">prop_train</span><span class="p">))</span>
+        <span class="n">train_fit</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">train_subsample_ridx</span><span class="p">]</span>
+        <span class="n">fit_samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">train_fit</span><span class="p">[</span><span class="s2">&quot;s&quot;</span><span class="p">]]</span>
+        <span class="n">evaluate_fit</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">train_data</span><span class="p">[</span><span class="s2">&quot;s&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">fit_samples</span><span class="p">)]</span>
+
+        <span class="c1"># Train RF.</span>
+        <span class="n">training_set_known_labels</span> <span class="o">=</span> <span class="n">train_fit</span><span class="p">[</span><span class="n">known_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">training_set_pcs</span> <span class="o">=</span> <span class="n">train_fit</span><span class="p">[</span><span class="n">pc_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">evaluation_set_pcs</span> <span class="o">=</span> <span class="n">evaluate_fit</span><span class="p">[</span><span class="n">pc_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">pop_clf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">n_estimators</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">pop_clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_set_pcs</span><span class="p">,</span> <span class="n">training_set_known_labels</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Random forest feature importances are as follows: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">pop_clf</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Evaluate RF.</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">pop_clf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">evaluation_set_pcs</span><span class="p">)</span>
+        <span class="n">error_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">evaluate_fit</span><span class="p">[</span><span class="n">known_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Estimated error rate for RF model is </span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">error_rate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pop_clf</span> <span class="o">=</span> <span class="n">fit</span>
+
+    <span class="c1"># Classify data.</span>
+    <span class="n">classifications</span><span class="p">,</span> <span class="n">probs</span> <span class="o">=</span> <span class="n">apply_model_func</span><span class="p">(</span><span class="n">pop_pc_pd</span><span class="p">[</span><span class="n">pc_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">pop_clf</span><span class="p">)</span>
+
+    <span class="n">pop_pc_pd</span><span class="p">[</span><span class="n">output_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">classifications</span>
+    <span class="n">pop_pc_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pop_pc_pd</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">probs</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">probs</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">probs</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pop_pc_pd</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">probs</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_prob</span><span class="p">,</span> <span class="n">output_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">missing_label</span>
+    <span class="n">pop_pc_pd</span> <span class="o">=</span> <span class="n">pop_pc_pd</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">pc_cols</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s2">&quot;columns&quot;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Found the following sample count after population assignment: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pop</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">pop</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">pop_pc_pd</span><span class="p">[</span><span class="n">output_col</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">convert_model_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pop_clf</span> <span class="o">=</span> <span class="n">convert_model_func</span><span class="p">(</span><span class="n">pop_clf</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">hail_input</span><span class="p">:</span>
+        <span class="n">pops_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">pop_pc_pd</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pop_pca_scores</span><span class="o">.</span><span class="n">key</span><span class="p">))</span>
+        <span class="n">pops_ht</span> <span class="o">=</span> <span class="n">pops_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+            <span class="n">assign_pops_from_pc_params</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="n">min_assignment_prob</span><span class="o">=</span><span class="n">min_prob</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fit</span><span class="p">:</span>
+            <span class="n">pops_ht</span> <span class="o">=</span> <span class="n">pops_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+                <span class="n">assign_pops_from_pc_params</span><span class="o">=</span><span class="n">pops_ht</span><span class="o">.</span><span class="n">assign_pops_from_pc_params</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">error_rate</span><span class="o">=</span><span class="n">error_rate</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">pops_ht</span> <span class="o">=</span> <span class="n">pops_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">evaluation_sample</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">evaluate_fit</span><span class="o">.</span><span class="n">s</span><span class="p">))</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pops_ht</span><span class="o">.</span><span class="n">s</span><span class="p">),</span>
+                <span class="n">training_sample</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">train_fit</span><span class="o">.</span><span class="n">s</span><span class="p">))</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pops_ht</span><span class="o">.</span><span class="n">s</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pops_ht</span><span class="p">,</span> <span class="n">pop_clf</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pop_pc_pd</span><span class="p">,</span> <span class="n">pop_clf</span></div>
+
+
+<div class="viewcode-block" id="run_pca_with_relateds"><a class="viewcode-back" href="../../../api_reference/sample_qc/ancestry.html#gnomad.sample_qc.ancestry.run_pca_with_relateds">[docs]</a><span class="k">def</span> <span class="nf">run_pca_with_relateds</span><span class="p">(</span>
+    <span class="n">qc_mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">related_samples_to_drop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">additional_samples_to_drop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_pcs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">autosomes_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run PCA excluding the given related or additional samples, and project those samples in the PC space to return scores for all samples.</span>
+
+<span class="sd">    The `related_samples_to_drop` and `additional_samples_to_drop` Tables have to be keyed by the sample ID and all samples present in these</span>
+<span class="sd">    tables will be excluded from the PCA.</span>
+
+<span class="sd">    The loadings Table returned also contains a `pca_af` annotation which is the allele frequency</span>
+<span class="sd">    used for PCA. This is useful to project other samples in the PC space.</span>
+
+<span class="sd">    :param qc_mt: Input QC MT</span>
+<span class="sd">    :param related_samples_to_drop: Optional table of related samples to drop when generating the PCs, these samples will be projected in the PC space</span>
+<span class="sd">    :param additional_samples_to_drop: Optional table of additional samples to drop when generating the PCs, these samples will be projected in the PC space</span>
+<span class="sd">    :param n_pcs: Number of PCs to compute</span>
+<span class="sd">    :param autosomes_only: Whether to run the analysis on autosomes only</span>
+<span class="sd">    :return: eigenvalues, scores and loadings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">autosomes_only</span><span class="p">:</span>
+        <span class="n">qc_mt</span> <span class="o">=</span> <span class="n">filter_to_autosomes</span><span class="p">(</span><span class="n">qc_mt</span><span class="p">)</span>
+
+    <span class="c1"># &#39;pca_mt&#39; is the MatrixTable to use for generating the PCs</span>
+    <span class="c1"># If samples to drop are provided in &#39;related_samples_to_drop&#39; or</span>
+    <span class="c1"># &#39;additional_samples_to_drop&#39;, &#39;project_pca_mt&#39; will also be generated</span>
+    <span class="c1"># and will contain the samples to project in the PC space</span>
+    <span class="n">pca_mt</span> <span class="o">=</span> <span class="n">qc_mt</span>
+
+    <span class="k">if</span> <span class="n">related_samples_to_drop</span><span class="p">:</span>
+        <span class="n">pca_mt</span> <span class="o">=</span> <span class="n">pca_mt</span><span class="o">.</span><span class="n">filter_cols</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">related_samples_to_drop</span><span class="p">[</span><span class="n">pca_mt</span><span class="o">.</span><span class="n">col_key</span><span class="p">])</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">additional_samples_to_drop</span><span class="p">:</span>
+        <span class="n">pca_mt</span> <span class="o">=</span> <span class="n">pca_mt</span><span class="o">.</span><span class="n">filter_cols</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">additional_samples_to_drop</span><span class="p">[</span><span class="n">pca_mt</span><span class="o">.</span><span class="n">col_key</span><span class="p">])</span>
+        <span class="p">)</span>
+
+    <span class="n">pca_evals</span><span class="p">,</span> <span class="n">pca_scores</span><span class="p">,</span> <span class="n">pca_loadings</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hwe_normalized_pca</span><span class="p">(</span>
+        <span class="n">pca_mt</span><span class="o">.</span><span class="n">GT</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">n_pcs</span><span class="p">,</span> <span class="n">compute_loadings</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">pca_af_ht</span> <span class="o">=</span> <span class="n">pca_mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+        <span class="n">pca_af</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pca_mt</span><span class="o">.</span><span class="n">GT</span><span class="o">.</span><span class="n">n_alt_alleles</span><span class="p">())</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+    <span class="n">pca_loadings</span> <span class="o">=</span> <span class="n">pca_loadings</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">pca_af</span><span class="o">=</span><span class="n">pca_af_ht</span><span class="p">[</span><span class="n">pca_loadings</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">pca_af</span>
+    <span class="p">)</span>  <span class="c1"># TODO: Evaluate if needed to write results at this point if relateds or not</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">related_samples_to_drop</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">additional_samples_to_drop</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pca_evals</span><span class="p">,</span> <span class="n">pca_scores</span><span class="p">,</span> <span class="n">pca_loadings</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pca_loadings</span> <span class="o">=</span> <span class="n">pca_loadings</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+        <span class="n">pca_scores</span> <span class="o">=</span> <span class="n">pca_scores</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+        <span class="n">project_pca_mt</span> <span class="o">=</span> <span class="n">qc_mt</span><span class="o">.</span><span class="n">filter_cols</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">pca_mt</span><span class="o">.</span><span class="n">cols</span><span class="p">()[</span><span class="n">qc_mt</span><span class="o">.</span><span class="n">col_key</span><span class="p">]))</span>
+        <span class="n">projected_scores</span> <span class="o">=</span> <span class="n">pc_project</span><span class="p">(</span><span class="n">project_pca_mt</span><span class="p">,</span> <span class="n">pca_loadings</span><span class="p">)</span>
+        <span class="n">pca_scores</span> <span class="o">=</span> <span class="n">pca_scores</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">projected_scores</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pca_evals</span><span class="p">,</span> <span class="n">pca_scores</span><span class="p">,</span> <span class="n">pca_loadings</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

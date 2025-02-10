@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.file_utils &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.file_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.file_utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="n">DataException</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="file_exists"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.file_exists">[docs]</a><span class="k">def</span> <span class="nf">file_exists</span><span class="p">(</span><span class="n">fname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether a file exists.</span>
+
+<span class="sd">    Supports either local or Google cloud (gs://) paths.</span>
+<span class="sd">    If the file is a Hail file (.ht, .mt, .bm, .parquet, .he, and .vds extensions), it</span>
+<span class="sd">    checks that _SUCCESS is present.</span>
+
+<span class="sd">    :param fname: File name.</span>
+<span class="sd">    :return: Whether the file exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">fname</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">fext</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;.ht&quot;</span><span class="p">,</span> <span class="s2">&quot;.mt&quot;</span><span class="p">,</span> <span class="s2">&quot;.bm&quot;</span><span class="p">,</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;.he&quot;</span><span class="p">}:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">/_SUCCESS&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">fext</span> <span class="o">==</span> <span class="s2">&quot;.vds&quot;</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">/reference_data/_SUCCESS&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">/variant_data/_SUCCESS&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">fname</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gs://&quot;</span><span class="p">):</span>
+        <span class="n">exists_func</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_exists</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exists_func</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span>
+
+    <span class="n">exists</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="n">exists_func</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">exists</span></div>
+
+
+<div class="viewcode-block" id="check_file_exists_raise_error"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.check_file_exists_raise_error">[docs]</a><span class="k">def</span> <span class="nf">check_file_exists_raise_error</span><span class="p">(</span>
+    <span class="n">fname</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">error_if_exists</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">error_if_not_exists</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">error_if_exists_msg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;The following files already exist: &quot;</span><span class="p">,</span>
+    <span class="n">error_if_not_exists_msg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;The following files do not exist: &quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether the file or all files in a list of files exist and optionally raise an exception.</span>
+
+<span class="sd">    This can be useful when writing out to files at the end of a pipeline to first check if the file already</span>
+<span class="sd">    exists and therefore requires the file to be removed or overwrite specified so the pipeline doesn&#39;t fail.</span>
+
+<span class="sd">    :param fname: File path, or list of file paths to check the existence of.</span>
+<span class="sd">    :param error_if_exists: Whether to raise an exception if any of the files exist. Default is True.</span>
+<span class="sd">    :param error_if_not_exists: Whether to raise an exception if any of the files do not exist. Default is False.</span>
+<span class="sd">    :param error_if_exists_msg: String of the error message to print if any of the files exist.</span>
+<span class="sd">    :param error_if_not_exists_msg: String of the error message to print if any of the files do not exist.</span>
+<span class="sd">    :return: Boolean indicating if `fname` or all files in `fname` exist.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="p">[</span><span class="n">fname</span><span class="p">]</span>
+
+    <span class="n">all_exist</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">exist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">not_exist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fname</span><span class="p">:</span>
+        <span class="n">exists</span> <span class="o">=</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">all_exist</span> <span class="o">&amp;=</span> <span class="n">exists</span>
+        <span class="k">if</span> <span class="n">exists</span> <span class="ow">and</span> <span class="n">error_if_exists</span><span class="p">:</span>
+            <span class="n">exist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span> <span class="ow">and</span> <span class="n">error_if_not_exists</span><span class="p">:</span>
+            <span class="n">not_exist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="n">error_msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">exist</span><span class="p">:</span>
+        <span class="n">error_msg</span> <span class="o">=</span> <span class="n">error_if_exists_msg</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exist</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">not_exist</span><span class="p">:</span>
+        <span class="n">error_msg</span> <span class="o">=</span> <span class="n">error_msg</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">error_if_not_exists_msg</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">not_exist</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error_msg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">all_exist</span></div>
+
+
+<div class="viewcode-block" id="write_temp_gcs"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.write_temp_gcs">[docs]</a><span class="k">def</span> <span class="nf">write_temp_gcs</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">gcs_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">temp_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: D103</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">temp_path</span><span class="p">:</span>
+        <span class="n">temp_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/tmp_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">.h&quot;</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">read_matrix_table</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">hl</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">gcs_path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="select_primitives_from_ht"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.select_primitives_from_ht">[docs]</a><span class="k">def</span> <span class="nf">select_primitives_from_ht</span><span class="p">(</span><span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select only primitive types (string, int, float, bool) from a Table.</span>
+
+<span class="sd">    Particularly useful for exporting a Table.</span>
+
+<span class="sd">    :param ht: Input Table</span>
+<span class="sd">    :return: Table with only primitive types selected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">x</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row_value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="ow">in</span> <span class="p">{</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">tint32</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">tint64</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">tbool</span><span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_file_stats"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.get_file_stats">[docs]</a><span class="k">def</span> <span class="nf">get_file_stats</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get size (as both int and str) and md5 for file at specified URL.</span>
+
+<span class="sd">    Typically used to get stats on VCFs.</span>
+
+<span class="sd">    :param url: Path to file of interest.</span>
+<span class="sd">    :param project_id: Google project ID. Specify if URL points to a requester-pays bucket.</span>
+<span class="sd">    :return: Tuple of file size and md5.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">one_gibibyte</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">30</span>
+    <span class="n">one_mebibyte</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">20</span>
+
+    <span class="k">if</span> <span class="n">project_id</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;gsutil&quot;</span><span class="p">,</span> <span class="s2">&quot;-u&quot;</span><span class="p">,</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;stat&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s2">&quot;gsutil&quot;</span><span class="p">,</span> <span class="s2">&quot;stat&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;Content-Length&quot;</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;=</span> <span class="n">one_gibibyte</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">one_gibibyte</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> GiB&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">one_mebibyte</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> MiB&quot;</span>
+
+        <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;Hash (md5)&quot;</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">[</span><span class="s2">&quot;md5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;md5&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="read_list_data"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.read_list_data">[docs]</a><span class="k">def</span> <span class="nf">read_list_data</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read a file input into a python list (each line will be an element).</span>
+
+<span class="sd">    Supports Google storage paths and .gz compression.</span>
+
+<span class="sd">    :param input_file_path: File path</span>
+<span class="sd">    :return: List of lines</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">input_file_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gs://&quot;</span><span class="p">):</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_copy</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">,</span> <span class="s2">&quot;file:///&quot;</span> <span class="o">+</span> <span class="n">input_file_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">input_file_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;gz&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">input_file_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;gz&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+<div class="viewcode-block" id="repartition_for_join"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.repartition_for_join">[docs]</a><span class="k">def</span> <span class="nf">repartition_for_join</span><span class="p">(</span>
+    <span class="n">ht_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">new_partition_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate new partition intervals using input Table.</span>
+
+<span class="sd">    Reading in all Tables using the same partition intervals (via</span>
+<span class="sd">    `_intervals`) before they are joined makes the joins much more efficient.</span>
+<span class="sd">    For more information, see:</span>
+<span class="sd">    https://discuss.hail.is/t/room-for-improvement-when-joining-multiple-hts/2278/8</span>
+
+<span class="sd">    :param ht_path: Path to Table to use for interval partition calculation.</span>
+<span class="sd">    :param new_partition_percent: Percent of initial dataset partitions to use.</span>
+<span class="sd">        Value should be greater than 1 so that input Table will have more</span>
+<span class="sd">        partitions for the join. Defaults to 1.1.</span>
+<span class="sd">    :return: List of IntervalExpressions calculated over new set of partitions</span>
+<span class="sd">        (number of partitions in HT * desired percent increase).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">ht_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_partition_percent</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;new_partition_percent value is less than 1! The new HT will have fewer&quot;</span>
+            <span class="s2">&quot; partitions than the original HT!&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">_calculate_new_partitions</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">n_partitions</span><span class="p">()</span> <span class="o">*</span> <span class="n">new_partition_percent</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_vds"><a class="viewcode-back" href="../../../api_reference/utils/file_utils.html#gnomad.utils.file_utils.create_vds">[docs]</a><span class="k">def</span> <span class="nf">create_vds</span><span class="p">(</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">temp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">vdses</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gvcfs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">save_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_genome_default_intervals</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">use_exome_default_intervals</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gvcf_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reference_genome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combine GVCFs into a single VDS.</span>
+
+<span class="sd">    :param output_path: Path to write output VDS.</span>
+<span class="sd">    :param temp_path: Directory path to write temporary files. A bucket with a life-cycle</span>
+<span class="sd">        policy is recommended.</span>
+<span class="sd">    :param vdses: Path to file containing VDS paths with no header.</span>
+<span class="sd">    :param gvcfs: Path to file containing GVCF paths with no header.</span>
+<span class="sd">    :param save_path: Path to write combiner to on failure. Can be used to restart</span>
+<span class="sd">        combiner from a failed state. If not specified, defaults to temp_path +</span>
+<span class="sd">        combiner_plan.json.</span>
+<span class="sd">    :param use_genome_default_intervals: Use the default genome intervals.</span>
+<span class="sd">    :param use_exome_default_intervals: Use the default exome intervals.</span>
+<span class="sd">    :param intervals: Path to text file with intervals to use for VDS creation.</span>
+<span class="sd">    :param gvcf_batch_size: Number of GVCFs to combine into a Variant Dataset at once.</span>
+<span class="sd">    :param reference_genome: Reference genome to use. Default is GRCh38.</span>
+<span class="sd">    :return: Combined VDS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">vdses</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gvcfs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No VDSes or GVCFs provided to combine into a VDS.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">save_path</span> <span class="ow">and</span> <span class="n">temp_path</span><span class="p">:</span>
+        <span class="n">save_path</span> <span class="o">=</span> <span class="n">temp_path</span> <span class="o">+</span> <span class="s2">&quot;combiner_plan.json&quot;</span>
+
+    <span class="n">vdses</span> <span class="o">=</span> <span class="n">read_list_data</span><span class="p">(</span><span class="n">vdses</span><span class="p">)</span> <span class="k">if</span> <span class="n">vdses</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">gvcfs</span> <span class="o">=</span> <span class="n">read_list_data</span><span class="p">(</span><span class="n">gvcfs</span><span class="p">)</span> <span class="k">if</span> <span class="n">gvcfs</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">(</span>
+            <span class="n">intervals</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">reference_genome</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">intervals</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">vdses</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">vdses</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span><span class="s2">&quot;No VDSes provided in file&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gvcfs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">gvcfs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span><span class="s2">&quot;No GVCFs provided in file&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">intervals</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">intervals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span><span class="s2">&quot;No intervals provided in passed intervals file&quot;</span><span class="p">)</span>
+
+    <span class="n">combiner</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">new_combiner</span><span class="p">(</span>
+        <span class="n">output_path</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span>
+        <span class="n">temp_path</span><span class="o">=</span><span class="n">temp_path</span><span class="p">,</span>
+        <span class="n">save_path</span><span class="o">=</span><span class="n">save_path</span><span class="p">,</span>
+        <span class="n">vds_paths</span><span class="o">=</span><span class="n">vdses</span><span class="p">,</span>
+        <span class="n">gvcf_paths</span><span class="o">=</span><span class="n">gvcfs</span><span class="p">,</span>
+        <span class="n">use_genome_default_intervals</span><span class="o">=</span><span class="n">use_genome_default_intervals</span><span class="p">,</span>
+        <span class="n">use_exome_default_intervals</span><span class="o">=</span><span class="n">use_exome_default_intervals</span><span class="p">,</span>
+        <span class="n">intervals</span><span class="o">=</span><span class="n">intervals</span><span class="p">,</span>
+        <span class="n">gvcf_batch_size</span><span class="o">=</span><span class="n">gvcf_batch_size</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">combiner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="n">vds</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">read_vds</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">vds</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
