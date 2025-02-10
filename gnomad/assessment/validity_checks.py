@@ -592,6 +592,7 @@ def check_raw_and_adj_callstats(
     verbose: bool,
     delimiter: str = "-",
     metric_first_field: bool = True,
+    nhomalt_metric: str = "nhomalt",
 ) -> None:
     """
     Perform validity checks on raw and adj data in input Table/MatrixTable.
@@ -608,6 +609,7 @@ def check_raw_and_adj_callstats(
     :param verbose: If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.
     :param delimiter: String to use as delimiter when making group label combinations. Default is "-".
     :param metric_first_field: If True, metric precedes label group, e.g. AC-afr-male. If False, label group precedes metric, afr-male-AC. Default is True.
+    :param nhomalt_metric: Name of metric denoting homozygous alternate counts. Default is "nhomalt".
     :return: None
     """
     t = t.rows() if isinstance(t, hl.MatrixTable) else t
@@ -616,7 +618,7 @@ def check_raw_and_adj_callstats(
 
     for group in ["raw", "adj"]:
         # Check AC and nhomalt missing if AN is missing and defined if AN is defined.
-        for subfield in ["AC", "nhomalt"]:
+        for subfield in ["AC", nhomalt_metric]:
             check_field = f"{subfield}{delimiter}{group}"
             an_field = f"AN{delimiter}{group}"
             field_check_expr[
@@ -632,6 +634,21 @@ def check_raw_and_adj_callstats(
                     **{an_field: t.info[an_field], check_field: t.info[check_field]}
                 ),
             }
+
+        # Check that nhomalt <= AC / 2.
+        check_field_nhomalt = f"{nhomalt_metric}{delimiter}{group}"
+        check_field_AC = f"AC{delimiter}{group}"
+
+        field_check_expr[f"{check_field_nhomalt} <= {check_field_AC} / 2"] = {
+            "expr": t.info[check_field_nhomalt] > (t.info[check_field_AC] / 2),
+            "agg_func": hl.agg.count_where,
+            "display_fields": hl.struct(
+                **{
+                    check_field_nhomalt: t.info[check_field_nhomalt],
+                    check_field_AC: t.info[check_field_AC],
+                }
+            ),
+        }
 
         # Check AF missing if AN is missing and defined if AN is defined and > 0.
         check_field = f"AF{delimiter}{group}"
@@ -662,7 +679,7 @@ def check_raw_and_adj_callstats(
         }
 
     for subfield in ["AC", "AF"]:
-        # Check raw AC, AF > 0
+        # If defined, check that raw AC, AF > 0.
         check_field = f"{subfield}{delimiter}raw"
         field_check_expr[f"{check_field} > 0"] = {
             "expr": t.info[check_field] <= 0,
@@ -670,7 +687,7 @@ def check_raw_and_adj_callstats(
             "display_fields": hl.struct(**{check_field: t.info[check_field]}),
         }
 
-        # Check adj AC, AF > 0
+        # If defined, check adj AC, AF >= 0.
         check_field = f"{subfield}{delimiter}adj"
         field_check_expr[f"{check_field} >= 0"] = {
             "expr": t.info[check_field] < 0,
@@ -680,8 +697,8 @@ def check_raw_and_adj_callstats(
             ),
         }
 
-    # Check overall gnomad's raw subfields >= adj
-    for subfield in ["AC", "AN", "nhomalt"]:
+    # Check overall gnomad's raw subfields >= adj.
+    for subfield in ["AC", "AN", nhomalt_metric]:
         check_field_left = f"{subfield}{delimiter}raw"
         check_field_right = f"{subfield}{delimiter}adj"
 
@@ -697,7 +714,7 @@ def check_raw_and_adj_callstats(
         }
 
         for subset in subsets:
-            # Add delimiter for subsets but not "" representing entire callset
+            # Add delimiter for subsets but not "" representing entire callset.
             if subset:
                 subset += delimiter
             field_check_label = (

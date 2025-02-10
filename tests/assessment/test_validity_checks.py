@@ -8,6 +8,7 @@ import pytest
 
 from gnomad.assessment.validity_checks import (
     check_missingness_of_struct,
+    check_raw_and_adj_callstats,
     check_sex_chr_metrics,
     flatten_missingness_struct,
     make_group_sum_expr_dict,
@@ -493,6 +494,141 @@ def test_sum_group_callstats(ht_for_group_sums, caplog) -> None:
         "PASSED AN_adj = sum_AN_adj_sex check",
         "PASSED AC_adj = sum_AC_adj_gen_anc_sex check",
         "Found 1 sites that fail AN_adj = sum_AN_adj_gen_anc_sex check:",
+    ]
+
+    for msg in expected_logs:
+        assert msg in log_messages, f"Expected log message is missing: {msg}"
+
+
+@pytest.fixture
+def ht_for_check_raw_and_adj_callstats() -> hl.Table:
+    """Fixture to create a Hail Table with the expected structure and test values for check_raw_and_adj_callstats, using underscore as the delimiter."""
+    data = [
+        {
+            "idx": 0,
+            "info": {
+                "AC_raw": 5,
+                "AC_adj": 3,
+                "AF_raw": 0.02,
+                "AF_adj": 0.01,
+                "AN_raw": 2500,
+                "AN_adj": 2400,
+                "nhomalt_raw": 1,  # Defined since AN_raw is defined
+                "nhomalt_adj": 0,
+            },
+            "filters": hl.empty_set(hl.tstr),
+        },
+        {
+            "idx": 1,
+            "info": {
+                "AC_raw": 0,
+                "AC_adj": 0,
+                "AF_raw": 0.0,
+                "AF_adj": 0.0,
+                "AN_raw": 0,
+                "AN_adj": 0,
+                "nhomalt_raw": None,
+                "nhomalt_adj": None,
+            },
+            "filters": hl.empty_set(hl.tstr),
+        },
+        {
+            "idx": 2,
+            "info": {
+                "AC_raw": -1,
+                "AC_adj": -1,
+                "AF_raw": -0.01,
+                "AF_adj": -0.01,
+                "AN_raw": 1000,
+                "AN_adj": 1100,
+                "nhomalt_raw": -3,
+                "nhomalt_adj": 2,
+            },
+            "filters": {"LowQual"},
+        },
+        {
+            "idx": 3,
+            "info": {
+                "AC_raw": 10,
+                "AF_raw": 0.05,
+                "AN_raw": 3000,
+                "AN_adj": 2000,
+                "AC_adj": 8,
+                "AF_adj": 0.02,
+                "nhomalt_raw": 3,
+                "nhomalt_adj": 1,
+            },
+            "filters": hl.empty_set(hl.tstr),
+        },
+        {
+            "idx": 4,
+            "info": {
+                "AC_raw": None,
+                "AF_raw": 0.05,
+                "AN_raw": None,
+                "AN_adj": 1000,
+                "AC_adj": 8,
+                "AF_adj": 0.03,
+                "nhomalt_raw": None,
+                "nhomalt_adj": 1,
+            },
+            "filters": hl.empty_set(hl.tstr),
+        },
+    ]
+
+    ht = hl.Table.parallelize(
+        data,
+        hl.tstruct(
+            idx=hl.tint32,
+            info=hl.tstruct(
+                AC_raw=hl.tint32,
+                AC_adj=hl.tint32,
+                AF_raw=hl.tfloat64,
+                AF_adj=hl.tfloat64,
+                AN_raw=hl.tint32,
+                AN_adj=hl.tint32,
+                nhomalt_raw=hl.tint32,
+                nhomalt_adj=hl.tint32,
+            ),
+            filters=hl.tset(hl.tstr),
+        ),
+    )
+
+    return ht
+
+
+def test_check_raw_and_adj_callstats(
+    ht_for_check_raw_and_adj_callstats, caplog
+) -> None:
+    """Test check_raw_and_adj_callstats function and it's expected log output."""
+    ht = ht_for_check_raw_and_adj_callstats
+    with caplog.at_level(logging.INFO, logger="gnomad.assessment.validity_checks"):
+        check_raw_and_adj_callstats(
+            ht, subsets=[""], verbose=True, delimiter="_", metric_first_field=True
+        )
+
+    log_messages = [record.getMessage() for record in caplog.records]
+
+    expected_logs = [
+        # Expected PASSES.
+        "PASSED AC_raw defined when AN defined and missing when AN missing check",
+        "PASSED AC_adj defined when AN defined and missing when AN missing check",
+        "PASSED AF_adj defined when AN defined (and > 0) and missing when AN missing check",
+        "PASSED AC_raw >= AC_adj check",
+        "PASSED nhomalt_raw <= AC_raw / 2 check",
+        # Expected FAILURES.
+        "Found 1 sites that fail nhomalt_raw defined when AN defined and missing when AN missing check:",
+        "Found 1 sites that fail AF_raw defined when AN defined (and > 0) and missing when AN missing check:",
+        "Found 1 sites that fail AF_raw missing when AN 0 check:",
+        "Found 1 sites that fail nhomalt_adj defined when AN defined and missing when AN missing check:",
+        "Found 1 sites that fail AF_adj missing when AN 0 check:",
+        "Found 2 sites that fail AC_raw > 0 check:",
+        "Found 1 sites that fail AC_adj >= 0 check:",
+        "Found 2 sites that fail AF_raw > 0 check:",
+        "Found 1 sites that fail AF_adj >= 0 check:",
+        "Found 1 sites that fail AN_raw >= AN_adj check:",
+        "Found 1 sites that fail nhomalt_raw >= nhomalt_adj check:",
+        "Found 1 sites that fail nhomalt_adj <= AC_adj / 2 check:",
     ]
 
     for msg in expected_logs:
