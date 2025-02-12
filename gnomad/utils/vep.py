@@ -1047,3 +1047,88 @@ def explode_by_vep_annotation(
         t = t.explode_rows(t[vep_annotation])
 
     return t
+
+
+def get_loftee_end_trunc_filter_expr(
+    csq_expr: hl.expr.StructExpression,
+    gerp_dist_cutoff: float = 0.0,
+) -> hl.expr.BooleanExpression:
+    """
+    Get the expression for LOFTEE's END_TRUNC filter based on the GERP distance cutoff.
+
+    The end truncation filter is based on the GERP distance cutoff (`gerp_dist_cutoff`)
+    and the 'GERP_DIST' and '50_BP_RULE' annotations in the LOFTEE annotations.
+
+    True is returned if the GERP distance is less than the cutoff and the '50_BP_RULE'
+    annotation is not 'PASS'.
+
+    :param csq_expr: StructExpression containing the LOFTEE annotation 'lof_info', with
+        'GERP_DIST' and '50_BP_RULE' info.
+    :param gerp_dist_cutoff: GERP distance cutoff for end truncation. Default is 0.0.
+    :return: BooleanExpression for end truncation annotation.
+    """
+    lof_info_expr = hl.dict(
+        csq_expr.lof_info.split(",")
+        .map(lambda x: x.split(":"))
+        .map(lambda x: (x[0], hl.or_missing(x.length() > 1, x[1])))
+    )
+
+    end_trunc_expr = hl.or_else(
+        hl.float64(lof_info_expr.get("GERP_DIST", "0")) < gerp_dist_cutoff, False
+    ) & hl.or_else(lof_info_expr.get("50_BP_RULE", "") != "PASS", False)
+
+    return end_trunc_expr
+
+
+def update_loftee_end_trunc_filter(
+    csq_expr: Union[hl.expr.StructExpression, hl.expr.ArrayExpression],
+    gerp_dist_cutoff: float = 0.0,
+) -> hl.expr.StructExpression:
+    """
+    Update the LOFTEE end truncation filter in the input Struct or Array of Structs.
+
+    The LOFTEE end truncation filter is updated based on the GERP distance cutoff
+    (`gerp_dist_cutoff`) using `get_loftee_end_trunc_filter_expr`.
+
+    The 'lof_filter' field in the input Struct or Array of Structs is updated to include
+    'END_TRUNC' if the end truncation filter is met, and 'END_TRUNC' is removed if the
+    end truncation filter is not met.
+
+    Then the 'lof' field in the input Struct or Array of Structs is updated to 'HC' if
+    the new 'lof_filter' is missing, and 'LC' if it's not missing.
+
+    :param csq_expr: Struct or Array of Structs containing the LOFTEE annotations.
+    :param gerp_dist_cutoff: GERP distance cutoff for end truncation. Default is 0.0.
+    :return: Struct or Array of Structs with updated LOFTEE end truncation filter
+        annotation.
+    """
+
+    def _update_csq_struct(csq_expr: hl.expr.StructExpression):
+        """
+        Update the LOFTEE end truncation filter in the input Struct.
+
+        :param csq_expr: Struct containing the LOFTEE annotations.
+        :return: Consequence Struct with updated LOFTEE annotations.
+        """
+        end_trunc_expr = get_loftee_end_trunc_filter_expr(csq_expr, gerp_dist_cutoff)
+        filter_expr = hl.or_else(
+            hl.set(csq_expr.lof_filter.split(",")), hl.empty_set(hl.tstr)
+        )
+        filter_expr = hl.if_else(
+            end_trunc_expr,
+            filter_expr.add("END_TRUNC"),
+            filter_expr.remove("END_TRUNC"),
+        )
+        filter_expr = hl.or_missing(filter_expr.length() > 0, hl.delimit(filter_expr))
+
+        lof_expr = hl.or_missing(
+            hl.is_defined(csq_expr.lof),
+            hl.if_else(hl.is_missing(filter_expr), "HC", "LC"),
+        )
+
+        return hl.struct(lof_filter=filter_expr, lof=lof_expr)
+
+    if isinstance(csq_expr, hl.expr.StructExpression):
+        return csq_expr.annotate(**_update_csq_struct(csq_expr))
+    else:
+        return csq_expr.map(lambda x: x.annotate(**_update_csq_struct(x)))
