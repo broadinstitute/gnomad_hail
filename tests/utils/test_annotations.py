@@ -5,7 +5,11 @@ from typing import Dict, List
 import hail as hl
 import pytest
 
-from gnomad.utils.annotations import fill_missing_key_combinations, missing_struct_expr
+from gnomad.utils.annotations import (
+    fill_missing_key_combinations,
+    get_copy_state_by_sex,
+    missing_struct_expr,
+)
 
 
 class TestFillMissingKeyCombinations:
@@ -90,3 +94,55 @@ def test_missing_struct_expr() -> None:
 
     # Verify the result.
     assert hl.eval(result == expected)
+
+
+class TestGetCopyStateBySex:
+    """Test the `get_copy_state_by_sex` function."""
+
+    @pytest.mark.parametrize(
+        "locus, is_xx, expected_diploid, expected_hemi_x, expected_hemi_y",
+        [
+            (
+                hl.locus("chr1", 100000, reference_genome="GRCh38"),
+                True,
+                True,
+                False,
+                False,
+            ),
+            (
+                hl.locus("chrX", 2781479, reference_genome="GRCh38"),
+                False,
+                True,
+                False,
+                False,
+            ),
+            (
+                hl.locus("chrX", 3000000, reference_genome="GRCh38"),
+                False,
+                False,
+                True,
+                False,
+            ),
+            (
+                hl.locus("chrY", 10000000, reference_genome="GRCh38"),
+                False,
+                False,
+                False,
+                True,
+            ),
+        ],
+    )
+    def test_get_copy_state_by_sex(
+        self, locus, is_xx, expected_diploid, expected_hemi_x, expected_hemi_y
+    ) -> None:
+        """Test copy state determination based on locus type and sex."""
+        is_xx_expr = hl.literal(is_xx)
+
+        diploid, hemi_x, hemi_y = get_copy_state_by_sex(locus, is_xx_expr)
+        result = hl.eval([diploid, hemi_x, hemi_y])
+
+        assert result == [
+            expected_diploid,
+            expected_hemi_x,
+            expected_hemi_y,
+        ], f"Failed for locus={locus}, is_xx={is_xx}. Expected {[expected_diploid, expected_hemi_x, expected_hemi_y]}, got {result}"

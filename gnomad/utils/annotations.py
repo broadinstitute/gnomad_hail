@@ -2780,3 +2780,31 @@ def add_gks_va(
         final_freq_dict["subcohortFrequency"] = list_of_group_info_dicts
 
     return final_freq_dict
+
+
+def get_copy_state_by_sex(
+    locus_expr: hl.expr.LocusExpression,
+    is_xx_expr: hl.expr.BooleanExpression,
+) -> Tuple[
+    hl.expr.BooleanExpression, hl.expr.BooleanExpression, hl.expr.BooleanExpression
+]:
+    """
+    Determine the copy state of a variant by its locus and the sex karotype of a sample.
+
+    This function assumes that the sample contains only XX and XY karyotypes. It does
+    not account for ambiguous sex or aneuploidies (e.g., XXY, XYY).
+
+    :param locus_expr: LocusExpression of the variant.
+    :param is_xx_expr: BooleanExpression indicating whether the sample has an XX sex
+       karyotype.
+    :return: Tuple of BooleanExpressions:
+        - diploid_expr: True if the variant is in autosomes or PAR regions, or in the X non-PAR region for XX individuals.
+        - hemi_x_expr: True if the variant is in the X non-PAR region for XY individuals.
+        - hemi_y_expr: True if the variant is in the Y non-PAR region for XY individuals.
+    """
+    diploid_expr = locus_expr.in_autosome_or_par() | (
+        locus_expr.in_x_nonpar() & is_xx_expr
+    )
+    hemi_x_expr = locus_expr.in_x_nonpar() & ~is_xx_expr
+    hemi_y_expr = locus_expr.in_y_nonpar() & ~is_xx_expr
+    return diploid_expr, hemi_x_expr, hemi_y_expr
