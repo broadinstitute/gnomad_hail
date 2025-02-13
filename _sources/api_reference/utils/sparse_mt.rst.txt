@@ -1,0 +1,8 @@
+gnomad.utils.sparse_mt
+======================
+
+
+
+.. gnomad_automodulesummary:: gnomad.utils.sparse_mt
+
+.. automodule:: gnomad.utils.sparse_mt

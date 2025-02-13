@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.reference_genome &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.release" href="release.html" />
+    <link rel="prev" title="gnomad.utils.plotting" href="plotting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">reference_genome</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.reference_genome.get_reference_ht"><code class="docutils literal notranslate"><span class="pre">get_reference_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.reference_genome.add_reference_sequence"><code class="docutils literal notranslate"><span class="pre">add_reference_sequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.reference_genome.get_reference_genome"><code class="docutils literal notranslate"><span class="pre">get_reference_genome()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.reference_genome</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/reference_genome.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-reference-genome">
+<h1>gnomad.utils.reference_genome<a class="headerlink" href="#gnomad-utils-reference-genome" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.reference_genome.get_reference_ht" title="gnomad.utils.reference_genome.get_reference_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.reference_genome.get_reference_ht</span></code></a>(ref)</p></td>
+<td><p>Create a reference Table with locus and alleles (containing only the reference allele by default) from the given reference genome.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.reference_genome.add_reference_sequence" title="gnomad.utils.reference_genome.add_reference_sequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.reference_genome.add_reference_sequence</span></code></a>(ref)</p></td>
+<td><p>Add the fasta sequence to a Hail reference genome.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.reference_genome.get_reference_genome" title="gnomad.utils.reference_genome.get_reference_genome"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.reference_genome.get_reference_genome</span></code></a>(locus)</p></td>
+<td><p>Return the reference genome associated with the input Locus expression.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.reference_genome"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.reference_genome.get_reference_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.reference_genome.</span></span><span class="sig-name descname"><span class="pre">get_reference_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contigs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_all_substitutions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/reference_genome.html#get_reference_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.reference_genome.get_reference_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Create a reference Table with locus and alleles (containing only the reference allele by default) from the given reference genome.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the <cite>contigs</cite> argument is not provided, all contigs (including obscure ones) will be added to the table.
+This can be slow as contigs are added one by one.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref</strong> (<a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a>) – Input reference genome</p></li>
+<li><p><strong>contigs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – An optional list of contigs that the Table should include</p></li>
+<li><p><strong>excluded_intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>]]) – An optional list of intervals to exclude</p></li>
+<li><p><strong>add_all_substitutions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, then all possible substitutions are added in the alleles array</p></li>
+<li><p><strong>filter_n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, bases where the reference is unknown (n) are filtered.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.reference_genome.add_reference_sequence">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.reference_genome.</span></span><span class="sig-name descname"><span class="pre">add_reference_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/reference_genome.html#add_reference_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.reference_genome.add_reference_sequence" title="Permalink to this definition"></a></dt>
+<dd><p>Add the fasta sequence to a Hail reference genome.</p>
+<p>Only GRCh37 and GRCh38 references are supported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ref</strong> (<a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a>) – Input reference genome.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.reference_genome.get_reference_genome">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.reference_genome.</span></span><span class="sig-name descname"><span class="pre">get_reference_genome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/reference_genome.html#get_reference_genome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.reference_genome.get_reference_genome" title="Permalink to this definition"></a></dt>
+<dd><p>Return the reference genome associated with the input Locus expression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.IntervalExpression.html#hail.expr.IntervalExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">IntervalExpression</span></code></a>]) – Input locus</p></li>
+<li><p><strong>add_sequence</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, the fasta sequence is added to the reference genome</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.ReferenceGenome.html#hail.genetics.ReferenceGenome" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReferenceGenome</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Reference genome</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plotting.html" class="btn btn-neutral float-left" title="gnomad.utils.plotting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="release.html" class="btn btn-neutral float-right" title="gnomad.utils.release" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.random_forest &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.random_forest</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.variant_qc.random_forest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pformat</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.classification</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.feature</span> <span class="kn">import</span> <span class="n">IndexToString</span><span class="p">,</span> <span class="n">StringIndexer</span><span class="p">,</span> <span class="n">VectorAssembler</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.functions</span> <span class="kn">import</span> <span class="n">vector_to_array</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span>  <span class="c1"># pylint: disable=no-name-in-module</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.file_utils</span> <span class="kn">import</span> <span class="n">file_exists</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="run_rf_test"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.run_rf_test">[docs]</a><span class="k">def</span> <span class="nf">run_rf_test</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/tmp&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run a dummy test RF on a given MT.</span>
+
+<span class="sd">    1. Creates row annotations and labels to run model on</span>
+<span class="sd">    2. Trains a RF pipeline model (including median imputation of missing values in created annotations)</span>
+<span class="sd">    3. Saves the RF pipeline model</span>
+<span class="sd">    4. Applies the model to the MT and prints features importance</span>
+
+<span class="sd">    :param mt: Input MT</span>
+<span class="sd">    :param output: Output files prefix to save the RF model</span>
+<span class="sd">    :return: RF model and MatrixTable after applying RF model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+        <span class="n">feature1</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">rand_bool</span><span class="p">(</span><span class="mf">0.1</span><span class="p">),</span>
+        <span class="n">feature2</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">rand_norm</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="n">feature3</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">rand_bool</span><span class="p">(</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">hl</span><span class="o">.</span><span class="n">rand_norm</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span>
+    <span class="p">)</span>
+
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="s2">&quot;feature1&quot;</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="s2">&quot;feature2&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;TP&quot;</span><span class="p">,</span> <span class="s2">&quot;FP&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">f3stats</span><span class="p">(</span><span class="n">ht</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+                <span class="n">n</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="s2">&quot;feature3&quot;</span><span class="p">])),</span>
+                <span class="n">med</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="s2">&quot;feature3&quot;</span><span class="p">])),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">f3_before_imputation</span> <span class="o">=</span> <span class="n">f3stats</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Feature3 defined values before imputation: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f3_before_imputation</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Feature3 median: </span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f3_before_imputation</span><span class="o">.</span><span class="n">med</span><span class="p">)</span>
+
+    <span class="n">features_to_impute</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;feature3&quot;</span><span class="p">]</span>
+    <span class="n">quantiles</span> <span class="o">=</span> <span class="n">get_columns_quantiles</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">features_to_impute</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">])</span>
+    <span class="n">quantiles</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Features median:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">f</span><span class="p">],</span> <span class="n">quantiles</span><span class="p">[</span><span class="n">f</span><span class="p">])</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features_to_impute</span><span class="p">})</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span><span class="n">medians</span><span class="o">=</span><span class="n">quantiles</span><span class="p">)</span>
+
+    <span class="n">f3_after_imputation</span> <span class="o">=</span> <span class="n">f3stats</span><span class="p">(</span><span class="n">ht</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Feature3 defined values after imputation: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f3_after_imputation</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Feature3 median: </span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f3_after_imputation</span><span class="o">.</span><span class="n">med</span><span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;feature1&quot;</span><span class="p">,</span> <span class="s2">&quot;feature2&quot;</span><span class="p">,</span> <span class="s2">&quot;feature3&quot;</span><span class="p">)</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;label&quot;</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;feature1&quot;</span><span class="p">,</span> <span class="s2">&quot;feature2&quot;</span><span class="p">,</span> <span class="s2">&quot;feature3&quot;</span><span class="p">]</span>
+
+    <span class="n">rf_model</span> <span class="o">=</span> <span class="n">train_rf</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+    <span class="n">save_model</span><span class="p">(</span><span class="n">rf_model</span><span class="p">,</span> <span class="n">out_path</span><span class="o">=</span><span class="n">output</span> <span class="o">+</span> <span class="s2">&quot;/rf.model&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rf_model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="n">output</span> <span class="o">+</span> <span class="s2">&quot;/rf.model&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rf_model</span><span class="p">,</span> <span class="n">apply_rf_model</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">rf_model</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_ht_fields_for_spark"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.check_ht_fields_for_spark">[docs]</a><span class="k">def</span> <span class="nf">check_ht_fields_for_spark</span><span class="p">(</span><span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check specified fields of a hail table for Spark DataFrame conversion (type and name).</span>
+
+<span class="sd">    :param ht: input Table</span>
+<span class="sd">    :param fields: Fields to test</span>
+<span class="sd">    :return: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tfloat</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tfloat32</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tfloat64</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tint</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tint32</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tint64</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">tbool</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">bad_field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span>
+
+    <span class="n">bad_types</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">row</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_types</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">bad_field_names</span> <span class="ow">or</span> <span class="n">bad_types</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Only basic type fields can be converted from Hail to Spark. In addition,&quot;</span>
+            <span class="s2">&quot; `.` are not allowed in field names in Spark.</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Offending fields (non basic type): </span><span class="si">{</span><span class="n">bad_types</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Offending fields (bad field name): </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bad_field_names</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="get_columns_quantiles"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.get_columns_quantiles">[docs]</a><span class="k">def</span> <span class="nf">get_columns_quantiles</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">quantiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">relative_error</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute approximate quantiles of specified numeric fields from non-missing values. Non-numeric fields are ignored.</span>
+
+<span class="sd">    This function returns a Dict of column name -&gt; list of quantiles in the same order specified.</span>
+<span class="sd">    If a column only has NAs, None is returned.</span>
+
+<span class="sd">    :param ht: input HT</span>
+<span class="sd">    :param fields: list of features to impute. If none given, all numerical features with missing data are imputed</span>
+<span class="sd">    :param quantiles: list of quantiles to return (e.g. [0.5] would return the median)</span>
+<span class="sd">    :param relative_error: The relative error on the quantile approximation</span>
+<span class="sd">    :return: Dict of column -&gt; quantiles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">check_ht_fields_for_spark</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing median for column: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">col_no_na</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">col_no_na</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_no_na</span><span class="o">.</span><span class="n">approxQuantile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">quantiles</span><span class="p">,</span> <span class="n">relative_error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="median_impute_features"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.median_impute_features">[docs]</a><span class="k">def</span> <span class="nf">median_impute_features</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">strata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Numerical features in the Table are median-imputed by Hail&#39;s `approx_median`.</span>
+
+<span class="sd">    If a `strata` dict is given, imputation is done based on the median of of each stratification.</span>
+
+<span class="sd">    The annotations that are added to the Table are</span>
+<span class="sd">        - feature_imputed - A row annotation indicating if each numerical feature was imputed or not.</span>
+<span class="sd">        - features_median - A global annotation containing the median of the numerical features. If `strata` is given,</span>
+<span class="sd">          this struct will also be broken down by the given strata.</span>
+<span class="sd">        - variants_by_strata - An additional global annotation with the variant counts by strata that will only be</span>
+<span class="sd">          added if imputing by a given `strata`.</span>
+
+<span class="sd">    :param ht: Table containing all samples and features for median imputation.</span>
+<span class="sd">    :param strata: Whether to impute features median by specific strata (default False).</span>
+<span class="sd">    :return: Feature Table imputed using approximate median values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing feature medians for imputation of missing numeric values&quot;</span><span class="p">)</span>
+    <span class="n">numerical_features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">hl</span><span class="o">.</span><span class="n">tint</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">==</span> <span class="n">hl</span><span class="o">.</span><span class="n">tfloat</span>
+    <span class="p">]</span>
+
+    <span class="n">median_agg_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">feature</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">approx_median</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">feature</span><span class="p">])</span> <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">numerical_features</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">strata</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+            <span class="n">feature_medians</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">ht</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">]),</span> <span class="n">median_agg_expr</span><span class="p">),</span>
+                <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">variants_by_strata</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">counter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">ht</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">])),</span> <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">feature_median_expr</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">feature_medians</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">tuple</span><span class="p">([</span><span class="n">ht</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">strata</span><span class="p">])]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Variant count by strata:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">variants_by_strata</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+            <span class="n">feature_medians</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">median_agg_expr</span><span class="p">,</span> <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">feature_median_expr</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">feature_medians</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">f</span><span class="p">],</span> <span class="n">feature_median_expr</span><span class="p">[</span><span class="n">f</span><span class="p">])</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">numerical_features</span><span class="p">},</span>
+        <span class="n">feature_imputed</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">f</span><span class="p">])</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">numerical_features</span><span class="p">}</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="ht_to_rf_df"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.ht_to_rf_df">[docs]</a><span class="k">def</span> <span class="nf">ht_to_rf_df</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a Spark dataframe ready for RF from a HT.</span>
+
+<span class="sd">    Rows with any missing features are dropped.</span>
+<span class="sd">    Missing labels are replaced with &#39;NA&#39;</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Only basic types are supported!</span>
+
+<span class="sd">    :param ht: Input HT</span>
+<span class="sd">    :param features: Features that will be used for RF</span>
+<span class="sd">    :param label: Optional label column that will be predicted by RF</span>
+<span class="sd">    :param index: Optional index column to keep (E.g. for joining results back at later stage)</span>
+<span class="sd">    :return: Spark Dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cols_to_keep</span> <span class="o">=</span> <span class="n">features</span><span class="p">[:]</span>
+
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">cols_to_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span><span class="p">:</span>
+        <span class="n">cols_to_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">()</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">cols_to_keep</span><span class="p">)</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;NA&quot;</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="get_features_importance"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.get_features_importance">[docs]</a><span class="k">def</span> <span class="nf">get_features_importance</span><span class="p">(</span>
+    <span class="n">rf_pipeline</span><span class="p">:</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">,</span> <span class="n">rf_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">assembler_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the features importance from a Pipeline model containing a RandomForestClassifier stage.</span>
+
+<span class="sd">    :param rf_pipeline: Input pipeline</span>
+<span class="sd">    :param rf_index: index of the RandomForestClassifier stage</span>
+<span class="sd">    :param assembler_index: index of the VectorAssembler stage</span>
+<span class="sd">    :return: feature importance for each feature in the RF model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">feature_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">x</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;_indexed&quot;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_indexed&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rf_pipeline</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">assembler_index</span><span class="p">]</span><span class="o">.</span><span class="n">getInputCols</span><span class="p">()</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">feature_names</span><span class="p">,</span> <span class="n">rf_pipeline</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">rf_index</span><span class="p">]</span><span class="o">.</span><span class="n">featureImportances</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_labels"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.get_labels">[docs]</a><span class="k">def</span> <span class="nf">get_labels</span><span class="p">(</span><span class="n">rf_pipeline</span><span class="p">:</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the labels from the StringIndexer stage at index 0 from an RF pipeline model.</span>
+
+<span class="sd">    :param rf_pipeline: Input pipeline</span>
+<span class="sd">    :return: labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">rf_pipeline</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span></div>
+
+
+<div class="viewcode-block" id="test_model"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.test_model">[docs]</a><span class="k">def</span> <span class="nf">test_model</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">rf_model</span><span class="p">:</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">,</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">prediction_col_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rf_prediction&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">tstruct</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A wrapper to test a model on a set of examples with known labels.</span>
+
+<span class="sd">    1) Runs the model on the data</span>
+<span class="sd">    2) Prints confusion matrix and accuracy</span>
+<span class="sd">    3) Returns confusion matrix as a list of struct</span>
+
+<span class="sd">    :param ht: Input table</span>
+<span class="sd">    :param rf_model: RF Model</span>
+<span class="sd">    :param features: Columns containing features that were used in the model</span>
+<span class="sd">    :param label: Column containing label to be predicted</span>
+<span class="sd">    :param prediction_col_name: Where to store the prediction</span>
+<span class="sd">    :return: A list containing structs with {label, prediction, n}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">apply_rf_model</span><span class="p">(</span>
+        <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">label</span><span class="p">])),</span>
+        <span class="n">rf_model</span><span class="p">,</span>
+        <span class="n">features</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">,</span>
+        <span class="n">prediction_col_name</span><span class="o">=</span><span class="n">prediction_col_name</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test_results</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">ht</span><span class="p">[</span><span class="n">prediction_col_name</span><span class="p">],</span> <span class="n">ht</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+        <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+        <span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Print results</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">test_results</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">prediction_col_name</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Testing results:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Accuracy: </span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">n</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_results</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="n">prediction_col_name</span><span class="p">]])</span>
+        <span class="o">/</span> <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">n</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_results</span><span class="p">]),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">test_results</span></div>
+
+
+<div class="viewcode-block" id="apply_rf_model"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.apply_rf_model">[docs]</a><span class="k">def</span> <span class="nf">apply_rf_model</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">rf_model</span><span class="p">:</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">,</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">probability_col_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rf_probability&quot;</span><span class="p">,</span>
+    <span class="n">prediction_col_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rf_prediction&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply a Random Forest (RF) pipeline model to a Table and annotate the RF probabilities and predictions.</span>
+
+<span class="sd">    :param ht: Input HT</span>
+<span class="sd">    :param rf_model: Random Forest pipeline model</span>
+<span class="sd">    :param features: List of feature columns in the pipeline. !Should match the model list of features!</span>
+<span class="sd">    :param label: Optional column containing labels. !Should match the model labels!</span>
+<span class="sd">    :param probability_col_name: Name of the column that will store the RF probabilities</span>
+<span class="sd">    :param prediction_col_name: Name of the column that will store the RF predictions</span>
+<span class="sd">    :return: Table with RF columns</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Applying RF model.&quot;</span><span class="p">)</span>
+
+    <span class="n">check_fields</span> <span class="o">=</span> <span class="n">features</span><span class="p">[:]</span>
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">check_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">check_ht_fields_for_spark</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">check_fields</span><span class="p">)</span>
+
+    <span class="n">index_name</span> <span class="o">=</span> <span class="s2">&quot;rf_idx&quot;</span>
+    <span class="k">while</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="n">index_name</span> <span class="o">+=</span> <span class="s2">&quot;_tmp&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">add_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">index_name</span><span class="p">)</span>
+
+    <span class="n">ht_keys</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">ht_to_rf_df</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">index_name</span><span class="p">)</span>
+
+    <span class="n">rf_df</span> <span class="o">=</span> <span class="n">rf_model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">prob_cols</span> <span class="o">=</span> <span class="n">get_labels</span><span class="p">(</span><span class="n">rf_model</span><span class="p">)</span>
+
+    <span class="n">rf_df</span> <span class="o">=</span> <span class="n">rf_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;probability&quot;</span><span class="p">,</span> <span class="n">vector_to_array</span><span class="p">(</span><span class="s2">&quot;probability&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">index_name</span><span class="p">,</span> <span class="s2">&quot;predictedLabel&quot;</span><span class="p">]</span>
+        <span class="o">+</span> <span class="p">[</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;probability&quot;</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prob_cols</span><span class="p">))]</span>
+    <span class="p">)</span>
+    <span class="n">new_colnames</span> <span class="o">=</span> <span class="p">[</span><span class="n">index_name</span><span class="p">,</span> <span class="s2">&quot;predictedLabel&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">prob_cols</span>
+    <span class="n">rf_df</span> <span class="o">=</span> <span class="n">rf_df</span><span class="o">.</span><span class="n">toDF</span><span class="p">(</span><span class="o">*</span><span class="n">new_colnames</span><span class="p">)</span>
+
+    <span class="c1"># Note: SparkSession is needed to write DF to disk before converting to HT;</span>
+    <span class="c1"># the resulting HT sometimes has missing and/or duplicate rows without</span>
+    <span class="c1"># the intermediate write.</span>
+    <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+    <span class="n">rf_df</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;rf_probs.parquet&quot;</span><span class="p">)</span>
+    <span class="n">rf_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&quot;rf_probs.parquet&quot;</span><span class="p">)</span>
+
+    <span class="n">rf_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_spark</span><span class="p">(</span><span class="n">rf_df</span><span class="p">)</span>
+
+    <span class="n">rf_ht</span> <span class="o">=</span> <span class="n">rf_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="n">probability_col_name</span><span class="p">:</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">rf_ht</span><span class="p">[</span><span class="n">ht</span><span class="p">[</span><span class="n">index_name</span><span class="p">]][</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">prob_cols</span><span class="p">},</span>
+            <span class="n">prediction_col_name</span><span class="p">:</span> <span class="n">rf_ht</span><span class="p">[</span><span class="n">ht</span><span class="p">[</span><span class="n">index_name</span><span class="p">]][</span><span class="s2">&quot;predictedLabel&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">*</span><span class="n">ht_keys</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="save_model"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.save_model">[docs]</a><span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span>
+    <span class="n">rf_pipeline</span><span class="p">:</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">,</span> <span class="n">out_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save a Random Forest pipeline model.</span>
+
+<span class="sd">    :param rf_pipeline: Pipeline to save</span>
+<span class="sd">    :param out_path: Output path</span>
+<span class="sd">    :param overwrite: If set, will overwrite existing file(s) at output location</span>
+<span class="sd">    :return: Nothing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Saving model to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">out_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+        <span class="n">rf_pipeline</span><span class="o">.</span><span class="n">write</span><span class="p">()</span><span class="o">.</span><span class="n">overwrite</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rf_pipeline</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_model"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.load_model">[docs]</a><span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a Random Forest pipeline model.</span>
+
+<span class="sd">    :param input_path: Location of model to load</span>
+<span class="sd">    :return: Random Forest pipeline model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading model from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">input_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="train_rf"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.train_rf">[docs]</a><span class="k">def</span> <span class="nf">train_rf</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">num_trees</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Train a Random Forest (RF) pipeline model.</span>
+
+<span class="sd">    :param ht: Input HT</span>
+<span class="sd">    :param features: List of columns to be used as features</span>
+<span class="sd">    :param label: Column containing the label to predict</span>
+<span class="sd">    :param num_trees: Number of trees to use</span>
+<span class="sd">    :param max_depth: Maximum tree depth</span>
+<span class="sd">    :return: Random Forest pipeline model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Training RF model using:</span><span class="se">\n</span><span class="s2">features: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">labels: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">num_trees:&quot;</span>
+        <span class="s2">&quot; </span><span class="si">%d</span><span class="se">\n</span><span class="s2">max_depth: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">features</span><span class="p">),</span>
+        <span class="n">label</span><span class="p">,</span>
+        <span class="n">num_trees</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">check_ht_fields_for_spark</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">features</span> <span class="o">+</span> <span class="p">[</span><span class="n">label</span><span class="p">])</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">ht_to_rf_df</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+
+    <span class="n">label_indexer</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">StringIndexer</span><span class="p">(</span><span class="n">inputCol</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">outputCol</span><span class="o">=</span><span class="n">label</span> <span class="o">+</span> <span class="s2">&quot;_indexed&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">setHandleInvalid</span><span class="p">(</span><span class="s2">&quot;keep&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">label_indexer</span><span class="o">.</span><span class="n">labels</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found labels: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+    <span class="n">string_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">dtypes</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">label</span> <span class="ow">and</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">string_features</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Indexing string features: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string_features</span><span class="p">))</span>
+    <span class="n">string_features_indexers</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">StringIndexer</span><span class="p">(</span><span class="n">inputCol</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">outputCol</span><span class="o">=</span><span class="n">x</span> <span class="o">+</span> <span class="s2">&quot;_indexed&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">setHandleInvalid</span><span class="p">(</span><span class="s2">&quot;keep&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">string_features</span>
+    <span class="p">]</span>
+
+    <span class="n">assembler</span> <span class="o">=</span> <span class="n">VectorAssembler</span><span class="p">(</span>
+        <span class="n">inputCols</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;_indexed&quot;</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span> <span class="k">else</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">dtypes</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">label</span>
+        <span class="p">],</span>
+        <span class="n">outputCol</span><span class="o">=</span><span class="s2">&quot;features&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span>
+        <span class="n">labelCol</span><span class="o">=</span><span class="n">label</span> <span class="o">+</span> <span class="s2">&quot;_indexed&quot;</span><span class="p">,</span>
+        <span class="n">featuresCol</span><span class="o">=</span><span class="s2">&quot;features&quot;</span><span class="p">,</span>
+        <span class="n">maxDepth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">,</span>
+        <span class="n">numTrees</span><span class="o">=</span><span class="n">num_trees</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">label_converter</span> <span class="o">=</span> <span class="n">IndexToString</span><span class="p">(</span>
+        <span class="n">inputCol</span><span class="o">=</span><span class="s2">&quot;prediction&quot;</span><span class="p">,</span> <span class="n">outputCol</span><span class="o">=</span><span class="s2">&quot;predictedLabel&quot;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span>
+    <span class="p">)</span>
+
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+        <span class="n">stages</span><span class="o">=</span><span class="p">[</span><span class="n">label_indexer</span><span class="p">]</span>
+        <span class="o">+</span> <span class="n">string_features_indexers</span>
+        <span class="o">+</span> <span class="p">[</span><span class="n">assembler</span><span class="p">,</span> <span class="n">rf</span><span class="p">,</span> <span class="n">label_converter</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Train model</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Training RF model&quot;</span><span class="p">)</span>
+    <span class="n">rf_model</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="n">feature_importance</span> <span class="o">=</span> <span class="n">get_features_importance</span><span class="p">(</span><span class="n">rf_model</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;RF features importance:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">feature_importance</span><span class="o">.</span><span class="n">items</span><span class="p">()]),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rf_model</span></div>
+
+
+<div class="viewcode-block" id="get_rf_runs"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.get_rf_runs">[docs]</a><span class="k">def</span> <span class="nf">get_rf_runs</span><span class="p">(</span><span class="n">rf_json_fp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load RF run data from JSON file.</span>
+
+<span class="sd">    :param rf_json_fp: File path to rf json file.</span>
+<span class="sd">    :return: Dictionary containing the content of the JSON file, or an empty dictionary if the file wasn&#39;t found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">rf_json_fp</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_open</span><span class="p">(</span><span class="n">rf_json_fp</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;File </span><span class="si">%s</span><span class="s2"> could not be found. Returning empty RF run hash dict.&quot;</span><span class="p">,</span> <span class="n">rf_json_fp</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="get_run_data"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.get_run_data">[docs]</a><span class="k">def</span> <span class="nf">get_run_data</span><span class="p">(</span>
+    <span class="n">input_args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span>
+    <span class="n">test_intervals</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">features_importance</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">test_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">tstruct</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a Dict containing information about the RF input arguments and feature importance.</span>
+
+<span class="sd">    :param Dict of bool keyed by str input_args: Dictionary of model input arguments</span>
+<span class="sd">    :param List of str test_intervals: Intervals withheld from training to be used in testing</span>
+<span class="sd">    :param Dict of float keyed by str features_importance: Feature importance returned by the RF</span>
+<span class="sd">    :param List of struct test_results: Accuracy results from applying RF model to the test intervals</span>
+<span class="sd">    :return: Dict of RF information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">run_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;input_args&quot;</span><span class="p">:</span> <span class="n">input_args</span><span class="p">,</span>
+        <span class="s2">&quot;features_importance&quot;</span><span class="p">:</span> <span class="n">features_importance</span><span class="p">,</span>
+        <span class="s2">&quot;test_intervals&quot;</span><span class="p">:</span> <span class="n">test_intervals</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">test_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tps</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">test_results</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="c1"># Note: values[0] is the TP/FP label and values[1] is the prediction</span>
+            <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">tps</span> <span class="o">+=</span> <span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">run_data</span><span class="p">[</span><span class="s2">&quot;test_results&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_results</span><span class="p">]</span>
+        <span class="n">run_data</span><span class="p">[</span><span class="s2">&quot;test_accuracy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tps</span> <span class="o">/</span> <span class="n">total</span>
+
+    <span class="k">return</span> <span class="n">run_data</span></div>
+
+
+<div class="viewcode-block" id="pretty_print_runs"><a class="viewcode-back" href="../../../api_reference/variant_qc/random_forest.html#gnomad.variant_qc.random_forest.pretty_print_runs">[docs]</a><span class="k">def</span> <span class="nf">pretty_print_runs</span><span class="p">(</span>
+    <span class="n">runs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">label_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rf_label&quot;</span><span class="p">,</span> <span class="n">prediction_col_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rf_prediction&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print the information for the RF runs loaded from the json file storing the RF run hashes -&gt; info.</span>
+
+<span class="sd">    :param runs: Dictionary containing JSON input loaded from RF run file</span>
+<span class="sd">    :param label_col: Name of the RF label column</span>
+<span class="sd">    :param prediction_col_name: Name of the RF prediction column</span>
+<span class="sd">    :return: Nothing -- only prints information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">run_hash</span><span class="p">,</span> <span class="n">run_data</span> <span class="ow">in</span> <span class="n">runs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">run_hash</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+        <span class="n">testing_results</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">run_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;test_results&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;test_results&quot;</span> <span class="ow">in</span> <span class="n">run_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="c1"># print(testing_results)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">run_data</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;: &quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">testing_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Print results</span>
+            <span class="n">res_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">testing_results</span><span class="p">)</span>
+            <span class="n">res_pd</span> <span class="o">=</span> <span class="n">res_pd</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">label_col</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">prediction_col_name</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;n&quot;</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Testing results:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pformat</span><span class="p">(</span><span class="n">res_pd</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

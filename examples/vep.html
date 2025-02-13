@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Variant Effect Predictor (VEP) &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="gnomad" href="../api_reference/index.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Variant Effect Predictor (VEP)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Variant Effect Predictor (VEP)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/vep.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="variant-effect-predictor-vep">
+<h1>Variant Effect Predictor (VEP)<a class="headerlink" href="#variant-effect-predictor-vep" title="Permalink to this heading"></a></h1>
+<p>To use the <a class="reference external" href="https://www.ensembl.org/vep">Ensembl Variant Effect Predictor</a> with Hail on Google Dataproc,
+the <code class="docutils literal notranslate"><span class="pre">--vep</span></code> flag must be included when starting the cluster. Note that a cluster’s VEP configuration is
+tied to a specific reference genome.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>hailctl<span class="w"> </span>dataproc<span class="w"> </span>start<span class="w"> </span>cluster-name<span class="w"> </span>--vep<span class="w"> </span>GRCh37<span class="w"> </span>--packages<span class="w"> </span>gnomad
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>VEP data is stored in requester pays buckets. Reading from these buckets will bill charges to the project
+in which the cluster is created.</p>
+</div>
+<p>Import variants into a sites-only Hail Table:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">(</span><span class="s2">&quot;/path/to/data.vcf.gz&quot;</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span> <span class="n">drop_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Annotate variants with VEP consequences:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gnomad.utils.vep</span> <span class="kn">import</span> <span class="n">vep_or_lookup_vep</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">vep_or_lookup_vep</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;GRCh37&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../api_reference/utils/vep.html#gnomad.utils.vep.vep_or_lookup_vep" title="gnomad.utils.vep.vep_or_lookup_vep"><code class="xref py py-func docutils literal notranslate"><span class="pre">vep_or_lookup_vep</span></code></a> uses a precomputed dataset to
+drastically speed up this process.</p>
+<p>Identify the most severe consequence for each variant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gnomad.utils.vep</span> <span class="kn">import</span> <span class="n">process_consequences</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">process_consequences</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../api_reference/utils/vep.html#gnomad.utils.vep.process_consequences" title="gnomad.utils.vep.process_consequences"><code class="xref py py-func docutils literal notranslate"><span class="pre">process_consequences</span></code></a> adds <code class="docutils literal notranslate"><span class="pre">worst_consequence_term</span></code>,
+<code class="docutils literal notranslate"><span class="pre">worst_csq_for_variant</span></code>, <code class="docutils literal notranslate"><span class="pre">worst_csq_by_gene</span></code> and other fields to <code class="docutils literal notranslate"><span class="pre">ds.vep</span></code>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api_reference/index.html" class="btn btn-neutral float-right" title="gnomad" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

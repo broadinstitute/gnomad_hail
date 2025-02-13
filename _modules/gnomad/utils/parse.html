@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.parse &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.parse</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.parse</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;This module contains utility functions for general parsing.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;parse_utils&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="parse_variant"><a class="viewcode-back" href="../../../api_reference/utils/parse.html#gnomad.utils.parse.parse_variant">[docs]</a><span class="k">def</span> <span class="nf">parse_variant</span><span class="p">(</span>
+    <span class="n">variant_str</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">contig</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">alt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">build</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a Struct with the locus and alleles from a variant string or contig, position, ref, and alt.</span>
+
+<span class="sd">    :param variant_str: Variant string in the format contig-position-ref-alt or</span>
+<span class="sd">        contig:position:ref:alt.</span>
+<span class="sd">    :param contig: Chromosome of the variant.</span>
+<span class="sd">    :param position: Variant position.</span>
+<span class="sd">    :param ref: Reference allele.</span>
+<span class="sd">    :param alt: Alternate allele.</span>
+<span class="sd">    :param build: Reference genome build. If not provided, will infer from the variant</span>
+<span class="sd">        string or contig. If &#39;chr&#39; is present in the contig, will assume GRCh38,</span>
+<span class="sd">        otherwise GRCh37.</span>
+<span class="sd">    :return: Struct with the locus and alleles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">variant_str</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">alt</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Either `variant_str` must be provided or all of `contig`, `position`, &quot;</span>
+            <span class="s2">&quot;`ref`, and `alt`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">build</span><span class="p">:</span>
+        <span class="n">build</span> <span class="o">=</span> <span class="s2">&quot;GRCh37&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">variant_str</span> <span class="ow">and</span> <span class="n">variant_str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">contig</span> <span class="ow">and</span> <span class="n">contig</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">build</span> <span class="o">=</span> <span class="s2">&quot;GRCh38&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No build provided. Assuming build: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">build</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">variant_str</span> <span class="ow">and</span> <span class="s2">&quot;:&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">variant_str</span><span class="p">:</span>
+            <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">alt</span> <span class="o">=</span> <span class="n">variant_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">alt</span><span class="p">]):</span>
+            <span class="n">variant_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contig</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">position</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">alt</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">parse_variant</span><span class="p">(</span><span class="n">variant_str</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">build</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Invalid variant format: </span><span class="si">{</span><span class="n">variant_str</span><span class="si">}</span><span class="s2">. Valid formats: </span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  contig-position-ref-alt </span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  contig:position:ref:alt&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="parse_locus_intervals"><a class="viewcode-back" href="../../../api_reference/utils/parse.html#gnomad.utils.parse.parse_locus_intervals">[docs]</a><span class="k">def</span> <span class="nf">parse_locus_intervals</span><span class="p">(</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">reference_genome</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse interval(s) string into Hail locus intervals.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If no reference genome is provided, the function will infer the reference genome</span>
+<span class="sd">        build from the interval string. If the interval string starts with &#39;chr&#39;, it will</span>
+<span class="sd">        assume GRCh38, otherwise GRCh37.</span>
+
+<span class="sd">    :param intervals: Interval string or list of interval strings. The interval string</span>
+<span class="sd">        format has to be &quot;contig:start-end&quot;, e.g.,&quot;1:1000-2000&quot; (GRCh37) or</span>
+<span class="sd">        &quot;chr1:1000-2000&quot; (GRCh38).</span>
+<span class="sd">    :return: Hail locus interval(s).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_str</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span><span class="n">intervals</span><span class="p">]</span> <span class="k">if</span> <span class="n">is_str</span> <span class="k">else</span> <span class="n">intervals</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reference_genome</span><span class="p">:</span>
+        <span class="n">reference_genome</span> <span class="o">=</span> <span class="s2">&quot;GRCh38&quot;</span> <span class="k">if</span> <span class="n">intervals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;GRCh37&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;No reference genome provided. Assuming reference genome: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">reference_genome</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference_genome</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="p">[</span><span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Interval must start with &#39;chr&#39; for GRCh38 reference genome.&quot;</span><span class="p">)</span>
+
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">reference_genome</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">intervals</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">intervals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">is_str</span> <span class="k">else</span> <span class="n">intervals</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

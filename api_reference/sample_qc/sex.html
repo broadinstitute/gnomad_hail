@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.sex &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils" href="../utils/index.html" />
+    <link rel="prev" title="gnomad.sample_qc.relatedness" href="relatedness.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sex</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.adjusted_sex_ploidy_expr"><code class="docutils literal notranslate"><span class="pre">adjusted_sex_ploidy_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.adjust_sex_ploidy"><code class="docutils literal notranslate"><span class="pre">adjust_sex_ploidy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment"><code class="docutils literal notranslate"><span class="pre">gaussian_mixture_model_karyotype_assignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.get_ploidy_cutoffs"><code class="docutils literal notranslate"><span class="pre">get_ploidy_cutoffs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs"><code class="docutils literal notranslate"><span class="pre">get_chr_x_hom_alt_cutoffs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.sex.get_sex_expr"><code class="docutils literal notranslate"><span class="pre">get_sex_expr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.sample_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.sex</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/sample_qc/sex.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-sample-qc-sex">
+<h1>gnomad.sample_qc.sex<a class="headerlink" href="#gnomad-sample-qc-sex" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.adjusted_sex_ploidy_expr" title="gnomad.sample_qc.sex.adjusted_sex_ploidy_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.adjusted_sex_ploidy_expr</span></code></a>(...)</p></td>
+<td><p>Create an entry expression to convert XY to haploid on non-PAR X/Y and XX to missing on Y.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.adjust_sex_ploidy" title="gnomad.sample_qc.sex.adjust_sex_ploidy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.adjust_sex_ploidy</span></code></a>(mt, ...)</p></td>
+<td><p>Convert males to haploid on non-PAR X/Y, sets females to missing on Y.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment" title="gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment</span></code></a>(sex_ht)</p></td>
+<td><p>Annotate the input Table with an X karyotype, Y karyotype, and sex karyotype based on a gaussian mixture model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.get_ploidy_cutoffs" title="gnomad.sample_qc.sex.get_ploidy_cutoffs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.get_ploidy_cutoffs</span></code></a>(ht)</p></td>
+<td><p>Get chromosome X and Y ploidy cutoffs for XY and XX samples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs" title="gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs</span></code></a>(ht, ...)</p></td>
+<td><p>Get cutoffs for the fraction homozygous alternate genotypes on chromosome X in 'XY' and 'XX' samples.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.sex.get_sex_expr" title="gnomad.sample_qc.sex.get_sex_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.sex.get_sex_expr</span></code></a>(...[, ...])</p></td>
+<td><p>Create a struct with X_karyotype, Y_karyotype, and sex_karyotype.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.sex"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.adjusted_sex_ploidy_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">adjusted_sex_ploidy_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">karyotype_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy_karyotype_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'XY'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xx_karyotype_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'XX'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#adjusted_sex_ploidy_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.adjusted_sex_ploidy_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Create an entry expression to convert XY to haploid on non-PAR X/Y and XX to missing on Y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – Locus expression.</p></li>
+<li><p><strong>gt_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a>) – Genotype expression.</p></li>
+<li><p><strong>karyotype_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Sex karyotype expression.</p></li>
+<li><p><strong>xy_karyotype_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String representing XY karyotype. Default is “XY”.</p></li>
+<li><p><strong>xx_karyotype_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String representing XX karyotype. Default is “XX”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.CallExpression.html#hail.expr.CallExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Genotype adjusted for sex ploidy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.adjust_sex_ploidy">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">adjust_sex_ploidy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sex_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">male_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'male'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">female_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'female'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#adjust_sex_ploidy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.adjust_sex_ploidy" title="Permalink to this definition"></a></dt>
+<dd><p>Convert males to haploid on non-PAR X/Y, sets females to missing on Y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MatrixTable</p></li>
+<li><p><strong>sex_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Expression pointing to sex in MT (if not male_str or female_str, no change)</p></li>
+<li><p><strong>male_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String for males (default ‘male’)</p></li>
+<li><p><strong>female_str</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String for females (default ‘female’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MatrixTable with fixed ploidy for sex chromosomes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">gaussian_mixture_model_karyotype_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sex_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrx_ploidy_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chrX_ploidy'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chry_ploidy_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chrY_ploidy'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">karyotype_output_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gmm'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#gaussian_mixture_model_karyotype_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate the input Table with an X karyotype, Y karyotype, and sex karyotype based on a gaussian mixture model.</p>
+<p>This function uses two component Gaussian mixture models on <cite>chrx_ploidy_expr</cite> and <cite>chry_ploidy_expr</cite> to assign
+an X karyotype and a Y karyotype which are then combined into the sex karyotype.</p>
+<dl class="simple">
+<dt>The following annotations are added:</dt><dd><ul class="simple">
+<li><p>{karyotype_output_prefix}_x_karyotype</p></li>
+<li><p>{karyotype_output_prefix_y_karyotype</p></li>
+<li><p>{karyotype_output_prefix}_karyotype = {karyotype_output_prefix}_x_karyotype + {karyotype_output_prefix}_y_karyotype</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This uses a two component Gaussian mixture model so all samples are given one of the following sex karyotypes:
+X, XX, XY, YY. It’s recommended that this annotation is only used to split samples into XX and
+XY groups that can then be used in <cite>get_ploidy_cutoffs</cite> to determine XX and XY ploidy means and stdevs.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sex_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table with chromosome X and chromosome Y ploidy values.</p></li>
+<li><p><strong>chrx_ploidy_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Expression pointing to chromosome X ploidy in <cite>sex_ht</cite>. Default is ‘chrX_ploidy’.</p></li>
+<li><p><strong>chry_ploidy_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Expression pointing to chromosome Y ploidy in <cite>sex_ht</cite>. Default is ‘chrY_ploidy’.</p></li>
+<li><p><strong>karyotype_output_prefix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String to use as the prefix for the Gaussian mixture model karyotype output. Default is ‘gmm’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Input Table with Gaussian mixture model karyotype annotations added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.get_ploidy_cutoffs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">get_ploidy_cutoffs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_ploidy_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aneuploidy_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_by_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#get_ploidy_cutoffs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.get_ploidy_cutoffs" title="Permalink to this definition"></a></dt>
+<dd><p>Get chromosome X and Y ploidy cutoffs for XY and XX samples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This assumes the input hail Table has the fields chrX_ploidy, and chrY_ploidy, and f_stat if <cite>f_stat_cutoff</cite> is
+set.</p>
+</div>
+<p>Return a tuple of sex chromosome ploidy cutoffs: ((x_ploidy_cutoffs), (y_ploidy_cutoffs)).
+x_ploidy_cutoffs: (upper cutoff for single X, (lower cutoff for double X, upper cutoff for double X), lower cutoff for triple X)
+y_ploidy_cutoffs: ((lower cutoff for single Y, upper cutoff for single Y), lower cutoff for double Y)</p>
+<p>Uses the normal_ploidy_cutoff parameter to determine the ploidy cutoffs for XX and XY karyotypes.
+Uses the aneuploidy_cutoff parameter to determine the cutoffs for sex aneuploidies.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>f_stat_cutoff</cite> or <cite>group_by_expr</cite> must be supplied. If <cite>f_stat_cutoff</cite> is supplied then f-stat is used to
+split the samples into roughly ‘XX’ and ‘XY’. If <cite>group_by_expr</cite> is supplied instead, then it must include an
+annotation grouping samples by ‘XX’ and ‘XY’. These are both only used to divide samples into XX and XY to
+determine means and standard deviations for these categories and are not used in the final karyotype annotation.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with f_stat and sex chromosome ploidies</p></li>
+<li><p><strong>f_stat_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – f-stat to roughly divide ‘XX’ from ‘XY’ samples. Assumes XX samples are below cutoff and XY
+are above cutoff.</p></li>
+<li><p><strong>normal_ploidy_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when determining sex chromosome ploidy cutoffs
+for XX, XY karyotypes.</p></li>
+<li><p><strong>aneuploidy_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when sex chromosome ploidy cutoffs for aneuploidies.</p></li>
+<li><p><strong>group_by_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Expression grouping samples into ‘XX’ and ‘XY’. Can be used instead of and <cite>f_stat_cutoff</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple of ploidy cutoff tuples: ((x_ploidy_cutoffs), (y_ploidy_cutoffs))</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">get_chr_x_hom_alt_cutoffs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chr_x_frac_hom_alt_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_by_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff_stdev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#get_chr_x_hom_alt_cutoffs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs" title="Permalink to this definition"></a></dt>
+<dd><p>Get cutoffs for the fraction homozygous alternate genotypes on chromosome X in ‘XY’ and ‘XX’ samples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This assumes the input hail Table has the field ‘f_stat’ if <cite>f_stat_cutoff</cite> is set.</p>
+</div>
+<p>Return a tuple of cutoffs for the fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on
+chromosome X: ((lower cutoff for more than one X, upper cutoff for more than one X), lower cutoff for single X).</p>
+<p>Uses the <cite>cutoff_stdev</cite> parameter to determine the fraction of homozygous alternate genotypes
+(hom-alt/(hom-alt + het)) on chromosome X cutoffs for ‘XX’ and ‘XY’ karyotypes.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>f_stat_cutoff</cite> or <cite>group_by_expr</cite> must be supplied. If <cite>f_stat_cutoff</cite> is supplied then f-stat is used to
+split the samples into roughly ‘XX’ and ‘XY’. If <cite>group_by_expr</cite> is supplied instead, then it must include an
+annotation grouping samples by ‘XX’ and ‘XY’. These are both only used to divide samples into XX and XY to
+determine means and standard deviations for these categories and are not used in the final karyotype annotation.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with f_stat and fraction of homozygous alternate genotypes on chromosome X.</p></li>
+<li><p><strong>chr_x_frac_hom_alt_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X.</p></li>
+<li><p><strong>f_stat_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – f-stat to roughly divide ‘XX’ from ‘XY’ samples. Assumes XX samples are below cutoff and XY
+are above cutoff.</p></li>
+<li><p><strong>group_by_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Expression grouping samples into ‘XX’ and ‘XY’. Can be used instead of <cite>f_stat_cutoff</cite>.</p></li>
+<li><p><strong>cutoff_stdev</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when determining sex chromosome ploidy cutoffs
+for XX, XY karyotypes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple of cutoffs: ((lower cutoff for more than one X, upper cutoff for more than one X), lower cutoff for
+single X).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.sex.get_sex_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.sex.</span></span><span class="sig-name descname"><span class="pre">get_sex_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chr_x_ploidy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chr_y_ploidy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_ploidy_cutoffs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_ploidy_cutoffs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chr_x_frac_hom_alt_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chr_x_frac_hom_alt_cutoffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/sex.html#get_sex_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.sex.get_sex_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Create a struct with X_karyotype, Y_karyotype, and sex_karyotype.</p>
+<p>Note that X0 is currently returned as ‘X’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chr_x_ploidy</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Chromosome X ploidy (or relative ploidy).</p></li>
+<li><p><strong>chr_y_ploidy</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Chromosome Y ploidy (or relative ploidy).</p></li>
+<li><p><strong>x_ploidy_cutoffs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Tuple of X chromosome ploidy cutoffs: (upper cutoff for single X, (lower cutoff for
+double X, upper cutoff for double X), lower cutoff for triple X).</p></li>
+<li><p><strong>y_ploidy_cutoffs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Tuple of Y chromosome ploidy cutoffs: ((lower cutoff for single Y, upper cutoff for
+single Y), lower cutoff for double Y).</p></li>
+<li><p><strong>chr_x_frac_hom_alt_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X.</p></li>
+<li><p><strong>chr_x_frac_hom_alt_cutoffs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – Tuple of cutoffs for the fraction of homozygous alternate genotypes
+(hom-alt/(hom-alt + het)) on chromosome X: ((lower cutoff for more than one X, upper cutoff for more than one X),
+lower cutoff for single X).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Struct containing X_karyotype, Y_karyotype, and sex_karyotype.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="relatedness.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.relatedness" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../utils/index.html" class="btn btn-neutral float-right" title="gnomad.utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

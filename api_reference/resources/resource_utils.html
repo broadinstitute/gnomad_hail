@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.resources.resource_utils &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.variant_qc" href="../variant_qc/index.html" />
+    <link rel="prev" title="gnomad.resources.import_resources" href="import_resources.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">resources</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="config.html">config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grch37/index.html">grch37</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grch38/index.html">grch38</a></li>
+<li class="toctree-l3"><a class="reference internal" href="import_resources.html">import_resources</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">resource_utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS"><code class="docutils literal notranslate"><span class="pre">GNOMAD_PUBLIC_BUCKETS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.BaseResource"><code class="docutils literal notranslate"><span class="pre">BaseResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.TableResource"><code class="docutils literal notranslate"><span class="pre">TableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.MatrixTableResource"><code class="docutils literal notranslate"><span class="pre">MatrixTableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VariantDatasetResource"><code class="docutils literal notranslate"><span class="pre">VariantDatasetResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.PedigreeResource"><code class="docutils literal notranslate"><span class="pre">PedigreeResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.BlockMatrixResource"><code class="docutils literal notranslate"><span class="pre">BlockMatrixResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.ExpressionResource"><code class="docutils literal notranslate"><span class="pre">ExpressionResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.BaseVersionedResource"><code class="docutils literal notranslate"><span class="pre">BaseVersionedResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedTableResource"><code class="docutils literal notranslate"><span class="pre">VersionedTableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedMatrixTableResource"><code class="docutils literal notranslate"><span class="pre">VersionedMatrixTableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedVariantDatasetResource"><code class="docutils literal notranslate"><span class="pre">VersionedVariantDatasetResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedPedigreeResource"><code class="docutils literal notranslate"><span class="pre">VersionedPedigreeResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedBlockMatrixResource"><code class="docutils literal notranslate"><span class="pre">VersionedBlockMatrixResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.ResourceNotAvailable"><code class="docutils literal notranslate"><span class="pre">ResourceNotAvailable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicResource"><code class="docutils literal notranslate"><span class="pre">GnomadPublicResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicTableResource"><code class="docutils literal notranslate"><span class="pre">GnomadPublicTableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicMatrixTableResource"><code class="docutils literal notranslate"><span class="pre">GnomadPublicMatrixTableResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicPedigreeResource"><code class="docutils literal notranslate"><span class="pre">GnomadPublicPedigreeResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource"><code class="docutils literal notranslate"><span class="pre">GnomadPublicBlockMatrixResource</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.DataException"><code class="docutils literal notranslate"><span class="pre">DataException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.import_sites_vcf"><code class="docutils literal notranslate"><span class="pre">import_sites_vcf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.resources.resource_utils.import_gencode"><code class="docutils literal notranslate"><span class="pre">import_gencode()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.resources</a></li>
+      <li class="breadcrumb-item active">gnomad.resources.resource_utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/resources/resource_utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-resources-resource-utils">
+<h1>gnomad.resources.resource_utils<a class="headerlink" href="#gnomad-resources-resource-utils" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS" title="gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS</span></code></a></p></td>
+<td><p>Public buckets used to stage gnomAD data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.BaseResource" title="gnomad.resources.resource_utils.BaseResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.BaseResource</span></code></a>([...])</p></td>
+<td><p>Generic abstract resource class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.TableResource" title="gnomad.resources.resource_utils.TableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.TableResource</span></code></a>([...])</p></td>
+<td><p>A Hail Table resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.MatrixTableResource" title="gnomad.resources.resource_utils.MatrixTableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.MatrixTableResource</span></code></a>([...])</p></td>
+<td><p>A Hail MatrixTable resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VariantDatasetResource" title="gnomad.resources.resource_utils.VariantDatasetResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VariantDatasetResource</span></code></a>([...])</p></td>
+<td><p>A Hail VariantDataset resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.PedigreeResource" title="gnomad.resources.resource_utils.PedigreeResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.PedigreeResource</span></code></a>([...])</p></td>
+<td><p>A pedigree resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.BlockMatrixResource" title="gnomad.resources.resource_utils.BlockMatrixResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.BlockMatrixResource</span></code></a>([...])</p></td>
+<td><p>A Hail BlockMatrix resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.ExpressionResource" title="gnomad.resources.resource_utils.ExpressionResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.ExpressionResource</span></code></a>([...])</p></td>
+<td><p>A Hail Expression resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.BaseVersionedResource" title="gnomad.resources.resource_utils.BaseVersionedResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.BaseVersionedResource</span></code></a>(...)</p></td>
+<td><p>Class for a versioned resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedTableResource" title="gnomad.resources.resource_utils.VersionedTableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VersionedTableResource</span></code></a>(...)</p></td>
+<td><p>Versioned Table resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedMatrixTableResource" title="gnomad.resources.resource_utils.VersionedMatrixTableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VersionedMatrixTableResource</span></code></a>(...)</p></td>
+<td><p>Versioned MatrixTable resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedVariantDatasetResource" title="gnomad.resources.resource_utils.VersionedVariantDatasetResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VersionedVariantDatasetResource</span></code></a>(...)</p></td>
+<td><p>Versioned VariantDataset resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedPedigreeResource" title="gnomad.resources.resource_utils.VersionedPedigreeResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VersionedPedigreeResource</span></code></a>(...)</p></td>
+<td><p>Versioned Pedigree resource.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.VersionedBlockMatrixResource" title="gnomad.resources.resource_utils.VersionedBlockMatrixResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.VersionedBlockMatrixResource</span></code></a>(...)</p></td>
+<td><p>Versioned BlockMatrix resource.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.ResourceNotAvailable" title="gnomad.resources.resource_utils.ResourceNotAvailable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.ResourceNotAvailable</span></code></a></p></td>
+<td><p>Exception raised if a resource is not available from the selected source.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicResource" title="gnomad.resources.resource_utils.GnomadPublicResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GnomadPublicResource</span></code></a>([...])</p></td>
+<td><p>Base class for the gnomAD project's public resources.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicTableResource" title="gnomad.resources.resource_utils.GnomadPublicTableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GnomadPublicTableResource</span></code></a>([...])</p></td>
+<td><p>Resource class for a public Hail Table published by the gnomAD project.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicMatrixTableResource" title="gnomad.resources.resource_utils.GnomadPublicMatrixTableResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GnomadPublicMatrixTableResource</span></code></a>([...])</p></td>
+<td><p>Resource class for a public Hail MatrixTable published by the gnomAD project.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicPedigreeResource" title="gnomad.resources.resource_utils.GnomadPublicPedigreeResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GnomadPublicPedigreeResource</span></code></a>([...])</p></td>
+<td><p>Resource class for a public pedigree published by the gnomAD project.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource" title="gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource</span></code></a>([...])</p></td>
+<td><p>Resource class for a public Hail BlockMatrix published by the gnomAD project.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.DataException" title="gnomad.resources.resource_utils.DataException"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.DataException</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.import_sites_vcf" title="gnomad.resources.resource_utils.import_sites_vcf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.import_sites_vcf</span></code></a>(...)</p></td>
+<td><p>Import site-level data from a VCF into a Hail Table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.resources.resource_utils.import_gencode" title="gnomad.resources.resource_utils.import_gencode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.resources.resource_utils.import_gencode</span></code></a>(...)</p></td>
+<td><p>Import GENCODE annotations GTF file as a Hail Table.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.resources.resource_utils"></span><dl class="py data">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GNOMAD_PUBLIC_BUCKETS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('gnomad-public',</span> <span class="pre">'gnomad-public-requester-pays')</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.GNOMAD_PUBLIC_BUCKETS" title="Permalink to this definition"></a></dt>
+<dd><p>Public buckets used to stage gnomAD data.</p>
+<p><cite>gnomad-public</cite> is a legacy bucket and contains one readme text file.</p>
+<p>The gnomAD Production Team writes output data to <cite>gnomad-public-requester-pays</cite>, and all data in this bucket
+syncs to the public bucket <cite>gcp-public-data–gnomad</cite>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">BaseResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BaseResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BaseResource" title="Permalink to this definition"></a></dt>
+<dd><p>Generic abstract resource class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The resource path</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of (e.g. .vcf path for an imported VCF)</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the resource. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.BaseResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseResource.path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.BaseResource.path" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseResource.import_resource">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BaseResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BaseResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Abstract method to import the resource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite an existing file at the destination.</p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to the underlying hail write function (acceptable parameters depend on specific resource types)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.TableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">TableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#TableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.TableResource" title="Permalink to this definition"></a></dt>
+<dd><p>A Hail Table resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The Table path (typically ending in .ht)</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the Table. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.TableResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.ht']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.TableResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.TableResource.ht">
+<span class="sig-name descname"><span class="pre">ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#TableResource.ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.TableResource.ht" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail Table resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.read_table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail Table resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.TableResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#TableResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.TableResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the TableResource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite an existing file at the destination.</p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to hl.Table.write</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.MatrixTableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">MatrixTableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#MatrixTableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.MatrixTableResource" title="Permalink to this definition"></a></dt>
+<dd><p>A Hail MatrixTable resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The MatrixTable path (typically ending in .mt)</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the MatrixTable. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.MatrixTableResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.mt']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.MatrixTableResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.MatrixTableResource.mt">
+<span class="sig-name descname"><span class="pre">mt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#MatrixTableResource.mt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.MatrixTableResource.mt" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail MatrixTable resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.read_matrix_table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail MatrixTable resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.MatrixTableResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#MatrixTableResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.MatrixTableResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the MatrixTable resource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, existing file(s) will be overwritten</p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to hl.MatrixTable.write</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VariantDatasetResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VariantDatasetResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VariantDatasetResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VariantDatasetResource" title="Permalink to this definition"></a></dt>
+<dd><p>A Hail VariantDataset resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The VariantDataset path (typically ending in .vds)</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the VariantDataset. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VariantDatasetResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.vds']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.VariantDatasetResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VariantDatasetResource.vds">
+<span class="sig-name descname"><span class="pre">vds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VariantDatasetResource.vds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VariantDatasetResource.vds" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail VariantDataset resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.vds.read_vds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail VariantDataset resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VariantDatasetResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VariantDatasetResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VariantDatasetResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the VariantDataset resource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, existing file(s) will be overwritten</p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to hl.vds.VariantDataset.write</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.PedigreeResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">PedigreeResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_pheno</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\\\\\\\\s+'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NA'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#PedigreeResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.PedigreeResource" title="Permalink to this definition"></a></dt>
+<dd><p>A pedigree resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The Pedigree path (typically ending in .fam or .ped)</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a>]]) – A function used to import the Pedigree. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+<li><p><strong>quant_pheno</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, phenotype is interpreted as quantitative.</p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Field delimiter regex.</p></li>
+<li><p><strong>missing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The string used to denote missing values. For case-control, 0, -9, and non-numeric are also treated as missing.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.PedigreeResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.fam',</span> <span class="pre">'.ped']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.PedigreeResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.PedigreeResource.ht">
+<span class="sig-name descname"><span class="pre">ht</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#PedigreeResource.ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.PedigreeResource.ht" title="Permalink to this definition"></a></dt>
+<dd><p>Read the pedigree into a family HT using hl.import_fam().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Family table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.PedigreeResource.pedigree">
+<span class="sig-name descname"><span class="pre">pedigree</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#PedigreeResource.pedigree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.PedigreeResource.pedigree" title="Permalink to this definition"></a></dt>
+<dd><p>Read the pedigree into an hl.Pedigree using hl.Pedigree.read().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delimiter</strong> – Delimiter used in the ped file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pedigree</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.PedigreeResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#PedigreeResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.PedigreeResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the Pedigree resource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, existing file(s) will be overwritten. IMPORTANT: Currently there is no implementation of this method when <cite>overwrite</cite> is set the <cite>False</cite></p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to hl.Pedigree.write</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BlockMatrixResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">BlockMatrixResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BlockMatrixResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BlockMatrixResource" title="Permalink to this definition"></a></dt>
+<dd><p>A Hail BlockMatrix resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The BlockMatrix path (typically ending in .bm)</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be kept track of and/or passed to the import_func.</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the BlockMatrix. <cite>import_func</cite> will be passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BlockMatrixResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.bm']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.BlockMatrixResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BlockMatrixResource.bm">
+<span class="sig-name descname"><span class="pre">bm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BlockMatrixResource.bm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BlockMatrixResource.bm" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail MatrixTable resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to BlockMatrix.read.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/linalg/hail.linalg.BlockMatrix.html#hail.linalg.BlockMatrix" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlockMatrix</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail MatrixTable resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BlockMatrixResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BlockMatrixResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BlockMatrixResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the BlockMatrixResource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite an existing file at the destination.</p></li>
+<li><p><strong>kwargs</strong> – Any additional parameters to be passed to BlockMatrix.write</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.ExpressionResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">ExpressionResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#ExpressionResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.ExpressionResource" title="Permalink to this definition"></a></dt>
+<dd><p>A Hail Expression resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The Expression path (typically ending in .he).</p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any sources that are required for the import and need to be
+kept track of and/or passed to the import_func (e.g. .vcf path for an imported
+VCF).</p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – A function used to import the Expression. <cite>import_func</cite> will be
+passed the <cite>import_args</cite> dictionary as kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.ExpressionResource.expected_file_extensions">
+<span class="sig-name descname"><span class="pre">expected_file_extensions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['.he']</span></em><a class="headerlink" href="#gnomad.resources.resource_utils.ExpressionResource.expected_file_extensions" title="Permalink to this definition"></a></dt>
+<dd><p>Expected file extensions for this resource type. If path doesn’t end with one of these, a warning is logged.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.ExpressionResource.he">
+<span class="sig-name descname"><span class="pre">he</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#ExpressionResource.he"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.ExpressionResource.he" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail Expression resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.experimental.read_expression.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail Expression resource.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.ExpressionResource.import_resource">
+<span class="sig-name descname"><span class="pre">import_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#ExpressionResource.import_resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.ExpressionResource.import_resource" title="Permalink to this definition"></a></dt>
+<dd><p>Import the Expression resource using its import_func and writes it in its path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, existing file(s) will be overwritten.</p></li>
+<li><p><strong>kwargs</strong> – Any other parameters to be passed to hl.experimental.
+write_expression.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseVersionedResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">BaseVersionedResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#BaseVersionedResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.BaseVersionedResource" title="Permalink to this definition"></a></dt>
+<dd><p>Class for a versioned resource.</p>
+<p>The attributes and methods of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The default version of this resource (must be in the <cite>versions</cite> dict)</p></li>
+<li><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.BaseResource" title="gnomad.resources.resource_utils.BaseResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseResource</span></code></a>]) – A dict of version name -&gt; resource.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseVersionedResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.BaseVersionedResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.BaseResource" title="gnomad.resources.resource_utils.BaseResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseResource</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseVersionedResource.default_version">
+<span class="sig-name descname"><span class="pre">default_version</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.BaseVersionedResource.default_version" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.BaseVersionedResource.versions">
+<span class="sig-name descname"><span class="pre">versions</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.BaseVersionedResource.versions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedTableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VersionedTableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VersionedTableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedTableResource" title="Permalink to this definition"></a></dt>
+<dd><p>Versioned Table resource.</p>
+<p>The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The default version of this Table resource (must to be in the <cite>versions</cite> dict)</p></li>
+<li><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.TableResource" title="gnomad.resources.resource_utils.TableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableResource</span></code></a>]) – A dict of version name -&gt; TableResource.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedTableResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedTableResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.TableResource" title="gnomad.resources.resource_utils.TableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableResource</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedMatrixTableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VersionedMatrixTableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VersionedMatrixTableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedMatrixTableResource" title="Permalink to this definition"></a></dt>
+<dd><p>Versioned MatrixTable resource.</p>
+<p>The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The default version of this MatrixTable resource (must to be in the <cite>versions</cite> dict)</p></li>
+<li><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.MatrixTableResource" title="gnomad.resources.resource_utils.MatrixTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTableResource</span></code></a>]) – A dict of version name -&gt; MatrixTableResource.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedMatrixTableResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedMatrixTableResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.MatrixTableResource" title="gnomad.resources.resource_utils.MatrixTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTableResource</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedVariantDatasetResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VersionedVariantDatasetResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VersionedVariantDatasetResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedVariantDatasetResource" title="Permalink to this definition"></a></dt>
+<dd><p>Versioned VariantDataset resource.</p>
+<p>The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.
+:type default_version: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
+:param default_version: The default version of this VariantDataset resource (must to be in the <cite>versions</cite> dict)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.VariantDatasetResource" title="gnomad.resources.resource_utils.VariantDatasetResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDatasetResource</span></code></a>]) – A dict of version name -&gt; VariantDatasetResource.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedVariantDatasetResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedVariantDatasetResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.VariantDatasetResource" title="gnomad.resources.resource_utils.VariantDatasetResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDatasetResource</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedPedigreeResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VersionedPedigreeResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VersionedPedigreeResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedPedigreeResource" title="Permalink to this definition"></a></dt>
+<dd><p>Versioned Pedigree resource.</p>
+<p>The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The default version of this Pedigree resource (must be in the <cite>versions</cite> dict)</p></li>
+<li><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.PedigreeResource" title="gnomad.resources.resource_utils.PedigreeResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">PedigreeResource</span></code></a>]) – A dict of version name -&gt; PedigreeResource.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedPedigreeResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedPedigreeResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.PedigreeResource" title="gnomad.resources.resource_utils.PedigreeResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">PedigreeResource</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedBlockMatrixResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">VersionedBlockMatrixResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">versions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#VersionedBlockMatrixResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedBlockMatrixResource" title="Permalink to this definition"></a></dt>
+<dd><p>Versioned BlockMatrix resource.</p>
+<p>The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.
+In addition, all versions of the resource are stored in the <cite>versions</cite> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The default version of this BlockMatrix resource (must to be in the <cite>versions</cite> dict)</p></li>
+<li><p><strong>versions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#gnomad.resources.resource_utils.BlockMatrixResource" title="gnomad.resources.resource_utils.BlockMatrixResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlockMatrixResource</span></code></a>]) – A dict of version name -&gt; BlockMatrixResource.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.VersionedBlockMatrixResource.resource_class">
+<span class="sig-name descname"><span class="pre">resource_class</span></span><a class="headerlink" href="#gnomad.resources.resource_utils.VersionedBlockMatrixResource.resource_class" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#gnomad.resources.resource_utils.BlockMatrixResource" title="gnomad.resources.resource_utils.BlockMatrixResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlockMatrixResource</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.ResourceNotAvailable">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">ResourceNotAvailable</span></span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#ResourceNotAvailable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.ResourceNotAvailable" title="Permalink to this definition"></a></dt>
+<dd><p>Exception raised if a resource is not available from the selected source.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GnomadPublicResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicResource" title="Permalink to this definition"></a></dt>
+<dd><p>Base class for the gnomAD project’s public resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – </p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicResource.is_resource_available">
+<span class="sig-name descname"><span class="pre">is_resource_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicResource.is_resource_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicResource.is_resource_available" title="Permalink to this definition"></a></dt>
+<dd><p>Check if this resource is available from the selected source.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the resource is available.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicTableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GnomadPublicTableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicTableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicTableResource" title="Permalink to this definition"></a></dt>
+<dd><p>Resource class for a public Hail Table published by the gnomAD project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – </p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicTableResource.ht">
+<span class="sig-name descname"><span class="pre">ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicTableResource.ht" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail Table resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.read_table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail Table resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicMatrixTableResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GnomadPublicMatrixTableResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicMatrixTableResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicMatrixTableResource" title="Permalink to this definition"></a></dt>
+<dd><p>Resource class for a public Hail MatrixTable published by the gnomAD project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – </p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicMatrixTableResource.mt">
+<span class="sig-name descname"><span class="pre">mt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_import</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicMatrixTableResource.mt" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail MatrixTable resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force_import</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, force the import of the resource even if it
+already exists.</p></li>
+<li><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to hl.read_matrix_table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail MatrixTable resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicPedigreeResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GnomadPublicPedigreeResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_pheno</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\\\\\\\\s+'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NA'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicPedigreeResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicPedigreeResource" title="Permalink to this definition"></a></dt>
+<dd><p>Resource class for a public pedigree published by the gnomAD project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – </p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a>]]) – </p></li>
+<li><p><strong>quant_pheno</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>delimiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>missing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicPedigreeResource.ht">
+<span class="sig-name descname"><span class="pre">ht</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicPedigreeResource.ht" title="Permalink to this definition"></a></dt>
+<dd><p>Read the pedigree into a family HT using hl.import_fam().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Family table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicPedigreeResource.pedigree">
+<span class="sig-name descname"><span class="pre">pedigree</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicPedigreeResource.pedigree" title="Permalink to this definition"></a></dt>
+<dd><p>Read the pedigree into an hl.Pedigree using hl.Pedigree.read().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delimiter</strong> – Delimiter used in the ped file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pedigree</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">GnomadPublicBlockMatrixResource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">import_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#GnomadPublicBlockMatrixResource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource" title="Permalink to this definition"></a></dt>
+<dd><p>Resource class for a public Hail BlockMatrix published by the gnomAD project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>import_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – </p></li>
+<li><p><strong>import_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource.bm">
+<span class="sig-name descname"><span class="pre">bm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">read_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource.bm" title="Permalink to this definition"></a></dt>
+<dd><p>Read and return the Hail MatrixTable resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>read_args</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Any additional arguments to pass to BlockMatrix.read.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/linalg/hail.linalg.BlockMatrix.html#hail.linalg.BlockMatrix" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlockMatrix</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail MatrixTable resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.DataException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">DataException</span></span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#DataException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.DataException" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.import_sites_vcf">
+<span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">import_sites_vcf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#import_sites_vcf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.import_sites_vcf" title="Permalink to this definition"></a></dt>
+<dd><p>Import site-level data from a VCF into a Hail Table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.resources.resource_utils.import_gencode">
+<span class="sig-prename descclassname"><span class="pre">gnomad.resources.resource_utils.</span></span><span class="sig-name descname"><span class="pre">import_gencode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gtf_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/resources/resource_utils.html#import_gencode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.resources.resource_utils.import_gencode" title="Permalink to this definition"></a></dt>
+<dd><p>Import GENCODE annotations GTF file as a Hail Table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gtf_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Path to GENCODE GTF file.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with GENCODE annotation information.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="import_resources.html" class="btn btn-neutral float-left" title="gnomad.resources.import_resources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../variant_qc/index.html" class="btn btn-neutral float-right" title="gnomad.variant_qc" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

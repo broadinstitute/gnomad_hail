@@ -1,0 +1,8 @@
+gnomad.resources.grch37.reference_data
+======================================
+
+
+
+.. gnomad_automodulesummary:: gnomad.resources.grch37.reference_data
+
+.. automodule:: gnomad.resources.grch37.reference_data

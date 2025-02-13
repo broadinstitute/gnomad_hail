@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.annotations" href="annotations.html" />
+    <link rel="prev" title="gnomad.sample_qc.sex" href="../sample_qc/sex.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+      <li class="breadcrumb-item active">gnomad.utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils">
+<h1>gnomad.utils<a class="headerlink" href="#gnomad-utils" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">annotations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_with_ht"><code class="docutils literal notranslate"><span class="pre">annotate_with_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.pop_max_expr"><code class="docutils literal notranslate"><span class="pre">pop_max_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.project_max_expr"><code class="docutils literal notranslate"><span class="pre">project_max_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.faf_expr"><code class="docutils literal notranslate"><span class="pre">faf_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.gen_anc_faf_max_expr"><code class="docutils literal notranslate"><span class="pre">gen_anc_faf_max_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.qual_hist_expr"><code class="docutils literal notranslate"><span class="pre">qual_hist_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.age_hists_expr"><code class="docutils literal notranslate"><span class="pre">age_hists_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_lowqual_expr"><code class="docutils literal notranslate"><span class="pre">get_lowqual_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_annotations_hists"><code class="docutils literal notranslate"><span class="pre">get_annotations_hists()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.create_frequency_bins_expr"><code class="docutils literal notranslate"><span class="pre">create_frequency_bins_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_and_index_source_mt_for_sex_ploidy"><code class="docutils literal notranslate"><span class="pre">annotate_and_index_source_mt_for_sex_ploidy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_is_haploid_expr"><code class="docutils literal notranslate"><span class="pre">get_is_haploid_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_gq_dp_adj_expr"><code class="docutils literal notranslate"><span class="pre">get_gq_dp_adj_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_het_ab_adj_expr"><code class="docutils literal notranslate"><span class="pre">get_het_ab_adj_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_adj_expr"><code class="docutils literal notranslate"><span class="pre">get_adj_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_adj"><code class="docutils literal notranslate"><span class="pre">annotate_adj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.add_variant_type"><code class="docutils literal notranslate"><span class="pre">add_variant_type()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_allele_info"><code class="docutils literal notranslate"><span class="pre">annotate_allele_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotation_type_is_numeric"><code class="docutils literal notranslate"><span class="pre">annotation_type_is_numeric()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotation_type_in_vcf_info"><code class="docutils literal notranslate"><span class="pre">annotation_type_in_vcf_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.bi_allelic_site_inbreeding_expr"><code class="docutils literal notranslate"><span class="pre">bi_allelic_site_inbreeding_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.fs_from_sb"><code class="docutils literal notranslate"><span class="pre">fs_from_sb()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.sor_from_sb"><code class="docutils literal notranslate"><span class="pre">sor_from_sb()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.pab_max_expr"><code class="docutils literal notranslate"><span class="pre">pab_max_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.bi_allelic_expr"><code class="docutils literal notranslate"><span class="pre">bi_allelic_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.unphase_call_expr"><code class="docutils literal notranslate"><span class="pre">unphase_call_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.region_flag_expr"><code class="docutils literal notranslate"><span class="pre">region_flag_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.missing_callstats_expr"><code class="docutils literal notranslate"><span class="pre">missing_callstats_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.set_female_y_metrics_to_na_expr"><code class="docutils literal notranslate"><span class="pre">set_female_y_metrics_to_na_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.hemi_expr"><code class="docutils literal notranslate"><span class="pre">hemi_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.merge_freq_arrays"><code class="docutils literal notranslate"><span class="pre">merge_freq_arrays()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.merge_histograms"><code class="docutils literal notranslate"><span class="pre">merge_histograms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_freq"><code class="docutils literal notranslate"><span class="pre">annotate_freq()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.annotate_downsamplings"><code class="docutils literal notranslate"><span class="pre">annotate_downsamplings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.build_freq_stratification_list"><code class="docutils literal notranslate"><span class="pre">build_freq_stratification_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.generate_freq_group_membership_array"><code class="docutils literal notranslate"><span class="pre">generate_freq_group_membership_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.compute_freq_by_strata"><code class="docutils literal notranslate"><span class="pre">compute_freq_by_strata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.agg_by_strata"><code class="docutils literal notranslate"><span class="pre">agg_by_strata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.update_structured_annotations"><code class="docutils literal notranslate"><span class="pre">update_structured_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.fill_missing_key_combinations"><code class="docutils literal notranslate"><span class="pre">fill_missing_key_combinations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.missing_struct_expr"><code class="docutils literal notranslate"><span class="pre">missing_struct_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.add_gks_vrs"><code class="docutils literal notranslate"><span class="pre">add_gks_vrs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.add_gks_va"><code class="docutils literal notranslate"><span class="pre">add_gks_va()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#gnomad.utils.annotations.get_copy_state_by_sex"><code class="docutils literal notranslate"><span class="pre">get_copy_state_by_sex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constraint.html">constraint</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.COVERAGE_CUTOFF"><code class="docutils literal notranslate"><span class="pre">COVERAGE_CUTOFF</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.get_mu_annotation_expr"><code class="docutils literal notranslate"><span class="pre">get_mu_annotation_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.annotate_with_mu"><code class="docutils literal notranslate"><span class="pre">annotate_with_mu()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.count_variants_by_group"><code class="docutils literal notranslate"><span class="pre">count_variants_by_group()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.get_downsampling_freq_indices"><code class="docutils literal notranslate"><span class="pre">get_downsampling_freq_indices()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.downsampling_counts_expr"><code class="docutils literal notranslate"><span class="pre">downsampling_counts_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.explode_downsamplings_oe"><code class="docutils literal notranslate"><span class="pre">explode_downsamplings_oe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.annotate_mutation_type"><code class="docutils literal notranslate"><span class="pre">annotate_mutation_type()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.trimer_from_heptamer"><code class="docutils literal notranslate"><span class="pre">trimer_from_heptamer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.collapse_strand"><code class="docutils literal notranslate"><span class="pre">collapse_strand()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.transform_methylation_level"><code class="docutils literal notranslate"><span class="pre">transform_methylation_level()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.assemble_constraint_context_ht"><code class="docutils literal notranslate"><span class="pre">assemble_constraint_context_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.build_models"><code class="docutils literal notranslate"><span class="pre">build_models()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.build_plateau_models"><code class="docutils literal notranslate"><span class="pre">build_plateau_models()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.build_coverage_model"><code class="docutils literal notranslate"><span class="pre">build_coverage_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.get_all_pop_lengths"><code class="docutils literal notranslate"><span class="pre">get_all_pop_lengths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.get_constraint_grouping_expr"><code class="docutils literal notranslate"><span class="pre">get_constraint_grouping_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings"><code class="docutils literal notranslate"><span class="pre">annotate_exploded_vep_for_constraint_groupings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.compute_expected_variants"><code class="docutils literal notranslate"><span class="pre">compute_expected_variants()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.oe_aggregation_expr"><code class="docutils literal notranslate"><span class="pre">oe_aggregation_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.compute_pli"><code class="docutils literal notranslate"><span class="pre">compute_pli()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.oe_confidence_interval"><code class="docutils literal notranslate"><span class="pre">oe_confidence_interval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.calculate_raw_z_score"><code class="docutils literal notranslate"><span class="pre">calculate_raw_z_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.get_constraint_flags"><code class="docutils literal notranslate"><span class="pre">get_constraint_flags()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.calculate_raw_z_score_sd"><code class="docutils literal notranslate"><span class="pre">calculate_raw_z_score_sd()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraint.html#gnomad.utils.constraint.add_gencode_transcript_annotations"><code class="docutils literal notranslate"><span class="pre">add_gencode_transcript_annotations()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="file_utils.html">file_utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.file_exists"><code class="docutils literal notranslate"><span class="pre">file_exists()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.check_file_exists_raise_error"><code class="docutils literal notranslate"><span class="pre">check_file_exists_raise_error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.write_temp_gcs"><code class="docutils literal notranslate"><span class="pre">write_temp_gcs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.select_primitives_from_ht"><code class="docutils literal notranslate"><span class="pre">select_primitives_from_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.get_file_stats"><code class="docutils literal notranslate"><span class="pre">get_file_stats()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.read_list_data"><code class="docutils literal notranslate"><span class="pre">read_list_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.repartition_for_join"><code class="docutils literal notranslate"><span class="pre">repartition_for_join()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_utils.html#gnomad.utils.file_utils.create_vds"><code class="docutils literal notranslate"><span class="pre">create_vds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_to_adj"><code class="docutils literal notranslate"><span class="pre">filter_to_adj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_by_frequency"><code class="docutils literal notranslate"><span class="pre">filter_by_frequency()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.combine_functions"><code class="docutils literal notranslate"><span class="pre">combine_functions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.low_conf_regions_expr"><code class="docutils literal notranslate"><span class="pre">low_conf_regions_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_low_conf_regions"><code class="docutils literal notranslate"><span class="pre">filter_low_conf_regions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_to_autosomes"><code class="docutils literal notranslate"><span class="pre">filter_to_autosomes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.add_filters_expr"><code class="docutils literal notranslate"><span class="pre">add_filters_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.subset_samples_and_variants"><code class="docutils literal notranslate"><span class="pre">subset_samples_and_variants()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_to_clinvar_pathogenic"><code class="docutils literal notranslate"><span class="pre">filter_to_clinvar_pathogenic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_gencode_ht"><code class="docutils literal notranslate"><span class="pre">filter_gencode_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_by_intervals"><code class="docutils literal notranslate"><span class="pre">filter_by_intervals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_by_gencode_intervals"><code class="docutils literal notranslate"><span class="pre">filter_by_gencode_intervals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_to_gencode_cds"><code class="docutils literal notranslate"><span class="pre">filter_to_gencode_cds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.remove_fields_from_constant"><code class="docutils literal notranslate"><span class="pre">remove_fields_from_constant()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_x_nonpar"><code class="docutils literal notranslate"><span class="pre">filter_x_nonpar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_y_nonpar"><code class="docutils literal notranslate"><span class="pre">filter_y_nonpar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_by_numeric_expr_range"><code class="docutils literal notranslate"><span class="pre">filter_by_numeric_expr_range()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_for_mu"><code class="docutils literal notranslate"><span class="pre">filter_for_mu()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.split_vds_by_strata"><code class="docutils literal notranslate"><span class="pre">split_vds_by_strata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.utils.filtering.filter_arrays_by_meta"><code class="docutils literal notranslate"><span class="pre">filter_arrays_by_meta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gen_stats.html">gen_stats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gen_stats.html#gnomad.utils.gen_stats.to_phred"><code class="docutils literal notranslate"><span class="pre">to_phred()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_stats.html#gnomad.utils.gen_stats.from_phred"><code class="docutils literal notranslate"><span class="pre">from_phred()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_stats.html#gnomad.utils.gen_stats.get_median_and_mad_expr"><code class="docutils literal notranslate"><span class="pre">get_median_and_mad_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_stats.html#gnomad.utils.gen_stats.merge_stats_counters_expr"><code class="docutils literal notranslate"><span class="pre">merge_stats_counters_expr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intervals.html">intervals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intervals.html#gnomad.utils.intervals.sort_intervals"><code class="docutils literal notranslate"><span class="pre">sort_intervals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intervals.html#gnomad.utils.intervals.union_intervals"><code class="docutils literal notranslate"><span class="pre">union_intervals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intervals.html#gnomad.utils.intervals.interval_length"><code class="docutils literal notranslate"><span class="pre">interval_length()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intervals.html#gnomad.utils.intervals.pad_intervals"><code class="docutils literal notranslate"><span class="pre">pad_intervals()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="liftover.html">liftover</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.GRCH37_to_GRCH38_CHAIN"><code class="docutils literal notranslate"><span class="pre">GRCH37_to_GRCH38_CHAIN</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.GRCH38_TO_GRCH37_CHAIN"><code class="docutils literal notranslate"><span class="pre">GRCH38_TO_GRCH37_CHAIN</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.get_liftover_genome"><code class="docutils literal notranslate"><span class="pre">get_liftover_genome()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.liftover_expr"><code class="docutils literal notranslate"><span class="pre">liftover_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.default_lift_data"><code class="docutils literal notranslate"><span class="pre">default_lift_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="liftover.html#gnomad.utils.liftover.liftover_using_gnomad_map"><code class="docutils literal notranslate"><span class="pre">liftover_using_gnomad_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parse.html">parse</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="parse.html#gnomad.utils.parse.parse_variant"><code class="docutils literal notranslate"><span class="pre">parse_variant()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="parse.html#gnomad.utils.parse.parse_locus_intervals"><code class="docutils literal notranslate"><span class="pre">parse_locus_intervals()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">plotting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.new_show"><code class="docutils literal notranslate"><span class="pre">new_show()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.plot_hail_hist"><code class="docutils literal notranslate"><span class="pre">plot_hail_hist()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.plot_multi_hail_hist"><code class="docutils literal notranslate"><span class="pre">plot_multi_hail_hist()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.plot_hail_hist_cumulative"><code class="docutils literal notranslate"><span class="pre">plot_hail_hist_cumulative()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.plot_hail_hist_both"><code class="docutils literal notranslate"><span class="pre">plot_hail_hist_both()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.set_font_size"><code class="docutils literal notranslate"><span class="pre">set_font_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.linear_and_log_tabs"><code class="docutils literal notranslate"><span class="pre">linear_and_log_tabs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.plot_hail_file_metadata"><code class="docutils literal notranslate"><span class="pre">plot_hail_file_metadata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.scale_file_sizes"><code class="docutils literal notranslate"><span class="pre">scale_file_sizes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.get_rows_data"><code class="docutils literal notranslate"><span class="pre">get_rows_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#gnomad.utils.plotting.pair_plot"><code class="docutils literal notranslate"><span class="pre">pair_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_genome.html">reference_genome</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_genome.html#gnomad.utils.reference_genome.get_reference_ht"><code class="docutils literal notranslate"><span class="pre">get_reference_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_genome.html#gnomad.utils.reference_genome.add_reference_sequence"><code class="docutils literal notranslate"><span class="pre">add_reference_sequence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_genome.html#gnomad.utils.reference_genome.get_reference_genome"><code class="docutils literal notranslate"><span class="pre">get_reference_genome()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="release.html">release</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="release.html#gnomad.utils.release.make_faf_index_dict"><code class="docutils literal notranslate"><span class="pre">make_faf_index_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="release.html#gnomad.utils.release.make_freq_index_dict"><code class="docutils literal notranslate"><span class="pre">make_freq_index_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="release.html#gnomad.utils.release.make_freq_index_dict_from_meta"><code class="docutils literal notranslate"><span class="pre">make_freq_index_dict_from_meta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="slack.html">slack</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="slack.html#gnomad.utils.slack.SlackClient"><code class="docutils literal notranslate"><span class="pre">SlackClient</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="slack.html#gnomad.utils.slack.slack_notifications"><code class="docutils literal notranslate"><span class="pre">slack_notifications()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sparse_mt.html">sparse_mt</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.compute_last_ref_block_end"><code class="docutils literal notranslate"><span class="pre">compute_last_ref_block_end()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.densify_sites"><code class="docutils literal notranslate"><span class="pre">densify_sites()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.get_as_info_expr"><code class="docutils literal notranslate"><span class="pre">get_as_info_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.get_site_info_expr"><code class="docutils literal notranslate"><span class="pre">get_site_info_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.default_compute_info"><code class="docutils literal notranslate"><span class="pre">default_compute_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.split_info_annotation"><code class="docutils literal notranslate"><span class="pre">split_info_annotation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.split_lowqual_annotation"><code class="docutils literal notranslate"><span class="pre">split_lowqual_annotation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.impute_sex_ploidy"><code class="docutils literal notranslate"><span class="pre">impute_sex_ploidy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.densify_all_reference_sites"><code class="docutils literal notranslate"><span class="pre">densify_all_reference_sites()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.compute_stats_per_ref_site"><code class="docutils literal notranslate"><span class="pre">compute_stats_per_ref_site()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.compute_coverage_stats"><code class="docutils literal notranslate"><span class="pre">compute_coverage_stats()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.get_allele_number_agg_func"><code class="docutils literal notranslate"><span class="pre">get_allele_number_agg_func()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.compute_allele_number_per_ref_site"><code class="docutils literal notranslate"><span class="pre">compute_allele_number_per_ref_site()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse_mt.html#gnomad.utils.sparse_mt.filter_ref_blocks"><code class="docutils literal notranslate"><span class="pre">filter_ref_blocks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES"><code class="docutils literal notranslate"><span class="pre">REPRODUCTIVE_TISSUES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.CELL_LINES"><code class="docutils literal notranslate"><span class="pre">CELL_LINES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.get_tissues_to_exclude"><code class="docutils literal notranslate"><span class="pre">get_tissues_to_exclude()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.summarize_transcript_expression"><code class="docutils literal notranslate"><span class="pre">summarize_transcript_expression()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.get_expression_proportion"><code class="docutils literal notranslate"><span class="pre">get_expression_proportion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues"><code class="docutils literal notranslate"><span class="pre">filter_expression_ht_by_tissues()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.tissue_expression_ht_to_array"><code class="docutils literal notranslate"><span class="pre">tissue_expression_ht_to_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs"><code class="docutils literal notranslate"><span class="pre">tx_filter_variants_by_csqs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.tx_annotate_variants"><code class="docutils literal notranslate"><span class="pre">tx_annotate_variants()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.tx_aggregate_variants"><code class="docutils literal notranslate"><span class="pre">tx_aggregate_variants()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline"><code class="docutils literal notranslate"><span class="pre">perform_tx_annotation_pipeline()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.clean_tissue_name_for_browser"><code class="docutils literal notranslate"><span class="pre">clean_tissue_name_for_browser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transcript_annotation.html#gnomad.utils.transcript_annotation.create_tx_annotation_by_region"><code class="docutils literal notranslate"><span class="pre">create_tx_annotation_by_region()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vcf.html">vcf</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.SORT_ORDER"><code class="docutils literal notranslate"><span class="pre">SORT_ORDER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.GROUPS"><code class="docutils literal notranslate"><span class="pre">GROUPS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.HISTS"><code class="docutils literal notranslate"><span class="pre">HISTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.FAF_POPS"><code class="docutils literal notranslate"><span class="pre">FAF_POPS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.SEXES"><code class="docutils literal notranslate"><span class="pre">SEXES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.AS_FIELDS"><code class="docutils literal notranslate"><span class="pre">AS_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.SITE_FIELDS"><code class="docutils literal notranslate"><span class="pre">SITE_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.ALLELE_TYPE_FIELDS"><code class="docutils literal notranslate"><span class="pre">ALLELE_TYPE_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.REGION_FLAG_FIELDS"><code class="docutils literal notranslate"><span class="pre">REGION_FLAG_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.JOINT_REGION_FLAG_FIELDS"><code class="docutils literal notranslate"><span class="pre">JOINT_REGION_FLAG_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.RF_FIELDS"><code class="docutils literal notranslate"><span class="pre">RF_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.AS_VQSR_FIELDS"><code class="docutils literal notranslate"><span class="pre">AS_VQSR_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.VQSR_FIELDS"><code class="docutils literal notranslate"><span class="pre">VQSR_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.INFO_DICT"><code class="docutils literal notranslate"><span class="pre">INFO_DICT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.IN_SILICO_ANNOTATIONS_INFO_DICT"><code class="docutils literal notranslate"><span class="pre">IN_SILICO_ANNOTATIONS_INFO_DICT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.VRS_FIELDS_DICT"><code class="docutils literal notranslate"><span class="pre">VRS_FIELDS_DICT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.ENTRIES"><code class="docutils literal notranslate"><span class="pre">ENTRIES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.SPARSE_ENTRIES"><code class="docutils literal notranslate"><span class="pre">SPARSE_ENTRIES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.FORMAT_DICT"><code class="docutils literal notranslate"><span class="pre">FORMAT_DICT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.adjust_vcf_incompatible_types"><code class="docutils literal notranslate"><span class="pre">adjust_vcf_incompatible_types()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_label_combos"><code class="docutils literal notranslate"><span class="pre">make_label_combos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.index_globals"><code class="docutils literal notranslate"><span class="pre">index_globals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_combo_header_text"><code class="docutils literal notranslate"><span class="pre">make_combo_header_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.create_label_groups"><code class="docutils literal notranslate"><span class="pre">create_label_groups()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_info_dict"><code class="docutils literal notranslate"><span class="pre">make_info_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.add_as_info_dict"><code class="docutils literal notranslate"><span class="pre">add_as_info_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_vcf_filter_dict"><code class="docutils literal notranslate"><span class="pre">make_vcf_filter_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_hist_bin_edges_expr"><code class="docutils literal notranslate"><span class="pre">make_hist_bin_edges_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.make_hist_dict"><code class="docutils literal notranslate"><span class="pre">make_hist_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.set_female_y_metrics_to_na"><code class="docutils literal notranslate"><span class="pre">set_female_y_metrics_to_na()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.build_vcf_export_reference"><code class="docutils literal notranslate"><span class="pre">build_vcf_export_reference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcf.html#gnomad.utils.vcf.rekey_new_reference"><code class="docutils literal notranslate"><span class="pre">rekey_new_reference()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vep.html">vep</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.CURRENT_VEP_VERSION"><code class="docutils literal notranslate"><span class="pre">CURRENT_VEP_VERSION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.CSQ_CODING"><code class="docutils literal notranslate"><span class="pre">CSQ_CODING</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.CSQ_SPLICE"><code class="docutils literal notranslate"><span class="pre">CSQ_SPLICE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.POSSIBLE_REFS"><code class="docutils literal notranslate"><span class="pre">POSSIBLE_REFS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.VEP_CONFIG_PATH"><code class="docutils literal notranslate"><span class="pre">VEP_CONFIG_PATH</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.VEP_CSQ_FIELDS"><code class="docutils literal notranslate"><span class="pre">VEP_CSQ_FIELDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.VEP_CSQ_HEADER"><code class="docutils literal notranslate"><span class="pre">VEP_CSQ_HEADER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.LOFTEE_LABELS"><code class="docutils literal notranslate"><span class="pre">LOFTEE_LABELS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.LOF_CSQ_SET"><code class="docutils literal notranslate"><span class="pre">LOF_CSQ_SET</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.get_vep_help"><code class="docutils literal notranslate"><span class="pre">get_vep_help()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.get_vep_context"><code class="docutils literal notranslate"><span class="pre">get_vep_context()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.vep_or_lookup_vep"><code class="docutils literal notranslate"><span class="pre">vep_or_lookup_vep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.get_most_severe_consequence_expr"><code class="docutils literal notranslate"><span class="pre">get_most_severe_consequence_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.add_most_severe_consequence_to_consequence"><code class="docutils literal notranslate"><span class="pre">add_most_severe_consequence_to_consequence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.process_consequences"><code class="docutils literal notranslate"><span class="pre">process_consequences()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_to_canonical_transcripts"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_canonical_transcripts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_to_mane_select_transcripts"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_mane_select_transcripts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_to_synonymous_variants"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_synonymous_variants()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_to_gene_list"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_gene_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.vep_struct_to_csq"><code class="docutils literal notranslate"><span class="pre">vep_struct_to_csq()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.get_most_severe_consequence_for_summary"><code class="docutils literal notranslate"><span class="pre">get_most_severe_consequence_for_summary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_transcript_csqs"><code class="docutils literal notranslate"><span class="pre">filter_vep_transcript_csqs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.filter_vep_transcript_csqs_expr"><code class="docutils literal notranslate"><span class="pre">filter_vep_transcript_csqs_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root"><code class="docutils literal notranslate"><span class="pre">add_most_severe_csq_to_tc_within_vep_root()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vep.html#gnomad.utils.vep.explode_by_vep_annotation"><code class="docutils literal notranslate"><span class="pre">explode_by_vep_annotation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../sample_qc/sex.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.sex" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="annotations.html" class="btn btn-neutral float-right" title="gnomad.utils.annotations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

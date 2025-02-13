@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.liftover &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.liftover</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.liftover</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.utils.reference_genome</span> <span class="kn">import</span> <span class="n">add_reference_sequence</span><span class="p">,</span> <span class="n">get_reference_genome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<span class="n">GRCH37_to_GRCH38_CHAIN</span> <span class="o">=</span> <span class="s2">&quot;gs://hail-common/references/grch37_to_grch38.over.chain.gz&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Path to chain file required to lift data from GRCh37 to GRCh38.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">GRCH38_TO_GRCH37_CHAIN</span> <span class="o">=</span> <span class="s2">&quot;gs://hail-common/references/grch38_to_grch37.over.chain.gz&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Path to chain file required to lift data from GRCh38 to GRCh37.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="get_liftover_genome"><a class="viewcode-back" href="../../../api_reference/utils/liftover.html#gnomad.utils.liftover.get_liftover_genome">[docs]</a><span class="k">def</span> <span class="nf">get_liftover_genome</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">genetics</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">genetics</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infer reference genome build of input data and assume destination reference genome build.</span>
+
+<span class="sd">    Adds liftover chain to source reference genome and sequence to destination reference genome.</span>
+<span class="sd">    Returns tuple containing both reference genomes in preparation for liftover.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :return: Tuple of source reference genome (with liftover chain added)</span>
+<span class="sd">        and destination reference genome (with sequence loaded)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Inferring reference genome of input...&quot;</span><span class="p">)</span>
+    <span class="n">input_build</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">get_reference</span><span class="p">(</span><span class="n">input_build</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading fasta sequence for destination build...&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">input_build</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">get_reference</span><span class="p">(</span><span class="s2">&quot;GRCh37&quot;</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">GRCH38_TO_GRCH37_CHAIN</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">get_reference</span><span class="p">(</span><span class="s2">&quot;GRCh38&quot;</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">GRCH37_to_GRCH38_CHAIN</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding liftover chain to input build...&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">has_liftover</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Source reference build </span><span class="si">%s</span><span class="s2"> already has a chain file: </span><span class="si">%s</span><span class="s2">! Using whichever&quot;</span>
+            <span class="s2">&quot; chain has already been added.&quot;</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">_liftovers</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_liftover</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">add_reference_sequence</span><span class="p">(</span><span class="n">target</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="liftover_expr"><a class="viewcode-back" href="../../../api_reference/utils/liftover.html#gnomad.utils.liftover.liftover_expr">[docs]</a><span class="k">def</span> <span class="nf">liftover_expr</span><span class="p">(</span>
+    <span class="n">locus</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">,</span>
+    <span class="n">alleles</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="n">destination_reference</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate struct liftover expression.</span>
+
+<span class="sd">    Struct contains:</span>
+<span class="sd">        - locus: Liftover coordinates</span>
+<span class="sd">        - alleles: Liftover alleles</span>
+<span class="sd">        - original_locus: Locus prior to liftover</span>
+<span class="sd">        - original_alleles: Alleles prior to liftover</span>
+<span class="sd">        - locus_fail_liftover: Whether the locus failed liftover</span>
+<span class="sd">        - ref_allele_mismatch: Whether the allele at index 0 of alleles (lifted over reference allele)</span>
+<span class="sd">            doesn&#39;t match the allele at that position in the destination reference</span>
+
+<span class="sd">    :param locus: Input locus.</span>
+<span class="sd">    :param alleles: Input alleles.</span>
+<span class="sd">    :param destination_reference: Desired reference genome build for liftover.</span>
+<span class="sd">    :return: Struct containing expressions for lifted over locus/alleles as well as original locus/alleles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lifted_over_locus</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">liftover</span><span class="p">(</span><span class="n">locus</span><span class="p">,</span> <span class="n">destination_reference</span><span class="p">,</span> <span class="n">include_strand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lifted_over_alleles</span> <span class="o">=</span> <span class="n">alleles</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+            <span class="n">lifted_over_locus</span><span class="o">.</span><span class="n">is_negative_strand</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">reverse_complement</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">a</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+        <span class="n">new_locus</span><span class="o">=</span><span class="n">lifted_over_locus</span><span class="o">.</span><span class="n">result</span><span class="p">,</span>
+        <span class="n">new_alleles</span><span class="o">=</span><span class="n">lifted_over_alleles</span><span class="p">,</span>
+        <span class="n">original_locus</span><span class="o">=</span><span class="n">locus</span><span class="p">,</span>
+        <span class="n">original_alleles</span><span class="o">=</span><span class="n">alleles</span><span class="p">,</span>
+        <span class="n">locus_fail_liftover</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">lifted_over_locus</span><span class="p">),</span>
+        <span class="n">ref_allele_mismatch</span><span class="o">=</span><span class="n">lifted_over_locus</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">sequence_context</span><span class="p">()</span>
+        <span class="o">!=</span> <span class="n">lifted_over_alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_lift_data"><a class="viewcode-back" href="../../../api_reference/utils/liftover.html#gnomad.utils.liftover.default_lift_data">[docs]</a><span class="k">def</span> <span class="nf">default_lift_data</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">remove_failed_sites</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lift input Table or MatrixTable from one reference build to another.</span>
+
+<span class="sd">    :param t: Table or MatrixTable.</span>
+<span class="sd">    :return: Table or MatrixTable with liftover annotations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Inferring input reference and destination reference...&quot;</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">target_genome</span> <span class="o">=</span> <span class="n">get_liftover_genome</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Annotating input data with liftover coordinates...&quot;</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">liftover_expr</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">alleles</span><span class="p">,</span> <span class="n">target_genome</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="n">liftover_expr</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">alleles</span><span class="p">,</span> <span class="n">target_genome</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="n">no_target_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus_fail_liftover</span><span class="p">)</span>
+    <span class="n">num_no_target</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">no_target_expr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">aggregate_rows</span><span class="p">(</span><span class="n">no_target_expr</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_failed_sites</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering out </span><span class="si">%d</span><span class="s2"> sites that failed to liftover...&quot;</span><span class="p">,</span> <span class="n">num_no_target</span><span class="p">)</span>
+        <span class="n">keep_expr</span> <span class="o">=</span> <span class="o">~</span><span class="n">t</span><span class="o">.</span><span class="n">locus_fail_liftover</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">keep_expr</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">keep_expr</span><span class="p">)</span>
+
+    <span class="n">row_key_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;locus&quot;</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">new_locus</span><span class="p">,</span> <span class="s2">&quot;alleles&quot;</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">new_alleles</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="o">**</span><span class="n">row_key_expr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">key_rows_by</span><span class="p">(</span><span class="o">**</span><span class="n">row_key_expr</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="liftover_using_gnomad_map"><a class="viewcode-back" href="../../../api_reference/utils/liftover.html#gnomad.utils.liftover.liftover_using_gnomad_map">[docs]</a><span class="k">def</span> <span class="nf">liftover_using_gnomad_map</span><span class="p">(</span><span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Liftover a gnomAD v2 table using already-established liftover file.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        This function shuffles!</span>
+
+<span class="sd">    :param ht: Input Hail Table.</span>
+<span class="sd">    :param data_type: Which gnomAD data type to map across. One of &quot;exomes&quot; or &quot;genomes&quot;.</span>
+<span class="sd">    :return: Lifted over Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">gnomad.resources.grch37.gnomad</span> <span class="kn">import</span> <span class="n">liftover</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;This function will trigger a shuffle! Pre-emptibles may not work.&quot;</span><span class="p">)</span>
+    <span class="n">lift_ht</span> <span class="o">=</span> <span class="n">liftover</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="n">original_locus</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="n">original_alleles</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+        <span class="s2">&quot;locus&quot;</span><span class="p">,</span> <span class="s2">&quot;alleles&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">lift_ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">ht</span><span class="p">[(</span><span class="n">lift_ht</span><span class="o">.</span><span class="n">original_locus</span><span class="p">,</span> <span class="n">lift_ht</span><span class="o">.</span><span class="n">original_alleles</span><span class="p">)]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;locus&quot;</span><span class="p">,</span> <span class="s2">&quot;alleles&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

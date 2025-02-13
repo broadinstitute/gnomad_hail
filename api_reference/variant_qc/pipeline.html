@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.pipeline &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.variant_qc.random_forest" href="random_forest.html" />
+    <link rel="prev" title="gnomad.variant_qc.ld" href="ld.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">variant_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ld.html">ld</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.pipeline.create_binned_ht"><code class="docutils literal notranslate"><span class="pre">create_binned_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.pipeline.score_bin_agg"><code class="docutils literal notranslate"><span class="pre">score_bin_agg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.pipeline.generate_trio_stats"><code class="docutils literal notranslate"><span class="pre">generate_trio_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.pipeline.generate_sib_stats"><code class="docutils literal notranslate"><span class="pre">generate_sib_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.pipeline.train_rf_model"><code class="docutils literal notranslate"><span class="pre">train_rf_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="random_forest.html">random_forest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="training.html">training</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.variant_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/variant_qc/pipeline.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-variant-qc-pipeline">
+<h1>gnomad.variant_qc.pipeline<a class="headerlink" href="#gnomad-variant-qc-pipeline" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.pipeline.create_binned_ht" title="gnomad.variant_qc.pipeline.create_binned_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.pipeline.create_binned_ht</span></code></a>(ht)</p></td>
+<td><p>Annotate each row of <cite>ht</cite> with a bin based on binning the score annotation into <cite>n_bins</cite> equally-sized bins.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.pipeline.score_bin_agg" title="gnomad.variant_qc.pipeline.score_bin_agg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.pipeline.score_bin_agg</span></code></a>(ht, ...)</p></td>
+<td><p>Make dict of aggregations for min/max of score, number of ClinVar variants, number of truth variants, and family statistics.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.pipeline.generate_trio_stats" title="gnomad.variant_qc.pipeline.generate_trio_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.pipeline.generate_trio_stats</span></code></a>(mt)</p></td>
+<td><p>Run <cite>generate_trio_stats_expr</cite> with variant QC pipeline defaults to get trio stats stratified by raw and adj.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.pipeline.generate_sib_stats" title="gnomad.variant_qc.pipeline.generate_sib_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.pipeline.generate_sib_stats</span></code></a>(mt, ...)</p></td>
+<td><p>Generate a hail table with counts of variants shared by pairs of siblings in <cite>relatedness_ht</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.pipeline.train_rf_model" title="gnomad.variant_qc.pipeline.train_rf_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.pipeline.train_rf_model</span></code></a>(ht, ...)</p></td>
+<td><p>Perform random forest (RF) training using a Table annotated with features and training data.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.variant_qc.pipeline"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.pipeline.create_binned_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">create_binned_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">singleton</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">biallelic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_substrat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/pipeline.html#create_binned_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.pipeline.create_binned_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate each row of <cite>ht</cite> with a bin based on binning the score annotation into <cite>n_bins</cite> equally-sized bins.</p>
+<p>This is meant as a default wrapper for <cite>compute_ranked_bin</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>The following fields should be present:</dt><dd><ul class="simple">
+<li><p>score</p></li>
+<li><p>ac - expected that this is the adj filtered allele count</p></li>
+<li><p>ac_raw - expected that this is the raw allele count before adj filtering</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<dl class="simple">
+<dt>Computes bin numbers stratified by SNV / Indels and with the following optional sub bins</dt><dd><ul class="simple">
+<li><p>singletons</p></li>
+<li><p>biallelics</p></li>
+<li><p>biallelic singletons</p></li>
+<li><p>adj</p></li>
+<li><p>adj biallelics</p></li>
+<li><p>adj singletons</p></li>
+<li><p>adj biallelic singletons</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input table</p></li>
+<li><p><strong>n_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of bins to bin into</p></li>
+<li><p><strong>singleton</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Should bins be stratified by singletons</p></li>
+<li><p><strong>biallelic</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Should bins be stratified by bi-alleleic variants</p></li>
+<li><p><strong>adj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Should bins be stratified by adj filtering</p></li>
+<li><p><strong>add_substrat</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]]) – Any additional stratifications for adding bins</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>table with bin number for each variant</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.pipeline.score_bin_agg">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">score_bin_agg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fam_stats_ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/pipeline.html#score_bin_agg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.pipeline.score_bin_agg" title="Permalink to this definition"></a></dt>
+<dd><p>Make dict of aggregations for min/max of score, number of ClinVar variants, number of truth variants, and family statistics.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function uses <cite>ht._parent</cite> to get the origin Table from the GroupedTable for the aggregation</p>
+</div>
+<p>This can easily be combined with the GroupedTable returned by <cite>compute_grouped_binned_ht</cite>, For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">binned_ht</span> <span class="o">=</span> <span class="n">create_binned_ht</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">grouped_binned_ht</span> <span class="o">=</span> <span class="n">compute_grouped_binned_ht</span><span class="p">(</span><span class="n">binned_ht</span><span class="p">)</span>
+<span class="n">agg_ht</span> <span class="o">=</span> <span class="n">grouped_binned_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">score_bin_agg</span><span class="p">(</span><span class="o">**</span><span class="n">grouped_binned_ht</span><span class="p">,</span> <span class="o">...</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The following annotations should be present:</p>
+<dl class="simple">
+<dt>In ht:</dt><dd><ul class="simple">
+<li><p>score</p></li>
+<li><p>singleton</p></li>
+<li><p>positive_train_site</p></li>
+<li><p>negative_train_site</p></li>
+<li><p>ac_raw - expected that this is the raw allele count before adj filtering</p></li>
+<li><p>ac - expected that this is the allele count after adj filtering</p></li>
+<li><p>ac_qc_samples_unrelated_raw - allele count before adj filtering for unrelated samples passing sample QC</p></li>
+<li><p>info - struct that includes QD, FS, and MQ in order to add an annotation for fail_hard_filters</p></li>
+</ul>
+</dd>
+<dt>In truth_ht:</dt><dd><ul class="simple">
+<li><p>omni</p></li>
+<li><p>mills</p></li>
+<li><p>hapmap</p></li>
+<li><p>kgp_phase1_hc</p></li>
+</ul>
+</dd>
+<dt>In fam_stats_ht:</dt><dd><ul class="simple">
+<li><p>n_de_novos_adj</p></li>
+<li><p>n_de_novos_raw</p></li>
+<li><p>n_transmitted_raw</p></li>
+<li><p>n_untransmitted_raw</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<dl class="simple">
+<dt>Automatic aggregations that will be done are:</dt><dd><ul class="simple">
+<li><p><cite>min_score</cite> - minimun of score annotation per group</p></li>
+<li><p><cite>max_score</cite> - maiximum of score annotation per group</p></li>
+<li><p><cite>n</cite> - count of variants per group</p></li>
+<li><p><cite>n_ins</cite> - count of insertion per group</p></li>
+<li><p><cite>n_ins</cite> - count of insertion per group</p></li>
+<li><p><cite>n_del</cite> - count of deletions per group</p></li>
+<li><p><cite>n_ti</cite> - count of transitions per group</p></li>
+<li><p><cite>n_tv</cite> - count of trnasversions per group</p></li>
+<li><p><cite>n_1bp_indel</cite> - count of one base pair indels per group</p></li>
+<li><p><cite>n_mod3bp_indel</cite> - count of indels with a length divisible by three per group</p></li>
+<li><p><cite>n_singleton</cite> - count of singletons per group</p></li>
+<li><p><cite>fail_hard_filters</cite> - count of variants per group with QD &lt; 2 | FS &gt; 60 | MQ &lt; 30</p></li>
+<li><p><cite>n_vqsr_pos_train</cite> - count of variants that were a VQSR positive train site per group</p></li>
+<li><p><cite>n_vqsr_neg_train</cite> - count of variants that were a VQSR negative train site per group</p></li>
+<li><p><cite>n_clinvar</cite> - count of clinvar variants</p></li>
+<li><p><cite>n_de_novos_singleton_adj</cite> - count of singleton de novo variants after adj filtration</p></li>
+<li><p><cite>n_de_novo_singleton</cite> - count of raw unfiltered singleton de novo variants</p></li>
+<li><p><cite>n_de_novos_adj</cite> - count of adj filtered de novo variants</p></li>
+<li><p><cite>n_de_novos</cite> - count of raw unfiltered de novo variants</p></li>
+<li><p><cite>n_trans_singletons</cite> - count of transmitted singletons</p></li>
+<li><p><cite>n_untrans_singletons</cite> - count of untransmitted singletons</p></li>
+<li><p><cite>n_omni</cite> - count of omni truth variants</p></li>
+<li><p><cite>n_mills</cite> - count of mills truth variants</p></li>
+<li><p><cite>n_hapmap</cite> - count of hapmap truth variants</p></li>
+<li><p><cite>n_kgp_phase1_hc</cite> - count of 1000 genomes phase 1 high confidence truth variants</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.GroupedTable.html#hail.GroupedTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupedTable</span></code></a>) – Table that aggregation will be performed on</p></li>
+<li><p><strong>fam_stats_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Path to family statistics HT</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Aggregation</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a dictionary containing aggregations to perform on ht</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.pipeline.generate_trio_stats">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">generate_trio_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autosomes_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bi_allelic_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/pipeline.html#generate_trio_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.pipeline.generate_trio_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Run <cite>generate_trio_stats_expr</cite> with variant QC pipeline defaults to get trio stats stratified by raw and adj.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Expects that <cite>mt</cite> is it a trio matrix table that was annotated with adj and if dealing with
+a sparse MT <cite>hl.experimental.densify</cite> must be run first.</p>
+<p>By default this pipeline function will filter <cite>mt</cite> to only autosomes and bi-allelic sites.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – A Trio Matrix Table returned from <cite>hl.trio_matrix</cite>. Must be dense</p></li>
+<li><p><strong>autosomes_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only autosomal intervals are used.</p></li>
+<li><p><strong>bi_allelic_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only bi-allelic sites are used for the computation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with trio stats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.pipeline.generate_sib_stats">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">generate_sib_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relatedness_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'i'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'j'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relationship_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relationship'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autosomes_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bi_allelic_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/pipeline.html#generate_sib_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.pipeline.generate_sib_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a hail table with counts of variants shared by pairs of siblings in <cite>relatedness_ht</cite>.</p>
+<p>This is meant as a default wrapper for <cite>generate_sib_stats_expr</cite>.</p>
+<p>This function takes a hail Table with a row for each pair of individuals i,j in the data that are related
+(it’s OK to have unrelated samples too).</p>
+<p>The <cite>relationship_col</cite> should be a column specifying the relationship between each two samples as defined by
+the constants in <cite>gnomad.utils.relatedness</cite>. This relationship_col will be used to filter to only pairs of
+samples that are annotated as <cite>SIBLINGS</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default this pipeline function will filter <cite>mt</cite> to only autosomes and bi-allelic sites.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input Matrix table</p></li>
+<li><p><strong>relatedness_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input relationship table</p></li>
+<li><p><strong>i_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 1st sample of the pair in the relationship table</p></li>
+<li><p><strong>j_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 2nd sample of the pair in the relationship table</p></li>
+<li><p><strong>relationship_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the relationship for the sample pair as defined in this module constants.</p></li>
+<li><p><strong>autosomes_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only autosomal intervals are used.</p></li>
+<li><p><strong>bi_allelic_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only bi-allelic sites are used for the computation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table with the sibling shared variant counts</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.pipeline.train_rf_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">train_rf_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp_to_tp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_trees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/pipeline.html#train_rf_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.pipeline.train_rf_model" title="Permalink to this definition"></a></dt>
+<dd><p>Perform random forest (RF) training using a Table annotated with features and training data.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>This function uses <cite>train_rf</cite> and extends it by:</dt><dd><ul class="simple">
+<li><p>Adding an option to apply the resulting model to test variants which are withheld from training.</p></li>
+<li><p>Uses a false positive (FP) to true positive (TP) ratio to determine what variants to use for RF training.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<dl class="simple">
+<dt>The returned Table includes the following annotations:</dt><dd><ul class="simple">
+<li><p>rf_train: indicates if the variant was used for training of the RF model.</p></li>
+<li><p>rf_label: indicates if the variant is a TP or FP.</p></li>
+<li><p>rf_test: indicates if the variant was used in testing of the RF model.</p></li>
+<li><p>features: global annotation of the features used for the RF model.</p></li>
+<li><p>features_importance: global annotation of the importance of each feature in the model.</p></li>
+<li><p>test_results: results from testing the model on variants defined by <cite>test_expr</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table annotated with features for the RF model and the positive and negative training data.</p></li>
+<li><p><strong>rf_features</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of column names to use as features in the RF training.</p></li>
+<li><p><strong>tp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – TP training expression.</p></li>
+<li><p><strong>fp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – FP training expression.</p></li>
+<li><p><strong>fp_to_tp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Ratio of FPs to TPs for creating the RF model. If set to 0, all training examples are used.</p></li>
+<li><p><strong>num_trees</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of trees in the RF model.</p></li>
+<li><p><strong>max_depth</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maxmimum tree depth in the RF model.</p></li>
+<li><p><strong>test_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – An expression specifying variants to hold out for testing and use for evaluation only.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with TP and FP training sets used in the RF training and the resulting RF model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ld.html" class="btn btn-neutral float-left" title="gnomad.variant_qc.ld" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="random_forest.html" class="btn btn-neutral float-right" title="gnomad.variant_qc.random_forest" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

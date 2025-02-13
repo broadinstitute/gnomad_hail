@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.vep &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.vep</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.vep</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="n">VersionedTableResource</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">VEP_VERSIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;101&quot;</span><span class="p">,</span> <span class="s2">&quot;105&quot;</span><span class="p">]</span>
+<span class="n">CURRENT_VEP_VERSION</span> <span class="o">=</span> <span class="n">VEP_VERSIONS</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Versions of VEP used in gnomAD data, the latest version is 105.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Note that these terms are current as of v105 with some included for backwards</span>
+<span class="c1"># compatibility (VEP &lt;= 75). The impact groupings are loosely based on VEP&#39;s categories</span>
+<span class="c1"># but have been adjusted to better serve gnomAD&#39;s use cases.</span>
+<span class="c1"># See: https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html</span>
+<span class="n">CSQ_CODING_HIGH_IMPACT</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;transcript_ablation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;splice_acceptor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;splice_donor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stop_gained&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;frameshift_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stop_lost&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">CSQ_CODING_MEDIUM_IMPACT</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;start_lost&quot;</span><span class="p">,</span>  <span class="c1"># considered high impact in v105, previously medium</span>
+    <span class="s2">&quot;initiator_codon_variant&quot;</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">&quot;transcript_amplification&quot;</span><span class="p">,</span>  <span class="c1"># considered high impact in v105, previously medium</span>
+    <span class="s2">&quot;inframe_insertion&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;inframe_deletion&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;missense_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;protein_altering_variant&quot;</span><span class="p">,</span>  <span class="c1"># new in v79</span>
+<span class="p">]</span>
+
+<span class="n">CSQ_CODING_LOW_IMPACT</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;splice_donor_5th_base_variant&quot;</span><span class="p">,</span>  <span class="c1"># new in v105</span>
+    <span class="s2">&quot;splice_region_variant&quot;</span><span class="p">,</span>  <span class="c1"># Considered low impact in v105, previously medium</span>
+    <span class="s2">&quot;splice_donor_region_variant&quot;</span><span class="p">,</span>  <span class="c1"># new in v105</span>
+    <span class="s2">&quot;splice_polypyrimidine_tract_variant&quot;</span><span class="p">,</span>  <span class="c1"># new in v105</span>
+    <span class="s2">&quot;incomplete_terminal_codon_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;start_retained_variant&quot;</span><span class="p">,</span>  <span class="c1"># new in v92</span>
+    <span class="s2">&quot;stop_retained_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;synonymous_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coding_sequence_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coding_transcript_variant&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">CSQ_NON_CODING</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;mature_miRNA_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;5_prime_UTR_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3_prime_UTR_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_coding_transcript_exon_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_coding_exon_variant&quot;</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">&quot;intron_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NMD_transcript_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_coding_transcript_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nc_transcript_variant&quot;</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">&quot;upstream_gene_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;downstream_gene_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TFBS_ablation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TFBS_amplification&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TF_binding_site_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;regulatory_region_ablation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;regulatory_region_amplification&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;feature_elongation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;regulatory_region_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;feature_truncation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;intergenic_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sequence_variant&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">CSQ_ORDER</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">CSQ_CODING_HIGH_IMPACT</span>
+    <span class="o">+</span> <span class="n">CSQ_CODING_MEDIUM_IMPACT</span>
+    <span class="o">+</span> <span class="n">CSQ_CODING_LOW_IMPACT</span>
+    <span class="o">+</span> <span class="n">CSQ_NON_CODING</span>
+<span class="p">)</span>
+
+<span class="n">CSQ_CODING</span> <span class="o">=</span> <span class="n">CSQ_CODING_HIGH_IMPACT</span> <span class="o">+</span> <span class="n">CSQ_CODING_MEDIUM_IMPACT</span> <span class="o">+</span> <span class="n">CSQ_CODING_LOW_IMPACT</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant containing all coding consequences.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">CSQ_SPLICE</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;splice_acceptor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;splice_donor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;splice_region_variant&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant containing all splice consequences.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">POSSIBLE_REFS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GRCh37&quot;</span><span class="p">,</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant containing supported references</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">VEP_CONFIG_PATH</span> <span class="o">=</span> <span class="s2">&quot;file:///vep_data/vep-gcloud.json&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant that contains the local path to the VEP config file</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">VEP_CSQ_FIELDS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;101&quot;</span><span class="p">:</span> <span class="s2">&quot;Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|VARIANT_CLASS|MINIMISED|SYMBOL_SOURCE|HGNC_ID|CANONICAL|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|GENE_PHENO|SIFT|PolyPhen|DOMAINS|HGVS_OFFSET|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|LoF|LoF_filter|LoF_flags|LoF_info&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;105&quot;</span><span class="p">:</span> <span class="s2">&quot;Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE_SELECT|MANE_PLUS_CLINICAL|TSL|APPRIS|CCDS|ENSP|UNIPROT_ISOFORM|SOURCE|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|TRANSCRIPTION_FACTORS|LoF|LoF_filter|LoF_flags|LoF_info&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant that defines the order of VEP annotations used in VCF export, currently stored in a dictionary with the VEP version as the key.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">VEP_CSQ_HEADER</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;Consequence annotations from Ensembl VEP. Format:&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">VEP_CSQ_FIELDS</span><span class="p">[</span><span class="n">CURRENT_VEP_VERSION</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant that contains description for VEP used in VCF export.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">LOFTEE_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;HC&quot;</span><span class="p">,</span> <span class="s2">&quot;LC&quot;</span><span class="p">,</span> <span class="s2">&quot;OS&quot;</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constant that contains annotations added by LOFTEE.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">LOF_CSQ_SET</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;splice_acceptor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;splice_donor_variant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stop_gained&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;frameshift_variant&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Set containing loss-of-function consequence strings.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="get_vep_help"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.get_vep_help">[docs]</a><span class="k">def</span> <span class="nf">get_vep_help</span><span class="p">(</span><span class="n">vep_config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the output of vep --help which includes the VEP version.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        If no `vep_config_path` is supplied, this function will only work for Dataproc clusters</span>
+<span class="sd">        created with `hailctl dataproc start --vep`. It assumes that the command is `/path/to/vep`.</span>
+
+<span class="sd">    :param vep_config_path: Optional path to use as the VEP config file. If None, `VEP_CONFIG_URI` environment variable is used</span>
+<span class="sd">    :return: VEP help string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">vep_config_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">vep_config_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VEP_CONFIG_URI&quot;</span><span class="p">]</span>
+
+    <span class="k">with</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_open</span><span class="p">(</span><span class="n">vep_config_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">vep_config_file</span><span class="p">:</span>
+        <span class="n">vep_config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">vep_config_file</span><span class="p">)</span>
+        <span class="n">vep_command</span> <span class="o">=</span> <span class="n">vep_config</span><span class="p">[</span><span class="s2">&quot;command&quot;</span><span class="p">]</span>
+        <span class="n">vep_help</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="n">vep_command</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vep_help</span></div>
+
+
+<div class="viewcode-block" id="get_vep_context"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.get_vep_context">[docs]</a><span class="k">def</span> <span class="nf">get_vep_context</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionedTableResource</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get VEP context resource for the genome build `ref`.</span>
+
+<span class="sd">    :param ref: Genome build. If None, `hl.default_reference` is used</span>
+<span class="sd">    :return: VEPed context resource</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">gnomad.resources.grch37.reference_data</span> <span class="k">as</span> <span class="nn">grch37</span>
+    <span class="kn">import</span> <span class="nn">gnomad.resources.grch38.reference_data</span> <span class="k">as</span> <span class="nn">grch38</span>
+
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">default_reference</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POSSIBLE_REFS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;get_vep_context passed </span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s1">. Expected one of </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">POSSIBLE_REFS</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">vep_context</span> <span class="o">=</span> <span class="n">grch37</span><span class="o">.</span><span class="n">vep_context</span> <span class="k">if</span> <span class="n">ref</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span> <span class="k">else</span> <span class="n">grch38</span><span class="o">.</span><span class="n">vep_context</span>
+    <span class="k">return</span> <span class="n">vep_context</span></div>
+
+
+<div class="viewcode-block" id="vep_or_lookup_vep"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.vep_or_lookup_vep">[docs]</a><span class="k">def</span> <span class="nf">vep_or_lookup_vep</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">,</span> <span class="n">reference_vep_ht</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vep_config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vep_version</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    VEP a table, or lookup variants in a reference database.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        If `reference_vep_ht` is supplied, no check is performed to confirm `reference_vep_ht` was</span>
+<span class="sd">        generated with the same version of VEP / VEP configuration as the VEP referenced in `vep_config_path`.</span>
+
+<span class="sd">    :param ht: Input Table</span>
+<span class="sd">    :param reference_vep_ht: A reference database with VEP annotations (must be in top-level `vep`)</span>
+<span class="sd">    :param reference: If reference_vep_ht is not specified, find a suitable one in reference (if None, grabs from hl.default_reference)</span>
+<span class="sd">    :param vep_config_path: vep_config to pass to hl.vep (if None, a suitable one for `reference` is chosen)</span>
+<span class="sd">    :param vep_version: Version of VEPed context Table to use (if None, the default `vep_context` resource will be used)</span>
+<span class="sd">    :return: VEPed Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">default_reference</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">if</span> <span class="n">vep_config_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">vep_config_path</span> <span class="o">=</span> <span class="n">VEP_CONFIG_PATH</span>
+
+    <span class="n">vep_help</span> <span class="o">=</span> <span class="n">get_vep_help</span><span class="p">(</span><span class="n">vep_config_path</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">hl</span><span class="o">.</span><span class="n">hadoop_open</span><span class="p">(</span><span class="n">vep_config_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">vep_config_file</span><span class="p">:</span>
+        <span class="n">vep_config</span> <span class="o">=</span> <span class="n">vep_config_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">reference_vep_ht</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">reference</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POSSIBLE_REFS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;vep_or_lookup_vep got </span><span class="si">{</span><span class="n">reference</span><span class="si">}</span><span class="s2">. Expected one of&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">POSSIBLE_REFS</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">vep_context</span> <span class="o">=</span> <span class="n">get_vep_context</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vep_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vep_version</span> <span class="o">=</span> <span class="n">vep_context</span><span class="o">.</span><span class="n">default_version</span>
+
+        <span class="k">if</span> <span class="n">vep_version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vep_context</span><span class="o">.</span><span class="n">versions</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;No VEPed context Table available for genome build </span><span class="si">%s</span><span class="s2"> and VEP&quot;</span>
+                <span class="s2">&quot; version </span><span class="si">%s</span><span class="s2">, all variants will be VEPed using the following&quot;</span>
+                <span class="s2">&quot; VEP:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">reference</span><span class="p">,</span>
+                <span class="n">vep_version</span><span class="p">,</span>
+                <span class="n">vep_help</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">vep</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">vep_config_path</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Using VEPed context Table from genome build </span><span class="si">%s</span><span class="s2"> and VEP version </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">reference</span><span class="p">,</span>
+            <span class="n">vep_version</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference_vep_ht</span> <span class="o">=</span> <span class="n">vep_context</span><span class="o">.</span><span class="n">versions</span><span class="p">[</span><span class="n">vep_version</span><span class="p">]</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">vep_context_help</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">reference_vep_ht</span><span class="o">.</span><span class="n">vep_help</span><span class="p">)</span>
+        <span class="n">vep_context_config</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">reference_vep_ht</span><span class="o">.</span><span class="n">vep_config</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">vep_help</span> <span class="o">==</span> <span class="n">vep_context_help</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;The VEP context HT version does not match the version referenced in the&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; VEP config file.</span><span class="se">\n</span><span class="s2">VEP context:</span><span class="se">\n</span><span class="si">{</span><span class="n">vep_context_help</span><span class="si">}</span><span class="se">\n\n</span><span class="s2"> VEP&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; config:</span><span class="se">\n</span><span class="si">{</span><span class="n">vep_help</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">vep_config</span> <span class="o">==</span> <span class="n">vep_context_config</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;The VEP context HT configuration does not match the configuration in&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">vep_config_path</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">VEP context:</span><span class="se">\n</span><span class="si">{</span><span class="n">vep_context_config</span><span class="si">}</span><span class="se">\n\n</span><span class="s2"> Current&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; config:</span><span class="se">\n</span><span class="si">{</span><span class="n">vep_config</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">vep</span><span class="o">=</span><span class="n">reference_vep_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vep</span><span class="p">)</span>
+
+    <span class="n">vep_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="p">))</span>
+    <span class="n">revep_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="p">))</span>
+    <span class="n">revep_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">vep</span><span class="p">(</span><span class="n">revep_ht</span><span class="p">,</span> <span class="n">vep_config_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;vep_proc_id&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">revep_ht</span><span class="o">.</span><span class="n">row</span><span class="p">):</span>
+        <span class="n">revep_ht</span> <span class="o">=</span> <span class="n">revep_ht</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;vep_proc_id&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;vep_proc_id&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">vep_ht</span><span class="o">.</span><span class="n">row</span><span class="p">):</span>
+        <span class="n">vep_ht</span> <span class="o">=</span> <span class="n">vep_ht</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;vep_proc_id&quot;</span><span class="p">)</span>
+
+    <span class="n">vep_ht</span> <span class="o">=</span> <span class="n">vep_ht</span><span class="o">.</span><span class="n">annotate_globals</span><span class="p">(</span>
+        <span class="n">vep_version</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">vep_version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">vep_help</span><span class="o">=</span><span class="n">vep_help</span><span class="p">,</span> <span class="n">vep_config</span><span class="o">=</span><span class="n">vep_config</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">vep_ht</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">revep_ht</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_most_severe_consequence_expr"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.get_most_severe_consequence_expr">[docs]</a><span class="k">def</span> <span class="nf">get_most_severe_consequence_expr</span><span class="p">(</span>
+    <span class="n">csq_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="n">csq_order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the most severe consequence from a collection of consequences.</span>
+
+<span class="sd">    This is for a given transcript, as there are often multiple annotations for a single</span>
+<span class="sd">    transcript: e.g. splice_region_variant&amp;intron_variant -&gt; splice_region_variant</span>
+
+<span class="sd">    :param csq_expr: ArrayExpression of consequences.</span>
+<span class="sd">    :param csq_order: Optional list indicating the order of VEP consequences, sorted</span>
+<span class="sd">        from high to low impact. Default is None, which uses the value of the</span>
+<span class="sd">        `CSQ_ORDER` global.</span>
+<span class="sd">    :return: Most severe consequence in `csq_expr`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">csq_order</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">csq_order</span> <span class="o">=</span> <span class="n">CSQ_ORDER</span>
+    <span class="n">csqs</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">csq_order</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">csqs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">csq_expr</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">c</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="add_most_severe_consequence_to_consequence"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.add_most_severe_consequence_to_consequence">[docs]</a><span class="k">def</span> <span class="nf">add_most_severe_consequence_to_consequence</span><span class="p">(</span>
+    <span class="n">tc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span>
+    <span class="n">csq_order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">most_severe_csq_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;most_severe_consequence&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add a `most_severe_consequence` field to a transcript consequence or array of transcript consequences.</span>
+
+<span class="sd">    For a single transcript consequence, `tc` should be a StructExpression with a</span>
+<span class="sd">    `consequence_terms` field, e.g. Struct(consequence_terms=[&#39;missense_variant&#39;]).</span>
+<span class="sd">    For an array of transcript consequences, `tc` should be an ArrayExpression of</span>
+<span class="sd">    StructExpressions with a `consequence_terms` field.</span>
+
+<span class="sd">    :param tc: Transcript consequence or array of transcript consequences to annotate.</span>
+<span class="sd">    :param csq_order: Optional list indicating the order of VEP consequences, sorted</span>
+<span class="sd">        from high to low impact. Default is None, which uses the value of the</span>
+<span class="sd">        `CSQ_ORDER` global.</span>
+<span class="sd">    :param most_severe_csq_field: Field name to use for most severe consequence. Default</span>
+<span class="sd">        is &#39;most_severe_consequence&#39;.</span>
+<span class="sd">    :return: Transcript consequence or array of transcript consequences annotated with</span>
+<span class="sd">        the most severe consequence.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">csq</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">get_most_severe_consequence_expr</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">consequence_terms</span><span class="p">,</span> <span class="n">csq_order</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tc</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tc</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">most_severe_csq_field</span><span class="p">:</span> <span class="n">csq</span><span class="p">(</span><span class="n">tc</span><span class="p">)})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tc</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">most_severe_csq_field</span><span class="p">:</span> <span class="n">csq</span><span class="p">(</span><span class="n">x</span><span class="p">)}))</span></div>
+
+
+<div class="viewcode-block" id="process_consequences"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.process_consequences">[docs]</a><span class="k">def</span> <span class="nf">process_consequences</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">penalize_flags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">csq_order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">has_polyphen</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add most_severe_consequence into [vep_root].transcript_consequences, and worst_csq_by_gene, any_lof into [vep_root].</span>
+
+<span class="sd">    `most_severe_consequence` is the worst consequence for a transcript.</span>
+
+<span class="sd">    Each transcript consequence is annotated with a `csq_score` which is a combination</span>
+<span class="sd">    of the index of the consequence&#39;s `most_severe_consequence` in `csq_order` and an</span>
+<span class="sd">    extra deduction for loss-of-function consequences, and polyphen predictions if</span>
+<span class="sd">    `has_polyphen` is True. Lower scores translate to higher severity.</span>
+
+<span class="sd">    The score adjustment is as follows:</span>
+<span class="sd">        - lof == &#39;HC&#39; &amp; NO lof_flags (-1000 if penalize_flags, -500 if not)</span>
+<span class="sd">        - lof == &#39;HC&#39; &amp; lof_flags (-500)</span>
+<span class="sd">        - lof == &#39;OS&#39; (-20)</span>
+<span class="sd">        - lof == &#39;LC&#39; (-10)</span>
+<span class="sd">        - everything else (0)</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        From gnomAD v4.0 on, the PolyPhen annotation was removed from the VEP Struct</span>
+<span class="sd">        in the release HTs. When using this function with gnomAD v4.0 or later,</span>
+<span class="sd">        set `has_polyphen` to False.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Root for VEP annotation (probably &quot;vep&quot;).</span>
+<span class="sd">    :param penalize_flags: Whether to penalize LOFTEE flagged variants, or treat them</span>
+<span class="sd">        as equal to HC.</span>
+<span class="sd">    :param csq_order: Optional list indicating the order of VEP consequences, sorted</span>
+<span class="sd">        from high to low impact. Default is None, which uses the value of the</span>
+<span class="sd">        `CSQ_ORDER` global.</span>
+<span class="sd">    :param has_polyphen: Whether the input VEP Struct has a PolyPhen annotation which</span>
+<span class="sd">        will be used to modify the consequence score. Default is True.</span>
+<span class="sd">    :return: MT with better formatted consequences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">csq_order</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">csq_order</span> <span class="o">=</span> <span class="n">CSQ_ORDER</span>
+    <span class="n">csqs</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">csq_order</span><span class="p">)</span>
+
+    <span class="c1"># Assign a score to each consequence based on the order in csq_order.</span>
+    <span class="n">csq_dict</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">csq_order</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">csq_order</span><span class="p">)))))</span>
+
+    <span class="k">def</span> <span class="nf">_find_worst_transcript_consequence</span><span class="p">(</span>
+        <span class="n">tcl</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the worst transcript consequence in an array of transcript consequences.</span>
+
+<span class="sd">        :param tcl: Array of transcript consequences.</span>
+<span class="sd">        :return: Worst transcript consequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">flag</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">no_flag</span> <span class="o">=</span> <span class="n">flag</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">penalize_flags</span><span class="p">)</span>
+
+        <span class="c1"># Score each consequence based on the order in csq_order.</span>
+        <span class="n">score_expr</span> <span class="o">=</span> <span class="n">tcl</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="n">csq_dict</span><span class="p">[</span><span class="n">csqs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">tc</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Determine the score adjustment based on the consequence&#39;s LOF and LOF flags.</span>
+        <span class="n">sub_expr</span> <span class="o">=</span> <span class="n">tcl</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">(</span><span class="n">missing_false</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">when</span><span class="p">((</span><span class="n">tc</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">lof_flags</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">no_flag</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">when</span><span class="p">((</span><span class="n">tc</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;HC&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">lof_flags</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">flag</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;OS&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="s2">&quot;LC&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If requested, determine the score adjustment based on the consequence&#39;s</span>
+        <span class="c1"># PolyPhen prediction.</span>
+        <span class="k">if</span> <span class="n">has_polyphen</span><span class="p">:</span>
+            <span class="n">polyphen_sub_expr</span> <span class="o">=</span> <span class="n">tcl</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">(</span><span class="n">missing_false</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">polyphen_prediction</span> <span class="o">==</span> <span class="s2">&quot;probably_damaging&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">polyphen_prediction</span> <span class="o">==</span> <span class="s2">&quot;possibly_damaging&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">polyphen_prediction</span> <span class="o">==</span> <span class="s2">&quot;benign&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sub_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">ps</span><span class="p">:</span> <span class="n">s</span> <span class="o">+</span> <span class="n">ps</span><span class="p">,</span> <span class="n">sub_expr</span><span class="p">,</span> <span class="n">polyphen_sub_expr</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the final consequence score.</span>
+        <span class="n">tcl</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">tc</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">ss</span><span class="p">:</span> <span class="n">tc</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">csq_score</span><span class="o">=</span><span class="n">s</span> <span class="o">-</span> <span class="n">ss</span><span class="p">),</span> <span class="n">tcl</span><span class="p">,</span> <span class="n">score_expr</span><span class="p">,</span> <span class="n">sub_expr</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Return the worst consequence based on the calculated score.</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">tcl</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">sorted</span><span class="p">(</span><span class="n">tcl</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">csq_score</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Annotate each transcript consequence with the &#39;most_severe_consequence&#39;.</span>
+    <span class="n">transcript_csqs</span> <span class="o">=</span> <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="p">,</span> <span class="n">csq_order</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Group transcript consequences by gene and find the worst consequence for each.</span>
+    <span class="n">gene_dict</span> <span class="o">=</span> <span class="n">transcript_csqs</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="n">tc</span><span class="o">.</span><span class="n">gene_symbol</span><span class="p">)</span>
+    <span class="n">worst_csq_gene</span> <span class="o">=</span> <span class="n">gene_dict</span><span class="o">.</span><span class="n">map_values</span><span class="p">(</span><span class="n">_find_worst_transcript_consequence</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">sorted_scores</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">sorted</span><span class="p">(</span><span class="n">worst_csq_gene</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="n">tc</span><span class="o">.</span><span class="n">csq_score</span><span class="p">)</span>
+
+    <span class="c1"># Filter transcript consequences to only include canonical transcripts and find the</span>
+    <span class="c1"># worst consequence for each gene.</span>
+    <span class="n">canonical</span> <span class="o">=</span> <span class="n">transcript_csqs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="n">csq</span><span class="o">.</span><span class="n">canonical</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">gene_canonical_dict</span> <span class="o">=</span> <span class="n">canonical</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="n">tc</span><span class="o">.</span><span class="n">gene_symbol</span><span class="p">)</span>
+    <span class="n">worst_csq_gene_canonical</span> <span class="o">=</span> <span class="n">gene_canonical_dict</span><span class="o">.</span><span class="n">map_values</span><span class="p">(</span>
+        <span class="n">_find_worst_transcript_consequence</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">sorted_canonical_scores</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">sorted</span><span class="p">(</span>
+        <span class="n">worst_csq_gene_canonical</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">:</span> <span class="n">tc</span><span class="o">.</span><span class="n">csq_score</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Annotate the HT/MT with the worst consequence for each gene and variant.</span>
+    <span class="n">vep_data</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">transcript_consequences</span><span class="o">=</span><span class="n">transcript_csqs</span><span class="p">,</span>
+        <span class="n">worst_consequence_term</span><span class="o">=</span><span class="n">csqs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">transcript_csqs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">csq</span><span class="p">:</span> <span class="n">csq</span><span class="o">.</span><span class="n">most_severe_consequence</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">worst_csq_by_gene</span><span class="o">=</span><span class="n">sorted_scores</span><span class="p">,</span>
+        <span class="n">worst_csq_for_variant</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">sorted_scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sorted_scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">worst_csq_by_gene_canonical</span><span class="o">=</span><span class="n">sorted_canonical_scores</span><span class="p">,</span>
+        <span class="n">worst_csq_for_variant_canonical</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">sorted_canonical_scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sorted_canonical_scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_root</span><span class="p">:</span> <span class="n">vep_data</span><span class="p">})</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_root</span><span class="p">:</span> <span class="n">vep_data</span><span class="p">})</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_to_canonical_transcripts"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_to_canonical_transcripts">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_to_canonical_transcripts</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">filter_empty_csq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences to those in the canonical transcript.</span>
+
+<span class="sd">    :param mt: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Name used for VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param filter_empty_csq: Whether to filter out rows where &#39;transcript_consequences&#39; is empty. Default is False.</span>
+<span class="sd">    :return: Table or MatrixTable with VEP transcript consequences filtered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">filter_vep_transcript_csqs</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">,</span> <span class="n">vep_root</span><span class="p">,</span> <span class="n">synonymous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">filter_empty_csq</span><span class="o">=</span><span class="n">filter_empty_csq</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_to_mane_select_transcripts"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_to_mane_select_transcripts">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_to_mane_select_transcripts</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">filter_empty_csq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences to those in the MANE Select transcript.</span>
+
+<span class="sd">    :param mt: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Name used for VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param filter_empty_csq: Whether to filter out rows where &#39;transcript_consequences&#39; is empty. Default is False.</span>
+<span class="sd">    :return: Table or MatrixTable with VEP transcript consequences filtered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">filter_vep_transcript_csqs</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">,</span>
+        <span class="n">vep_root</span><span class="p">,</span>
+        <span class="n">synonymous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">canonical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">mane_select</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">filter_empty_csq</span><span class="o">=</span><span class="n">filter_empty_csq</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_to_synonymous_variants"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_to_synonymous_variants">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_to_synonymous_variants</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">filter_empty_csq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences to those with a most severe consequence of &#39;synonymous_variant&#39;.</span>
+
+<span class="sd">    :param mt: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Name used for VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param filter_empty_csq: Whether to filter out rows where &#39;transcript_consequences&#39; is empty. Default is False.</span>
+<span class="sd">    :return: Table or MatrixTable with VEP transcript consequences filtered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">filter_vep_transcript_csqs</span><span class="p">(</span>
+        <span class="n">mt</span><span class="p">,</span> <span class="n">vep_root</span><span class="p">,</span> <span class="n">canonical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">filter_empty_csq</span><span class="o">=</span><span class="n">filter_empty_csq</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_to_gene_list"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_to_gene_list">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_to_gene_list</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">match_by_gene_symbol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">filter_empty_csq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences to those in a set of genes.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       Filtering to a list of genes by their &#39;gene_id&#39; or &#39;gene_symbol&#39; will filter to</span>
+<span class="sd">       all variants that are annotated to the gene, including</span>
+<span class="sd">       [&#39;upstream_gene_variant&#39;, &#39;downstream_gene_variant&#39;], which will not be the</span>
+<span class="sd">       same as if you filter to a gene interval. If you only want variants inside</span>
+<span class="sd">       certain gene boundaries and a faster filter, you can first filter `t` to an</span>
+<span class="sd">       interval list and then apply this filter.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :param genes: Genes of interest to filter VEP transcript consequences to.</span>
+<span class="sd">    :param match_by_gene_symbol: Whether to match values in `genes` to VEP transcript</span>
+<span class="sd">        consequences by &#39;gene_symbol&#39; instead of &#39;gene_id&#39;. Default is False.</span>
+<span class="sd">    :param vep_root: Name used for VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param filter_empty_csq: Whether to filter out rows where &#39;transcript_consequences&#39;</span>
+<span class="sd">        is empty. Default is False.</span>
+<span class="sd">    :return: Table or MatrixTable with VEP transcript consequences filtered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">filter_vep_transcript_csqs</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">,</span>
+        <span class="n">vep_root</span><span class="p">,</span>
+        <span class="n">synonymous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">canonical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">filter_empty_csq</span><span class="o">=</span><span class="n">filter_empty_csq</span><span class="p">,</span>
+        <span class="n">genes</span><span class="o">=</span><span class="n">genes</span><span class="p">,</span>
+        <span class="n">match_by_gene_symbol</span><span class="o">=</span><span class="n">match_by_gene_symbol</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="vep_struct_to_csq"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.vep_struct_to_csq">[docs]</a><span class="k">def</span> <span class="nf">vep_struct_to_csq</span><span class="p">(</span>
+    <span class="n">vep_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span>
+    <span class="n">csq_fields</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">VEP_CSQ_FIELDS</span><span class="p">[</span><span class="n">CURRENT_VEP_VERSION</span><span class="p">],</span>
+    <span class="n">has_polyphen_sift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a VEP Struct, returns and array of VEP VCF CSQ strings (one per consequence in the struct).</span>
+
+<span class="sd">    The fields and their order will correspond to those passed in `csq_fields`, which corresponds to the</span>
+<span class="sd">    VCF header that is required to interpret the VCF CSQ INFO field.</span>
+
+<span class="sd">    Note that the order is flexible and that all fields that are in the default value are supported.</span>
+<span class="sd">    These fields will be formatted in the same way that their VEP CSQ counterparts are.</span>
+
+<span class="sd">    While other fields can be added if their name are the same as those in the struct. Their value will be the result of calling</span>
+<span class="sd">    hl.str(), so it may differ from their usual VEP CSQ representation.</span>
+
+<span class="sd">    :param vep_expr: The input VEP Struct</span>
+<span class="sd">    :param csq_fields: The | delimited list of fields to include in the CSQ (in that order), default is the CSQ fields of the CURRENT_VEP_VERSION.</span>
+<span class="sd">    :param has_polyphen_sift: Whether the input VEP Struct has PolyPhen and SIFT annotations. Default is True.</span>
+<span class="sd">    :return: The corresponding CSQ strings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_csq_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">csq_fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">get_csq_from_struct</span><span class="p">(</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">feature_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StringExpression</span><span class="p">:</span>
+        <span class="c1"># Most fields are 1-1, just lowercase</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+        <span class="c1"># Add general exceptions</span>
+        <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;allele&quot;</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">variant_allele</span><span class="p">,</span>
+                <span class="s2">&quot;consequence&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">consequence_terms</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;&amp;&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;feature_type&quot;</span><span class="p">:</span> <span class="n">feature_type</span><span class="p">,</span>
+                <span class="s2">&quot;feature&quot;</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">transcript_id</span>
+                    <span class="k">if</span> <span class="s2">&quot;transcript_id&quot;</span> <span class="ow">in</span> <span class="n">element</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="n">element</span><span class="o">.</span><span class="n">regulatory_feature_id</span>
+                        <span class="k">if</span> <span class="s2">&quot;regulatory_feature_id&quot;</span> <span class="ow">in</span> <span class="n">element</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="n">element</span><span class="o">.</span><span class="n">motif_feature_id</span>
+                            <span class="k">if</span> <span class="s2">&quot;motif_feature_id&quot;</span> <span class="ow">in</span> <span class="n">element</span>
+                            <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;variant_class&quot;</span><span class="p">:</span> <span class="n">vep_expr</span><span class="o">.</span><span class="n">variant_class</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add exception for transcripts</span>
+        <span class="k">if</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s2">&quot;Transcript&quot;</span><span class="p">:</span>
+            <span class="n">transcript_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;canonical&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">canonical</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;YES&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;ensp&quot;</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">protein_id</span><span class="p">,</span>
+                <span class="s2">&quot;gene&quot;</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">gene_id</span><span class="p">,</span>
+                <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">gene_symbol</span><span class="p">,</span>
+                <span class="s2">&quot;symbol_source&quot;</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">gene_symbol_source</span><span class="p">,</span>
+                <span class="s2">&quot;cdna_position&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">cdna_start</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">cdna_start</span> <span class="o">==</span> <span class="n">element</span><span class="o">.</span><span class="n">cdna_end</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">cdna_end</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;cds_position&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">cds_start</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">cds_start</span> <span class="o">==</span> <span class="n">element</span><span class="o">.</span><span class="n">cds_end</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">cds_end</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;mirna&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">mirna</span><span class="p">,</span> <span class="s2">&quot;&amp;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;mirna&quot;</span> <span class="ow">in</span> <span class="n">element</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;protein_position&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">protein_start</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">protein_start</span> <span class="o">==</span> <span class="n">element</span><span class="o">.</span><span class="n">protein_end</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">protein_end</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;uniprot_isoform&quot;</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">uniprot_isoform</span><span class="p">,</span> <span class="s2">&quot;&amp;&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">&quot;uniprot_isoform&quot;</span> <span class="ow">in</span> <span class="n">element</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+            <span class="c1"># Retain transcript dict updates only for fields that exist in the csq</span>
+            <span class="c1"># fields.</span>
+            <span class="n">transcript_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">transcript_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">csq_fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)]</span>
+            <span class="p">}</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">transcript_dict</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">has_polyphen_sift</span><span class="p">:</span>
+                <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;sift&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="n">element</span><span class="o">.</span><span class="n">sift_prediction</span>
+                            <span class="o">+</span> <span class="s2">&quot;(&quot;</span>
+                            <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">.</span><span class="n">sift_score</span><span class="p">)</span>
+                            <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;polyphen&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="n">element</span><span class="o">.</span><span class="n">polyphen_prediction</span>
+                            <span class="o">+</span> <span class="s2">&quot;(&quot;</span>
+                            <span class="o">+</span> <span class="n">hl</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">.</span><span class="n">polyphen_score</span><span class="p">)</span>
+                            <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;domains&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span>
+                        <span class="n">element</span><span class="o">.</span><span class="n">domains</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">db</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="s2">&quot;&amp;&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s2">&quot;MotifFeature&quot;</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s2">&quot;motif_score_change&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">.</span><span class="n">motif_score_change</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;transcription_factors&quot;</span> <span class="ow">in</span> <span class="n">element</span><span class="p">:</span>
+                <span class="n">fields</span><span class="p">[</span><span class="s2">&quot;transcription_factors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">transcription_factors</span><span class="p">,</span> <span class="s2">&quot;&amp;&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">delimit</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">str</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">_csq_fields</span><span class="p">],</span> <span class="s2">&quot;|&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">csq</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_array</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">feature_field</span><span class="p">,</span> <span class="n">feature_type</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;transcript_consequences&quot;</span><span class="p">,</span> <span class="s2">&quot;Transcript&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;regulatory_feature_consequences&quot;</span><span class="p">,</span> <span class="s2">&quot;RegulatoryFeature&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;motif_feature_consequences&quot;</span><span class="p">,</span> <span class="s2">&quot;MotifFeature&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;intergenic_consequences&quot;</span><span class="p">,</span> <span class="s2">&quot;Intergenic&quot;</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">csq</span> <span class="o">=</span> <span class="n">csq</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span>
+                <span class="n">vep_expr</span><span class="p">[</span><span class="n">feature_field</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">get_csq_from_struct</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">feature_type</span><span class="o">=</span><span class="n">feature_type</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">empty_array</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">csq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">csq</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_most_severe_consequence_for_summary"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.get_most_severe_consequence_for_summary">[docs]</a><span class="k">def</span> <span class="nf">get_most_severe_consequence_for_summary</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">csq_order</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">CSQ_ORDER</span><span class="p">,</span>
+    <span class="n">loftee_labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">LOFTEE_LABELS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepare a hail Table for summary statistics generation.</span>
+
+<span class="sd">    Adds the following annotations:</span>
+<span class="sd">        - most_severe_csq: Most severe consequence for variant</span>
+<span class="sd">        - protein_coding: Whether the variant is present on a protein-coding transcript</span>
+<span class="sd">        - lof: Whether the variant is a loss-of-function variant</span>
+<span class="sd">        - no_lof_flags: Whether the variant has any LOFTEE flags (True if no flags)</span>
+
+<span class="sd">    Assumes input Table is annotated with VEP and that VEP annotations have been filtered to canonical transcripts.</span>
+
+<span class="sd">    :param ht: Input Table.</span>
+<span class="sd">    :param csq_order: Order of VEP consequences, sorted from high to low impact. Default is CSQ_ORDER.</span>
+<span class="sd">    :param loftee_labels: Annotations added by LOFTEE. Default is LOFTEE_LABELS.</span>
+<span class="sd">    :return: Table annotated with VEP summary annotations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_most_severe_csq</span><span class="p">(</span>
+        <span class="n">csq_list</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span> <span class="n">protein_coding</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process VEP consequences to generate summary annotations.</span>
+
+<span class="sd">        :param csq_list: VEP consequences list to be processed.</span>
+<span class="sd">        :param protein_coding: Whether variant is in a protein-coding transcript.</span>
+<span class="sd">        :return: Struct containing summary annotations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lof</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">)</span>
+        <span class="n">no_lof_flags</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">null</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tbool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">protein_coding</span><span class="p">:</span>
+            <span class="n">all_lofs</span> <span class="o">=</span> <span class="n">csq_list</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lof</span><span class="p">)</span>
+            <span class="n">lof</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">loftee_labels</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">all_lofs</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">csq_list</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">lof</span><span class="p">),</span> <span class="n">csq_list</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="n">lof</span><span class="p">),</span> <span class="n">csq_list</span>
+            <span class="p">)</span>
+            <span class="n">no_lof_flags</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">or_missing</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">lof</span><span class="p">),</span>
+                <span class="n">csq_list</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lof</span> <span class="o">==</span> <span class="n">lof</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lof_flags</span><span class="p">)),</span>
+            <span class="p">)</span>
+        <span class="n">all_csq_terms</span> <span class="o">=</span> <span class="n">csq_list</span><span class="o">.</span><span class="n">flatmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">consequence_terms</span><span class="p">)</span>
+        <span class="n">most_severe_csq</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">csq_order</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">all_csq_terms</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span>
+            <span class="n">most_severe_csq</span><span class="o">=</span><span class="n">most_severe_csq</span><span class="p">,</span>
+            <span class="n">protein_coding</span><span class="o">=</span><span class="n">protein_coding</span><span class="p">,</span>
+            <span class="n">lof</span><span class="o">=</span><span class="n">lof</span><span class="p">,</span>
+            <span class="n">no_lof_flags</span><span class="o">=</span><span class="n">no_lof_flags</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">protein_coding</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">biotype</span> <span class="o">==</span> <span class="s2">&quot;protein_coding&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">hl</span><span class="o">.</span><span class="n">case</span><span class="p">(</span><span class="n">missing_false</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">protein_coding</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">_get_most_severe_csq</span><span class="p">(</span><span class="n">protein_coding</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">_get_most_severe_csq</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">regulatory_feature_consequences</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">_get_most_severe_csq</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">regulatory_feature_consequences</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">when</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">motif_feature_consequences</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">_get_most_severe_csq</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">motif_feature_consequences</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">_get_most_severe_csq</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">intergenic_consequences</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_transcript_csqs"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_transcript_csqs">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_transcript_csqs</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+    <span class="n">synonymous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">canonical</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">ensembl_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_empty_csq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</span>
+
+<span class="sd">    If `filter_empty_csq` parameter is set to True, the Table/MatrixTable is filtered</span>
+<span class="sd">    to variants where &#39;transcript_consequences&#39; within the VEP annotation is not empty</span>
+<span class="sd">    after the specified filtering criteria is applied.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        By default, the Table/MatrixTable is filtered to variants where</span>
+<span class="sd">        &#39;transcript_consequences&#39; within the VEP annotation is not empty after filtering</span>
+<span class="sd">        to Ensembl canonical transcripts with a most severe consequence of</span>
+<span class="sd">        &#39;synonymous_variant&#39;.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Root for VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :param synonymous: Whether to filter to variants where the most severe consequence</span>
+<span class="sd">        is &#39;synonymous_variant&#39;. Default is True.</span>
+<span class="sd">    :param canonical: Whether to filter to only canonical transcripts. Default is True.</span>
+<span class="sd">    :param ensembl_only: Whether to filter to only Ensembl transcripts. This option is</span>
+<span class="sd">        useful for deduplicating transcripts that are the same between RefSeq and</span>
+<span class="sd">        Emsembl. Default is True.</span>
+<span class="sd">    :param filter_empty_csq: Whether to filter out rows where &#39;transcript_consequences&#39;</span>
+<span class="sd">        is empty, after filtering &#39;transcript_consequences&#39; to the specified criteria.</span>
+<span class="sd">        Default is True.</span>
+<span class="sd">    :param kwargs: Filtering criteria to apply to the VEP transcript consequences using</span>
+<span class="sd">        `filter_vep_transcript_csqs_expr`. See that function for more details.</span>
+<span class="sd">    :return: Table or MatrixTable with VEP transcript consequences filtered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+    <span class="n">vep_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">vep_root</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">transcript_consequences</span><span class="o">=</span><span class="n">filter_vep_transcript_csqs_expr</span><span class="p">(</span>
+                <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="p">,</span>
+                <span class="n">synonymous</span><span class="o">=</span><span class="n">synonymous</span><span class="p">,</span>
+                <span class="n">canonical</span><span class="o">=</span><span class="n">canonical</span><span class="p">,</span>
+                <span class="n">ensembl_only</span><span class="o">=</span><span class="n">ensembl_only</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="n">vep_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_mt</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">vep_data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">filter_empty_csq</span><span class="p">:</span>
+        <span class="n">transcript_csq_expr</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">transcript_consequences</span>
+        <span class="n">filter_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">transcript_csq_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">transcript_csq_expr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">filter_expr</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_mt</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filter_expr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="filter_vep_transcript_csqs_expr"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.filter_vep_transcript_csqs_expr">[docs]</a><span class="k">def</span> <span class="nf">filter_vep_transcript_csqs_expr</span><span class="p">(</span>
+    <span class="n">csq_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span>
+    <span class="n">synonymous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">canonical</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">mane_select</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">ensembl_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">protein_coding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">loftee_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">no_lof_flags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">csqs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">keep_csqs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">keep_genes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">match_by_gene_symbol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">additional_filtering_criteria</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If `csqs` is not None or `synonymous` is True, and &#39;most_severe_consequence&#39;</span>
+<span class="sd">        is not already annotated on the `csq_expr` elements, the most severe</span>
+<span class="sd">        consequence will be added to the `csq_expr` for filtering.</span>
+
+<span class="sd">    :param csq_expr: VEP transcript consequences StructExpression or ArrayExpression.</span>
+<span class="sd">    :param synonymous: Whether to filter to variants where the most severe consequence</span>
+<span class="sd">        is &#39;synonymous_variant&#39;. Default is False.</span>
+<span class="sd">    :param canonical: Whether to filter to only canonical transcripts. Default is False.</span>
+<span class="sd">    :param mane_select: Whether to filter to only MANE Select transcripts. Default is</span>
+<span class="sd">        False.</span>
+<span class="sd">    :param ensembl_only: Whether to filter to only Ensembl transcripts. This option is</span>
+<span class="sd">        useful for deduplicating transcripts that are the same between RefSeq and</span>
+<span class="sd">        Emsembl. Default is False.</span>
+<span class="sd">    :param protein_coding: Whether to filter to only protein-coding transcripts.</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    :param loftee_labels: List of LOFTEE labels to filter to. Default is None, which</span>
+<span class="sd">        filters to all LOFTEE labels.</span>
+<span class="sd">    :param no_lof_flags: Whether to filter to consequences with no LOFTEE flags.</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    :param csqs: Optional list of consequence terms to filter to. Transcript</span>
+<span class="sd">        consequences are filtered to those where &#39;most_severe_consequence&#39; is in the</span>
+<span class="sd">        list of consequence terms `csqs`. Default is None.</span>
+<span class="sd">    :param keep_csqs: Whether to keep transcript consequences that are in `csqs`. If</span>
+<span class="sd">        set to False, transcript consequences that are in `csqs` will be removed.</span>
+<span class="sd">        Default is True.</span>
+<span class="sd">    :param genes: Optional list of genes to filter VEP transcript consequences to.</span>
+<span class="sd">        Default is None.</span>
+<span class="sd">    :param keep_genes: Whether to keep transcript consequences that are in `genes`. If</span>
+<span class="sd">        set to False, transcript consequences that are in `genes` will be removed.</span>
+<span class="sd">        Default is True.</span>
+<span class="sd">    :param match_by_gene_symbol: Whether to match values in `genes` to VEP transcript</span>
+<span class="sd">        consequences by &#39;gene_symbol&#39; instead of &#39;gene_id&#39;. Default is False.</span>
+<span class="sd">    :param additional_filtering_criteria: Optional list of additional filtering</span>
+<span class="sd">        criteria to apply to the VEP transcript consequences.</span>
+<span class="sd">    :return: BooleanExpression indicating whether the consequence should be filtered</span>
+<span class="sd">        or an ArrayExpression of the filtered VEP transcript consequences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_struct</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">csq_expr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">synonymous</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to most severe consequence of synonymous_variant...&quot;</span><span class="p">)</span>
+        <span class="n">csqs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;synonymous_variant&quot;</span><span class="p">]</span>
+
+    <span class="n">csq_fields</span> <span class="o">=</span> <span class="n">csq_expr</span> <span class="k">if</span> <span class="n">is_struct</span> <span class="k">else</span> <span class="n">csq_expr</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">element_type</span><span class="o">.</span><span class="n">fields</span>
+    <span class="k">if</span> <span class="n">csqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;most_severe_consequence&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">csq_fields</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding most_severe_consequence annotation...&quot;</span><span class="p">)</span>
+            <span class="n">csq_expr</span> <span class="o">=</span> <span class="n">add_most_severe_consequence_to_consequence</span><span class="p">(</span><span class="n">csq_expr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_filter_vep_csq_expr</span><span class="p">(</span>
+        <span class="n">csq</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span>
+        <span class="n">additional_filtering_criteria</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter VEP consequence StructExpression based on specified criteria.</span>
+
+<span class="sd">        :param csq: VEP consequence StructExpression.</span>
+<span class="sd">        :param additional_filtering_criteria: Optional list of additional filtering.</span>
+<span class="sd">        :return: BooleanExpression for filtering VEP consequence StructExpression.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">bool</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">csqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">csqs</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">most_severe_consequence</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">keep_csqs</span><span class="p">:</span>
+                <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">found</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">found</span>
+        <span class="k">if</span> <span class="n">canonical</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to canonical transcripts&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">csq</span><span class="o">.</span><span class="n">canonical</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">mane_select</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to MANE Select transcripts...&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">mane_select</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ensembl_only</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to Ensembl transcripts...&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">csq</span><span class="o">.</span><span class="n">transcript_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ENST&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">protein_coding</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to protein coding transcripts...&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">csq</span><span class="o">.</span><span class="n">biotype</span> <span class="o">==</span> <span class="s2">&quot;protein_coding&quot;</span>
+        <span class="k">if</span> <span class="n">loftee_labels</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Filtering to consequences with LOFTEE labels: </span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">loftee_labels</span>
+            <span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">loftee_labels</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">lof</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">no_lof_flags</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to consequences with no LOFTEE flags...&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">lof_flags</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">csq</span><span class="o">.</span><span class="n">lof_flags</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">genes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to genes of interest...&quot;</span><span class="p">)</span>
+            <span class="n">gene_field</span> <span class="o">=</span> <span class="s2">&quot;gene_symbol&quot;</span> <span class="k">if</span> <span class="n">match_by_gene_symbol</span> <span class="k">else</span> <span class="s2">&quot;gene_id&quot;</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">csq</span><span class="p">[</span><span class="n">gene_field</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">keep_genes</span><span class="p">:</span>
+                <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">found</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">found</span>
+        <span class="k">if</span> <span class="n">additional_filtering_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering to variants with additional criteria...&quot;</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">&amp;=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">iand</span><span class="p">,</span> <span class="n">additional_filtering_criteria</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">criteria</span>
+
+    <span class="k">if</span> <span class="n">is_struct</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_filter_vep_csq_expr</span><span class="p">(</span><span class="n">csq_expr</span><span class="p">,</span> <span class="n">additional_filtering_criteria</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">csq_expr</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_filter_vep_csq_expr</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">additional_filtering_criteria</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">additional_filtering_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_most_severe_csq_to_tc_within_vep_root"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root">[docs]</a><span class="k">def</span> <span class="nf">add_most_severe_csq_to_tc_within_vep_root</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span> <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add most_severe_consequence annotation to &#39;transcript_consequences&#39; within the vep root annotation.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_root: Root for vep annotation (probably vep).</span>
+<span class="sd">    :return: Table or MatrixTable with most_severe_consequence annotation added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">annotation</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">transcript_consequences</span><span class="o">=</span><span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">transcript_consequences</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="n">add_most_severe_consequence_to_consequence</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">annotate_rows</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_root</span><span class="p">:</span> <span class="n">annotation</span><span class="p">})</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_root</span><span class="p">:</span> <span class="n">annotation</span><span class="p">})</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="explode_by_vep_annotation"><a class="viewcode-back" href="../../../api_reference/utils/vep.html#gnomad.utils.vep.explode_by_vep_annotation">[docs]</a><span class="k">def</span> <span class="nf">explode_by_vep_annotation</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+    <span class="n">vep_annotation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;transcript_consequences&quot;</span><span class="p">,</span>
+    <span class="n">vep_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;vep&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Explode the specified VEP annotation on the input Table/MatrixTable.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :param vep_annotation: Name of annotation in `vep_root` to explode.</span>
+<span class="sd">    :param vep_root: Name used for root VEP annotation. Default is &#39;vep&#39;.</span>
+<span class="sd">    :return: Table or MatrixTable with exploded VEP annotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">vep_annotation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vep_annotation</span><span class="si">}</span><span class="s2"> is not a row field of the </span><span class="si">{</span><span class="n">vep_root</span><span class="si">}</span><span class="s2"> annotation in&quot;</span>
+            <span class="s2">&quot; Table/MatrixTable!&quot;</span>
+        <span class="p">)</span>
+    <span class="c1"># Create top-level annotation for `vep_annotation` and explode it.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">transmute</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_annotation</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">][</span><span class="n">vep_annotation</span><span class="p">]})</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">vep_annotation</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">transmute_rows</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">vep_annotation</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="n">vep_root</span><span class="p">][</span><span class="n">vep_annotation</span><span class="p">]})</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">explode_rows</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">vep_annotation</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">t</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

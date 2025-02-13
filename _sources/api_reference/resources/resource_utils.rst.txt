@@ -1,0 +1,8 @@
+gnomad.resources.resource_utils
+===============================
+
+
+
+.. gnomad_automodulesummary:: gnomad.resources.resource_utils
+
+.. automodule:: gnomad.resources.resource_utils

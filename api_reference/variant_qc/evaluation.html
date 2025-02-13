@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.evaluation &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.variant_qc.ld" href="ld.html" />
+    <link rel="prev" title="gnomad.variant_qc" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">variant_qc</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">evaluation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_ranked_bin"><code class="docutils literal notranslate"><span class="pre">compute_ranked_bin()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_grouped_binned_ht"><code class="docutils literal notranslate"><span class="pre">compute_grouped_binned_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance"><code class="docutils literal notranslate"><span class="pre">compute_binned_truth_sample_concordance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.evaluation.create_truth_sample_ht"><code class="docutils literal notranslate"><span class="pre">create_truth_sample_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.evaluation.add_rank"><code class="docutils literal notranslate"><span class="pre">add_rank()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ld.html">ld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="random_forest.html">random_forest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="training.html">training</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.variant_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/variant_qc/evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-variant-qc-evaluation">
+<h1>gnomad.variant_qc.evaluation<a class="headerlink" href="#gnomad-variant-qc-evaluation" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_ranked_bin" title="gnomad.variant_qc.evaluation.compute_ranked_bin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.evaluation.compute_ranked_bin</span></code></a>(ht, ...)</p></td>
+<td><p>Return a table with a bin for each row based on the ranking of <cite>score_expr</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_grouped_binned_ht" title="gnomad.variant_qc.evaluation.compute_grouped_binned_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.evaluation.compute_grouped_binned_ht</span></code></a>(bin_ht)</p></td>
+<td><p>Group a Table that has been annotated with bins (<cite>compute_ranked_bin</cite> or <cite>create_binned_ht</cite>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance" title="gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance</span></code></a>(ht, ...)</p></td>
+<td><p>Determine the concordance (TP, FP, FN) between a truth sample within the callset and the samples truth data grouped by bins computed using <cite>compute_ranked_bin</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.evaluation.create_truth_sample_ht" title="gnomad.variant_qc.evaluation.create_truth_sample_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.evaluation.create_truth_sample_ht</span></code></a>(mt, ...)</p></td>
+<td><p>Compute a table comparing a truth sample in callset vs the truth.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.evaluation.add_rank" title="gnomad.variant_qc.evaluation.add_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.evaluation.add_rank</span></code></a>(ht, ...)</p></td>
+<td><p>Add rank based on the <cite>score_expr</cite>.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.variant_qc.evaluation"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.evaluation.compute_ranked_bin">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.evaluation.</span></span><span class="sig-name descname"><span class="pre">compute_ranked_bin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'bin':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_snv_indel_separately</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/evaluation.html#compute_ranked_bin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.evaluation.compute_ranked_bin" title="Permalink to this definition"></a></dt>
+<dd><p>Return a table with a bin for each row based on the ranking of <cite>score_expr</cite>.</p>
+<p>The bin is computed by dividing the <cite>score_expr</cite> into <cite>n_bins</cite> bins containing approximately equal numbers of elements.
+This is done by ranking the rows by <cite>score_expr</cite> (and a random number in cases where multiple variants have the same score)
+and then assigning the variant to a bin based on its ranking.</p>
+<p>If <cite>compute_snv_indel_separately</cite> is True all items in <cite>bin_expr</cite> will be stratified by snv / indels for the ranking and
+bin calculation. Because SNV and indel rows are mutually exclusive, they are re-combined into a single annotation. For
+example if we have the following four variants and scores and <cite>n_bins</cite> of 2:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variant</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Score</p></th>
+<th class="head" colspan="2"><p>bin - <cite>compute_snv_indel_separately</cite>:</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p></p></th>
+<th class="head"><p></p></th>
+<th class="head"><p></p></th>
+<th class="head"><p>False</p></th>
+<th class="head"><p>True</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p>Var1</p></td>
+<td><p>SNV</p></td>
+<td><p>0.1</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>Var2</p></td>
+<td><p>SNV</p></td>
+<td><p>0.2</p></td>
+<td><p>1</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Var3</p></td>
+<td><p>Indel</p></td>
+<td><p>0.3</p></td>
+<td><p>2</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>Var4</p></td>
+<td><p>Indel</p></td>
+<td><p>0.4</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <cite>bin_expr</cite> defines which data the bin(s) should be computed on. E.g., to get biallelic specific binning
+and singleton specific binning, the following could be used:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bin_expr</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;biallelic_bin&#39;</span><span class="p">:</span> <span class="o">~</span><span class="n">ht</span><span class="o">.</span><span class="n">was_split</span><span class="p">,</span>
+    <span class="s1">&#39;singleton_bin&#39;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">singleton</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table</p></li>
+<li><p><strong>score_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Expression containing the score</p></li>
+<li><p><strong>bin_expr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Specific row grouping(s) to perform ranking and binning on (see note)</p></li>
+<li><p><strong>compute_snv_indel_separately</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Should all <cite>bin_expr</cite> items be stratified by SNVs / indels</p></li>
+<li><p><strong>n_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of bins to bin the data into</p></li>
+<li><p><strong>desc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to bin the score in descending order</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with the requested bin annotations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.evaluation.compute_grouped_binned_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.evaluation.</span></span><span class="sig-name descname"><span class="pre">compute_grouped_binned_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bin_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/evaluation.html#compute_grouped_binned_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.evaluation.compute_grouped_binned_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Group a Table that has been annotated with bins (<cite>compute_ranked_bin</cite> or <cite>create_binned_ht</cite>).</p>
+<p>The table will be grouped by bin_id (bin, biallelic, etc.), contig, snv, bi_allelic and singleton.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If performing an aggregation following this grouping (such as <cite>score_bin_agg</cite>) then the aggregation
+function will need to use <cite>ht._parent</cite> to get the origin Table from the GroupedTable for the aggregation</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bin_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table with a <cite>bin_id</cite> annotation</p></li>
+<li><p><strong>checkpoint_path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – If provided an intermediate checkpoint table is created with all required annotations before shuffling.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.GroupedTable.html#hail.GroupedTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupedTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table grouped by bins(s)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.evaluation.</span></span><span class="sig-name descname"><span class="pre">compute_binned_truth_sample_concordance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binned_score_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/evaluation.html#compute_binned_truth_sample_concordance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.evaluation.compute_binned_truth_sample_concordance" title="Permalink to this definition"></a></dt>
+<dd><p>Determine the concordance (TP, FP, FN) between a truth sample within the callset and the samples truth data grouped by bins computed using <cite>compute_ranked_bin</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>The input ‘ht` should contain three row fields:</dt><dd><ul class="simple">
+<li><p>score: value to use for binning</p></li>
+<li><p>GT: a CallExpression containing the genotype of the evaluation data for the sample</p></li>
+<li><p>truth_GT: a CallExpression containing the genotype of the truth sample</p></li>
+</ul>
+</dd>
+<dt>The input <cite>binned_score_ht</cite> should contain:</dt><dd><ul class="simple">
+<li><p>score: value used to bin the full callset</p></li>
+<li><p>bin: the full callset bin</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<p>‘add_bins` can be used to add additional global and truth sample binning to the final binned truth sample
+concordance HT. The keys in <cite>add_bins</cite> must be present in <cite>binned_score_ht</cite> and the values in <cite>add_bins</cite>
+should be expressions on <cite>ht</cite> that define a subset of variants to bin in the truth sample. An example is if we want
+to look at the global and truth sample binning on only bi-allelic variants. <cite>add_bins</cite> could be set to
+{‘biallelic_bin’: ht.biallelic}.</p>
+<p>The table is grouped by global/truth sample bin and variant type and contains TP, FP and FN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input HT</p></li>
+<li><p><strong>binned_score_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with the bin annotation for each variant</p></li>
+<li><p><strong>n_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of bins to bin the data into</p></li>
+<li><p><strong>add_bins</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Dictionary of additional global bin columns (key) and the expr to use for binning the truth sample (value)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Binned truth sample concordance HT</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.evaluation.create_truth_sample_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.evaluation.</span></span><span class="sig-name descname"><span class="pre">create_truth_sample_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_confidence_intervals_ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/evaluation.html#create_truth_sample_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.evaluation.create_truth_sample_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Compute a table comparing a truth sample in callset vs the truth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – MT of truth sample from callset to be compared to truth</p></li>
+<li><p><strong>truth_mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – MT of truth sample</p></li>
+<li><p><strong>high_confidence_intervals_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – High confidence interval HT</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table containing both the callset truth sample and the truth data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.evaluation.add_rank">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.evaluation.</span></span><span class="sig-name descname"><span class="pre">add_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subrank_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/evaluation.html#add_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.evaluation.add_rank" title="Permalink to this definition"></a></dt>
+<dd><p>Add rank based on the <cite>score_expr</cite>. Rank is added for snvs and indels separately.</p>
+<p>If one or more <cite>subrank_expr</cite> are provided, then subrank is added based on all sites for which the boolean expression is true.</p>
+<p>In addition, variant counts (snv, indel separately) is added as a global (<cite>rank_variant_counts</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – input Hail Table containing variants (with QC annotations) to be ranked</p></li>
+<li><p><strong>score_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – the Table annotation by which ranking should be scored</p></li>
+<li><p><strong>subrank_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]]) – Any subranking to be added in the form name_of_subrank: subrank_filtering_expr</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with rankings added</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="gnomad.variant_qc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ld.html" class="btn btn-neutral float-right" title="gnomad.variant_qc.ld" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.pipeline &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.variant_qc.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql</span>
+
+<span class="kn">import</span> <span class="nn">gnomad.resources.grch37</span> <span class="k">as</span> <span class="nn">grch37_resources</span>
+<span class="kn">import</span> <span class="nn">gnomad.resources.grch38</span> <span class="k">as</span> <span class="nn">grch38_resources</span>
+<span class="kn">from</span> <span class="nn">gnomad.sample_qc.relatedness</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SIBLINGS</span><span class="p">,</span>
+    <span class="n">generate_sib_stats_expr</span><span class="p">,</span>
+    <span class="n">generate_trio_stats_expr</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.annotations</span> <span class="kn">import</span> <span class="n">annotate_adj</span><span class="p">,</span> <span class="n">bi_allelic_expr</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.filtering</span> <span class="kn">import</span> <span class="n">filter_to_autosomes</span><span class="p">,</span> <span class="n">filter_to_clinvar_pathogenic</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.reference_genome</span> <span class="kn">import</span> <span class="n">get_reference_genome</span>
+<span class="kn">from</span> <span class="nn">gnomad.variant_qc.evaluation</span> <span class="kn">import</span> <span class="n">compute_ranked_bin</span>
+<span class="kn">from</span> <span class="nn">gnomad.variant_qc.random_forest</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_features_importance</span><span class="p">,</span>
+    <span class="n">test_model</span><span class="p">,</span>
+    <span class="n">train_rf</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gnomad.variant_qc.training</span> <span class="kn">import</span> <span class="n">sample_training_examples</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">INBREEDING_COEFF_HARD_CUTOFF</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.3</span>
+
+
+<div class="viewcode-block" id="create_binned_ht"><a class="viewcode-back" href="../../../api_reference/variant_qc/pipeline.html#gnomad.variant_qc.pipeline.create_binned_ht">[docs]</a><span class="k">def</span> <span class="nf">create_binned_ht</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">n_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">singleton</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">biallelic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">adj</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">add_substrat</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Annotate each row of `ht` with a bin based on binning the score annotation into `n_bins` equally-sized bins.</span>
+
+<span class="sd">    This is meant as a default wrapper for `compute_ranked_bin`.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The following fields should be present:</span>
+<span class="sd">            - score</span>
+<span class="sd">            - ac - expected that this is the adj filtered allele count</span>
+<span class="sd">            - ac_raw - expected that this is the raw allele count before adj filtering</span>
+
+<span class="sd">    Computes bin numbers stratified by SNV / Indels and with the following optional sub bins</span>
+<span class="sd">        - singletons</span>
+<span class="sd">        - biallelics</span>
+<span class="sd">        - biallelic singletons</span>
+<span class="sd">        - adj</span>
+<span class="sd">        - adj biallelics</span>
+<span class="sd">        - adj singletons</span>
+<span class="sd">        - adj biallelic singletons</span>
+
+<span class="sd">    :param ht: Input table</span>
+<span class="sd">    :param n_bins: Number of bins to bin into</span>
+<span class="sd">    :param singleton: Should bins be stratified by singletons</span>
+<span class="sd">    :param biallelic: Should bins be stratified by bi-alleleic variants</span>
+<span class="sd">    :param adj: Should bins be stratified by adj filtering</span>
+<span class="sd">    :param add_substrat: Any additional stratifications for adding bins</span>
+<span class="sd">    :return: table with bin number for each variant</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_new_bin_expr</span><span class="p">(</span>
+        <span class="n">bin_expr</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
+        <span class="n">new_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span>
+        <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update a dictionary of expressions to add another stratification.</span>
+
+<span class="sd">        :param bin_expr: Dictionary of expressions to add another stratification to</span>
+<span class="sd">        :param new_expr: New Boolean expression to add to `bin_expr`</span>
+<span class="sd">        :param new_id: Name to add to each current key in `bin_expr` to indicate the new stratification</span>
+<span class="sd">        :return: Dictionary of `bin_expr` updated with `new_expr` added as an additional stratification to all</span>
+<span class="sd">            expressions already in `bin_expr`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_bin_expr</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">bin_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">bin_expr</span> <span class="o">&amp;</span> <span class="n">new_expr</span>
+            <span class="k">for</span> <span class="n">bin_id</span><span class="p">,</span> <span class="n">bin_expr</span> <span class="ow">in</span> <span class="n">bin_expr</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">bin_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_bin_expr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bin_expr</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_bin_expr</span>
+
+    <span class="c1"># Desired bins and sub-bins</span>
+    <span class="n">bin_expr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bin&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">singleton</span><span class="p">:</span>
+        <span class="n">bin_expr</span> <span class="o">=</span> <span class="n">_new_bin_expr</span><span class="p">(</span><span class="n">bin_expr</span><span class="p">,</span> <span class="n">ht</span><span class="o">.</span><span class="n">ac_raw</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;singleton&quot;</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">biallelic</span><span class="p">:</span>
+        <span class="n">bin_expr</span> <span class="o">=</span> <span class="n">_new_bin_expr</span><span class="p">(</span><span class="n">bin_expr</span><span class="p">,</span> <span class="o">~</span><span class="n">ht</span><span class="o">.</span><span class="n">was_split</span><span class="p">,</span> <span class="s2">&quot;biallelic&quot;</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">adj</span><span class="p">:</span>
+        <span class="n">bin_expr</span> <span class="o">=</span> <span class="n">_new_bin_expr</span><span class="p">(</span><span class="n">bin_expr</span><span class="p">,</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">ac</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;adj&quot;</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">add_substrat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_bin_expr</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">add_id</span><span class="p">,</span> <span class="n">add_expr</span> <span class="ow">in</span> <span class="n">add_substrat</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">new_bin_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_new_bin_expr</span><span class="p">(</span><span class="n">bin_expr</span><span class="p">,</span> <span class="n">add_expr</span><span class="p">,</span> <span class="n">add_id</span><span class="p">))</span>
+        <span class="n">bin_expr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_bin_expr</span><span class="p">)</span>
+
+    <span class="n">bin_ht</span> <span class="o">=</span> <span class="n">compute_ranked_bin</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span> <span class="n">score_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="n">bin_expr</span><span class="o">=</span><span class="n">bin_expr</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="n">n_bins</span>
+    <span class="p">)</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select_globals</span><span class="p">()</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bin_ht</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="score_bin_agg"><a class="viewcode-back" href="../../../api_reference/variant_qc/pipeline.html#gnomad.variant_qc.pipeline.score_bin_agg">[docs]</a><span class="k">def</span> <span class="nf">score_bin_agg</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">GroupedTable</span><span class="p">,</span> <span class="n">fam_stats_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Aggregation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make dict of aggregations for min/max of score, number of ClinVar variants, number of truth variants, and family statistics.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This function uses `ht._parent` to get the origin Table from the GroupedTable for the aggregation</span>
+
+<span class="sd">    This can easily be combined with the GroupedTable returned by `compute_grouped_binned_ht`, For example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        binned_ht = create_binned_ht(...)</span>
+<span class="sd">        grouped_binned_ht = compute_grouped_binned_ht(binned_ht)</span>
+<span class="sd">        agg_ht = grouped_binned_ht.aggregate(score_bin_agg(**grouped_binned_ht, ...))</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The following annotations should be present:</span>
+
+<span class="sd">        In ht:</span>
+<span class="sd">            - score</span>
+<span class="sd">            - singleton</span>
+<span class="sd">            - positive_train_site</span>
+<span class="sd">            - negative_train_site</span>
+<span class="sd">            - ac_raw - expected that this is the raw allele count before adj filtering</span>
+<span class="sd">            - ac - expected that this is the allele count after adj filtering</span>
+<span class="sd">            - ac_qc_samples_unrelated_raw - allele count before adj filtering for unrelated samples passing sample QC</span>
+<span class="sd">            - info - struct that includes QD, FS, and MQ in order to add an annotation for fail_hard_filters</span>
+
+<span class="sd">        In truth_ht:</span>
+<span class="sd">            - omni</span>
+<span class="sd">            - mills</span>
+<span class="sd">            - hapmap</span>
+<span class="sd">            - kgp_phase1_hc</span>
+
+<span class="sd">        In fam_stats_ht:</span>
+<span class="sd">            - n_de_novos_adj</span>
+<span class="sd">            - n_de_novos_raw</span>
+<span class="sd">            - n_transmitted_raw</span>
+<span class="sd">            - n_untransmitted_raw</span>
+
+<span class="sd">    Automatic aggregations that will be done are:</span>
+<span class="sd">        - `min_score` - minimun of score annotation per group</span>
+<span class="sd">        - `max_score` - maiximum of score annotation per group</span>
+<span class="sd">        - `n` - count of variants per group</span>
+<span class="sd">        - `n_ins` - count of insertion per group</span>
+<span class="sd">        - `n_ins` - count of insertion per group</span>
+<span class="sd">        - `n_del` - count of deletions per group</span>
+<span class="sd">        - `n_ti` - count of transitions per group</span>
+<span class="sd">        - `n_tv` - count of trnasversions per group</span>
+<span class="sd">        - `n_1bp_indel` - count of one base pair indels per group</span>
+<span class="sd">        - `n_mod3bp_indel` - count of indels with a length divisible by three per group</span>
+<span class="sd">        - `n_singleton` - count of singletons per group</span>
+<span class="sd">        - `fail_hard_filters` - count of variants per group with QD &lt; 2 | FS &gt; 60 | MQ &lt; 30</span>
+<span class="sd">        - `n_vqsr_pos_train` - count of variants that were a VQSR positive train site per group</span>
+<span class="sd">        - `n_vqsr_neg_train` - count of variants that were a VQSR negative train site per group</span>
+<span class="sd">        - `n_clinvar` - count of clinvar variants</span>
+<span class="sd">        - `n_de_novos_singleton_adj` - count of singleton de novo variants after adj filtration</span>
+<span class="sd">        - `n_de_novo_singleton` - count of raw unfiltered singleton de novo variants</span>
+<span class="sd">        - `n_de_novos_adj` - count of adj filtered de novo variants</span>
+<span class="sd">        - `n_de_novos` - count of raw unfiltered de novo variants</span>
+<span class="sd">        - `n_trans_singletons` - count of transmitted singletons</span>
+<span class="sd">        - `n_untrans_singletons` - count of untransmitted singletons</span>
+<span class="sd">        - `n_omni` - count of omni truth variants</span>
+<span class="sd">        - `n_mills` - count of mills truth variants</span>
+<span class="sd">        - `n_hapmap` - count of hapmap truth variants</span>
+<span class="sd">        - `n_kgp_phase1_hc` - count of 1000 genomes phase 1 high confidence truth variants</span>
+
+<span class="sd">    :param ht: Table that aggregation will be performed on</span>
+<span class="sd">    :param fam_stats_ht: Path to family statistics HT</span>
+<span class="sd">    :return: a dictionary containing aggregations to perform on ht</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Annotate binned table with the evaluation data</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">_parent</span>
+    <span class="n">indel_length</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">-</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">length</span><span class="p">())</span>
+    <span class="c1"># Load external evaluation data</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">clinvar_ht</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">grch37_resources</span><span class="o">.</span><span class="n">reference_data</span><span class="o">.</span><span class="n">clinvar</span>
+        <span class="k">if</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span>
+        <span class="k">else</span> <span class="n">grch38_resources</span><span class="o">.</span><span class="n">reference_data</span><span class="o">.</span><span class="n">clinvar</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+    <span class="c1"># Filter to ClinVar pathogenic data.</span>
+    <span class="n">clinvar_path</span> <span class="o">=</span> <span class="n">filter_to_clinvar_pathogenic</span><span class="p">(</span><span class="n">clinvar_ht</span><span class="p">)[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">clinvar</span> <span class="o">=</span> <span class="n">clinvar_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">truth_data</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">grch37_resources</span><span class="o">.</span><span class="n">reference_data</span><span class="o">.</span><span class="n">get_truth_ht</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span>
+        <span class="k">else</span> <span class="n">grch38_resources</span><span class="o">.</span><span class="n">reference_data</span><span class="o">.</span><span class="n">get_truth_ht</span><span class="p">()</span>
+    <span class="p">)[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">fam</span> <span class="o">=</span> <span class="n">fam_stats_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;fail_hard_filters&quot;</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="n">fail_hard_filters_expr</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">fail_hard_filters</span>
+    <span class="k">elif</span> <span class="s2">&quot;info&quot;</span> <span class="ow">in</span> <span class="n">ht</span><span class="o">.</span><span class="n">row</span><span class="p">:</span>
+        <span class="n">fail_hard_filters_expr</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">QD</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">FS</span> <span class="o">&gt;</span> <span class="mi">60</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">MQ</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Either &#39;fail_hard_filters&#39; or &#39;info&#39; must be present in the input Table!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ins_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_insertion</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">del_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_deletion</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">indel_1bp_expr</span> <span class="o">=</span> <span class="n">indel_length</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">count_where_expr</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;n_ins&quot;</span><span class="p">:</span> <span class="n">ins_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_del&quot;</span><span class="p">:</span> <span class="n">del_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_ti&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_transition</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">&quot;n_tv&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_transversion</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ht</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">&quot;n_1bp_indel&quot;</span><span class="p">:</span> <span class="n">indel_1bp_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_1bp_ins&quot;</span><span class="p">:</span> <span class="n">ins_expr</span> <span class="o">&amp;</span> <span class="n">indel_1bp_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_2bp_ins&quot;</span><span class="p">:</span> <span class="n">ins_expr</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">indel_length</span> <span class="o">==</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;n_3bp_ins&quot;</span><span class="p">:</span> <span class="n">ins_expr</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">indel_length</span> <span class="o">==</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;n_1bp_del&quot;</span><span class="p">:</span> <span class="n">del_expr</span> <span class="o">&amp;</span> <span class="n">indel_1bp_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_2bp_del&quot;</span><span class="p">:</span> <span class="n">del_expr</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">indel_length</span> <span class="o">==</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;n_3bp_del&quot;</span><span class="p">:</span> <span class="n">del_expr</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">indel_length</span> <span class="o">==</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;n_mod3bp_indel&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">indel_length</span> <span class="o">%</span> <span class="mi">3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;n_singleton&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">singleton</span><span class="p">,</span>
+        <span class="s2">&quot;fail_hard_filters&quot;</span><span class="p">:</span> <span class="n">fail_hard_filters_expr</span><span class="p">,</span>
+        <span class="s2">&quot;n_pos_train&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">positive_train_site</span><span class="p">,</span>
+        <span class="s2">&quot;n_neg_train&quot;</span><span class="p">:</span> <span class="n">ht</span><span class="o">.</span><span class="n">negative_train_site</span><span class="p">,</span>
+        <span class="s2">&quot;n_clinvar&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">clinvar</span><span class="p">),</span>
+        <span class="s2">&quot;n_clinvar_path&quot;</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">clinvar_path</span><span class="p">),</span>
+        <span class="s2">&quot;n_omni&quot;</span><span class="p">:</span> <span class="n">truth_data</span><span class="o">.</span><span class="n">omni</span><span class="p">,</span>
+        <span class="s2">&quot;n_mills&quot;</span><span class="p">:</span> <span class="n">truth_data</span><span class="o">.</span><span class="n">mills</span><span class="p">,</span>
+        <span class="s2">&quot;n_hapmap&quot;</span><span class="p">:</span> <span class="n">truth_data</span><span class="o">.</span><span class="n">hapmap</span><span class="p">,</span>
+        <span class="s2">&quot;n_kgp_phase1_hc&quot;</span><span class="p">:</span> <span class="n">truth_data</span><span class="o">.</span><span class="n">kgp_phase1_hc</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">min_score</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">),</span>
+        <span class="n">max_score</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">score</span><span class="p">),</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count_where</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">count_where_expr</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">n_de_novos_singleton_adj</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">ac</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_adj</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">n_de_novo_singleton</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">ac_raw</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_raw</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">n_de_novos_adj</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_adj</span><span class="p">),</span>
+        <span class="n">n_de_novo</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_raw</span><span class="p">),</span>
+        <span class="n">n_de_novos_AF_001_adj</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                <span class="n">fam</span><span class="o">.</span><span class="n">ac_parents_adj</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">fam</span><span class="o">.</span><span class="n">ac_parents_adj</span> <span class="o">/</span> <span class="n">fam</span><span class="o">.</span><span class="n">an_parents_adj</span>
+            <span class="p">)</span>
+            <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_adj</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">n_de_novos_AF_001</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span>
+                <span class="n">fam</span><span class="o">.</span><span class="n">ac_parents_raw</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">fam</span><span class="o">.</span><span class="n">ac_parents_raw</span> <span class="o">/</span> <span class="n">fam</span><span class="o">.</span><span class="n">an_parents_raw</span>
+            <span class="p">)</span>
+            <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">,</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_de_novos_raw</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">n_trans_singletons</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">ht</span><span class="o">.</span><span class="n">ac_raw</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_transmitted_raw</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">n_untrans_singletons</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">ac_raw</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">ac_qc_samples_unrelated_raw</span> <span class="o">==</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_untransmitted_raw</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">n_train_trans_singletons</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">ac_raw</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">ht</span><span class="o">.</span><span class="n">positive_train_site</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fam</span><span class="o">.</span><span class="n">n_transmitted_raw</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="generate_trio_stats"><a class="viewcode-back" href="../../../api_reference/variant_qc/pipeline.html#gnomad.variant_qc.pipeline.generate_trio_stats">[docs]</a><span class="k">def</span> <span class="nf">generate_trio_stats</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">autosomes_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">bi_allelic_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run `generate_trio_stats_expr` with variant QC pipeline defaults to get trio stats stratified by raw and adj.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Expects that `mt` is it a trio matrix table that was annotated with adj and if dealing with</span>
+<span class="sd">        a sparse MT `hl.experimental.densify` must be run first.</span>
+
+<span class="sd">        By default this pipeline function will filter `mt` to only autosomes and bi-allelic sites.</span>
+
+<span class="sd">    :param mt: A Trio Matrix Table returned from `hl.trio_matrix`. Must be dense</span>
+<span class="sd">    :param autosomes_only: If set, only autosomal intervals are used.</span>
+<span class="sd">    :param bi_allelic_only: If set, only bi-allelic sites are used for the computation</span>
+<span class="sd">    :return: Table with trio stats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">autosomes_only</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">filter_to_autosomes</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bi_allelic_only</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">bi_allelic_expr</span><span class="p">(</span><span class="n">mt</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating trio stats using </span><span class="si">%d</span><span class="s2"> trios.&quot;</span><span class="p">,</span> <span class="n">mt</span><span class="o">.</span><span class="n">count_cols</span><span class="p">())</span>
+    <span class="n">trio_adj</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">proband_entry</span><span class="o">.</span><span class="n">adj</span> <span class="o">&amp;</span> <span class="n">mt</span><span class="o">.</span><span class="n">father_entry</span><span class="o">.</span><span class="n">adj</span> <span class="o">&amp;</span> <span class="n">mt</span><span class="o">.</span><span class="n">mother_entry</span><span class="o">.</span><span class="n">adj</span>
+
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_rows</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">generate_trio_stats_expr</span><span class="p">(</span>
+            <span class="n">mt</span><span class="p">,</span>
+            <span class="n">transmitted_strata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;adj&quot;</span><span class="p">:</span> <span class="n">trio_adj</span><span class="p">},</span>
+            <span class="n">de_novo_strata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;adj&quot;</span><span class="p">:</span> <span class="n">trio_adj</span><span class="p">},</span>
+            <span class="n">ac_strata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;adj&quot;</span><span class="p">:</span> <span class="n">trio_adj</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="generate_sib_stats"><a class="viewcode-back" href="../../../api_reference/variant_qc/pipeline.html#gnomad.variant_qc.pipeline.generate_sib_stats">[docs]</a><span class="k">def</span> <span class="nf">generate_sib_stats</span><span class="p">(</span>
+    <span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span>
+    <span class="n">relatedness_ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">i_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span>
+    <span class="n">j_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;j&quot;</span><span class="p">,</span>
+    <span class="n">relationship_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;relationship&quot;</span><span class="p">,</span>
+    <span class="n">autosomes_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">bi_allelic_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a hail table with counts of variants shared by pairs of siblings in `relatedness_ht`.</span>
+
+<span class="sd">    This is meant as a default wrapper for `generate_sib_stats_expr`.</span>
+
+<span class="sd">    This function takes a hail Table with a row for each pair of individuals i,j in the data that are related</span>
+<span class="sd">    (it&#39;s OK to have unrelated samples too).</span>
+
+<span class="sd">    The `relationship_col` should be a column specifying the relationship between each two samples as defined by</span>
+<span class="sd">    the constants in `gnomad.utils.relatedness`. This relationship_col will be used to filter to only pairs of</span>
+<span class="sd">    samples that are annotated as `SIBLINGS`.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        By default this pipeline function will filter `mt` to only autosomes and bi-allelic sites.</span>
+
+<span class="sd">    :param mt: Input Matrix table</span>
+<span class="sd">    :param relatedness_ht: Input relationship table</span>
+<span class="sd">    :param i_col: Column containing the 1st sample of the pair in the relationship table</span>
+<span class="sd">    :param j_col: Column containing the 2nd sample of the pair in the relationship table</span>
+<span class="sd">    :param relationship_col: Column containing the relationship for the sample pair as defined in this module constants.</span>
+<span class="sd">    :param autosomes_only: If set, only autosomal intervals are used.</span>
+<span class="sd">    :param bi_allelic_only: If set, only bi-allelic sites are used for the computation</span>
+<span class="sd">    :return: A Table with the sibling shared variant counts</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">autosomes_only</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">filter_to_autosomes</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bi_allelic_only</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">bi_allelic_expr</span><span class="p">(</span><span class="n">mt</span><span class="p">))</span>
+
+    <span class="n">sib_ht</span> <span class="o">=</span> <span class="n">relatedness_ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">relatedness_ht</span><span class="p">[</span><span class="n">relationship_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">SIBLINGS</span><span class="p">)</span>
+    <span class="n">s_to_keep</span> <span class="o">=</span> <span class="n">sib_ht</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect_as_set</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="p">[</span><span class="n">sib_ht</span><span class="p">[</span><span class="n">i_col</span><span class="p">]</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">sib_ht</span><span class="p">[</span><span class="n">j_col</span><span class="p">]</span><span class="o">.</span><span class="n">s</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_cols</span><span class="p">(</span><span class="n">s_to_keep</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">s</span><span class="p">))</span>
+    <span class="k">if</span> <span class="s2">&quot;adj&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">entry</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">annotate_adj</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+
+    <span class="n">sib_stats_ht</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">select_rows</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">generate_sib_stats_expr</span><span class="p">(</span>
+            <span class="n">mt</span><span class="p">,</span>
+            <span class="n">sib_ht</span><span class="p">,</span>
+            <span class="n">i_col</span><span class="o">=</span><span class="n">i_col</span><span class="p">,</span>
+            <span class="n">j_col</span><span class="o">=</span><span class="n">j_col</span><span class="p">,</span>
+            <span class="n">strata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;adj&quot;</span><span class="p">:</span> <span class="n">mt</span><span class="o">.</span><span class="n">adj</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">sib_stats_ht</span></div>
+
+
+<div class="viewcode-block" id="train_rf_model"><a class="viewcode-back" href="../../../api_reference/variant_qc/pipeline.html#gnomad.variant_qc.pipeline.train_rf_model">[docs]</a><span class="k">def</span> <span class="nf">train_rf_model</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span>
+    <span class="n">rf_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">tp_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span>
+    <span class="n">fp_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">,</span>
+    <span class="n">fp_to_tp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">num_trees</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">test_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">ml</span><span class="o">.</span><span class="n">PipelineModel</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform random forest (RF) training using a Table annotated with features and training data.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This function uses `train_rf` and extends it by:</span>
+<span class="sd">            - Adding an option to apply the resulting model to test variants which are withheld from training.</span>
+<span class="sd">            - Uses a false positive (FP) to true positive (TP) ratio to determine what variants to use for RF training.</span>
+
+<span class="sd">    The returned Table includes the following annotations:</span>
+<span class="sd">        - rf_train: indicates if the variant was used for training of the RF model.</span>
+<span class="sd">        - rf_label: indicates if the variant is a TP or FP.</span>
+<span class="sd">        - rf_test: indicates if the variant was used in testing of the RF model.</span>
+<span class="sd">        - features: global annotation of the features used for the RF model.</span>
+<span class="sd">        - features_importance: global annotation of the importance of each feature in the model.</span>
+<span class="sd">        - test_results: results from testing the model on variants defined by `test_expr`.</span>
+
+<span class="sd">    :param ht: Table annotated with features for the RF model and the positive and negative training data.</span>
+<span class="sd">    :param rf_features: List of column names to use as features in the RF training.</span>
+<span class="sd">    :param tp_expr: TP training expression.</span>
+<span class="sd">    :param fp_expr: FP training expression.</span>
+<span class="sd">    :param fp_to_tp: Ratio of FPs to TPs for creating the RF model. If set to 0, all training examples are used.</span>
+<span class="sd">    :param num_trees: Number of trees in the RF model.</span>
+<span class="sd">    :param max_depth: Maxmimum tree depth in the RF model.</span>
+<span class="sd">    :param test_expr: An expression specifying variants to hold out for testing and use for evaluation only.</span>
+<span class="sd">    :return: Table with TP and FP training sets used in the RF training and the resulting RF model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">_tp</span><span class="o">=</span><span class="n">tp_expr</span><span class="p">,</span> <span class="n">_fp</span><span class="o">=</span><span class="n">fp_expr</span><span class="p">,</span> <span class="n">rf_test</span><span class="o">=</span><span class="n">test_expr</span><span class="p">)</span>
+
+    <span class="n">rf_ht</span> <span class="o">=</span> <span class="n">sample_training_examples</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span> <span class="n">tp_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">_tp</span><span class="p">,</span> <span class="n">fp_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">_fp</span><span class="p">,</span> <span class="n">fp_to_tp</span><span class="o">=</span><span class="n">fp_to_tp</span><span class="p">,</span> <span class="n">test_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">rf_test</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">rf_train</span><span class="o">=</span><span class="n">rf_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="n">rf_label</span><span class="o">=</span><span class="n">rf_ht</span><span class="p">[</span><span class="n">ht</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;_tp&quot;</span><span class="p">,</span> <span class="s2">&quot;_fp&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_train&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_label&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_test&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Summary of TP/FP and RF training data:&quot;</span><span class="p">)</span>
+    <span class="n">summary</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Training RF model:</span><span class="se">\n</span><span class="s2">features: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">num_tree: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">max_depth:</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rf_features</span><span class="p">),</span>
+        <span class="n">num_trees</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">rf_model</span> <span class="o">=</span> <span class="n">train_rf</span><span class="p">(</span>
+        <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">rf_train</span><span class="p">),</span>
+        <span class="n">features</span><span class="o">=</span><span class="n">rf_features</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;rf_label&quot;</span><span class="p">,</span>
+        <span class="n">num_trees</span><span class="o">=</span><span class="n">num_trees</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test_results</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">test_expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Testing model on specified variants or intervals...&quot;</span><span class="p">)</span>
+        <span class="n">test_ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">rf_label</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">ht</span><span class="o">.</span><span class="n">rf_test</span><span class="p">)</span>
+        <span class="n">test_results</span> <span class="o">=</span> <span class="n">test_model</span><span class="p">(</span>
+            <span class="n">test_ht</span><span class="p">,</span> <span class="n">rf_model</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">rf_features</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;rf_label&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">features_importance</span> <span class="o">=</span> <span class="n">get_features_importance</span><span class="p">(</span><span class="n">rf_model</span><span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">select_globals</span><span class="p">(</span>
+        <span class="n">features_importance</span><span class="o">=</span><span class="n">features_importance</span><span class="p">,</span>
+        <span class="n">features</span><span class="o">=</span><span class="n">rf_features</span><span class="p">,</span>
+        <span class="n">test_results</span><span class="o">=</span><span class="n">test_results</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;rf_train&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_label&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_test&quot;</span><span class="p">),</span> <span class="n">rf_model</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

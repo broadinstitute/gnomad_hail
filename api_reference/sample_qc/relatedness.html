@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.relatedness &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.sex" href="sex.html" />
+    <link rel="prev" title="gnomad.sample_qc.platform" href="platform.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">relatedness</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.UNRELATED"><code class="docutils literal notranslate"><span class="pre">UNRELATED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES"><code class="docutils literal notranslate"><span class="pre">SECOND_DEGREE_RELATIVES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.PARENT_CHILD"><code class="docutils literal notranslate"><span class="pre">PARENT_CHILD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.SIBLINGS"><code class="docutils literal notranslate"><span class="pre">SIBLINGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS"><code class="docutils literal notranslate"><span class="pre">DUPLICATE_OR_TWINS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP"><code class="docutils literal notranslate"><span class="pre">AMBIGUOUS_RELATIONSHIP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_duplicated_samples"><code class="docutils literal notranslate"><span class="pre">get_duplicated_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_duplicated_samples_ht"><code class="docutils literal notranslate"><span class="pre">get_duplicated_samples_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.explode_duplicate_samples_ht"><code class="docutils literal notranslate"><span class="pre">explode_duplicate_samples_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_relationship_expr"><code class="docutils literal notranslate"><span class="pre">get_relationship_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_slope_int_relationship_expr"><code class="docutils literal notranslate"><span class="pre">get_slope_int_relationship_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.infer_families"><code class="docutils literal notranslate"><span class="pre">infer_families()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.create_fake_pedigree"><code class="docutils literal notranslate"><span class="pre">create_fake_pedigree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.compute_related_samples_to_drop"><code class="docutils literal notranslate"><span class="pre">compute_related_samples_to_drop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.filter_to_trios"><code class="docutils literal notranslate"><span class="pre">filter_to_trios()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.generate_trio_stats_expr"><code class="docutils literal notranslate"><span class="pre">generate_trio_stats_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.generate_sib_stats_expr"><code class="docutils literal notranslate"><span class="pre">generate_sib_stats_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.calculate_de_novo_post_prob"><code class="docutils literal notranslate"><span class="pre">calculate_de_novo_post_prob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.relatedness.default_get_de_novo_expr"><code class="docutils literal notranslate"><span class="pre">default_get_de_novo_expr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.sample_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.relatedness</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/sample_qc/relatedness.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-sample-qc-relatedness">
+<h1>gnomad.sample_qc.relatedness<a class="headerlink" href="#gnomad-sample-qc-relatedness" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.UNRELATED" title="gnomad.sample_qc.relatedness.UNRELATED"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.UNRELATED</span></code></a></p></td>
+<td><p>String representation for a pair of unrelated individuals in this module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES" title="gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES</span></code></a></p></td>
+<td><p>String representation for a pair of 2nd degree relatives in this module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.PARENT_CHILD" title="gnomad.sample_qc.relatedness.PARENT_CHILD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.PARENT_CHILD</span></code></a></p></td>
+<td><p>String representation for a parent-child pair in this module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.SIBLINGS" title="gnomad.sample_qc.relatedness.SIBLINGS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.SIBLINGS</span></code></a></p></td>
+<td><p>String representation for a sibling pair in this module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS" title="gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS</span></code></a></p></td>
+<td><p>String representation for a pair of samples who are identical (either MZ twins of duplicate) in this module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP" title="gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP</span></code></a></p></td>
+<td><p>String representation for a pair of samples whose relationship is ambiguous.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_duplicated_samples" title="gnomad.sample_qc.relatedness.get_duplicated_samples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.get_duplicated_samples</span></code></a>(...)</p></td>
+<td><p>Extract the list of duplicate samples using a Table ouput from pc_relate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_duplicated_samples_ht" title="gnomad.sample_qc.relatedness.get_duplicated_samples_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.get_duplicated_samples_ht</span></code></a>(...)</p></td>
+<td><p>Create a HT with duplicated samples sets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.explode_duplicate_samples_ht" title="gnomad.sample_qc.relatedness.explode_duplicate_samples_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.explode_duplicate_samples_ht</span></code></a>(dups_ht)</p></td>
+<td><p>Explode the result of <cite>get_duplicated_samples_ht</cite>, so that each line contains a single sample.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_relationship_expr" title="gnomad.sample_qc.relatedness.get_relationship_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.get_relationship_expr</span></code></a>(...)</p></td>
+<td><p>Return an expression indicating the relationship between a pair of samples given their kin coefficient and IBDO, IBD1, IBD2 values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.get_slope_int_relationship_expr" title="gnomad.sample_qc.relatedness.get_slope_int_relationship_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.get_slope_int_relationship_expr</span></code></a>(...)</p></td>
+<td><p>Return an expression indicating the relationship between a pair of samples given slope and intercept cutoffs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.infer_families" title="gnomad.sample_qc.relatedness.infer_families"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.infer_families</span></code></a>(...)</p></td>
+<td><p>Generate a pedigree containing trios inferred from the <cite>relationship_ht</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.create_fake_pedigree" title="gnomad.sample_qc.relatedness.create_fake_pedigree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.create_fake_pedigree</span></code></a>(n, ...)</p></td>
+<td><p>Generate a pedigree made of trios created by sampling 3 random samples in the sample list.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.compute_related_samples_to_drop" title="gnomad.sample_qc.relatedness.compute_related_samples_to_drop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.compute_related_samples_to_drop</span></code></a>(...)</p></td>
+<td><p>Compute a Table with the list of samples to drop (and their global rank) to get the maximal independent set of unrelated samples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.filter_to_trios" title="gnomad.sample_qc.relatedness.filter_to_trios"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.filter_to_trios</span></code></a>(...)</p></td>
+<td><p>Filter a Table, MatrixTable or VariantDataset to a set of trios in <cite>fam_ht</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.generate_trio_stats_expr" title="gnomad.sample_qc.relatedness.generate_trio_stats_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.generate_trio_stats_expr</span></code></a>(trio_mt)</p></td>
+<td><p>Generate a row-wise expression containing trio transmission stats.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.generate_sib_stats_expr" title="gnomad.sample_qc.relatedness.generate_sib_stats_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.generate_sib_stats_expr</span></code></a>(mt, ...)</p></td>
+<td><p>Generate a row-wise expression containing the number of alternate alleles in common between sibling pairs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.calculate_de_novo_post_prob" title="gnomad.sample_qc.relatedness.calculate_de_novo_post_prob"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.calculate_de_novo_post_prob</span></code></a>(...)</p></td>
+<td><p>Calculate the posterior probability of a <em>de novo</em> mutation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.relatedness.default_get_de_novo_expr" title="gnomad.sample_qc.relatedness.default_get_de_novo_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.relatedness.default_get_de_novo_expr</span></code></a>(...)</p></td>
+<td><p>Get the <em>de novo</em> status of a variant based on the proband and parent genotypes.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.relatedness"></span><dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.UNRELATED">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">UNRELATED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'unrelated'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.UNRELATED" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a pair of unrelated individuals in this module.
+Typically &gt;2nd degree relatives, but the threshold is user-dependant.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">SECOND_DEGREE_RELATIVES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'second</span> <span class="pre">degree</span> <span class="pre">relatives'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a pair of 2nd degree relatives in this module.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.PARENT_CHILD">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">PARENT_CHILD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'parent-child'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.PARENT_CHILD" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a parent-child pair in this module.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.SIBLINGS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">SIBLINGS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'siblings'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.SIBLINGS" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a sibling pair in this module.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">DUPLICATE_OR_TWINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'duplicate/twins'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a pair of samples who are identical (either MZ twins of duplicate) in this module.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">AMBIGUOUS_RELATIONSHIP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ambiguous'</span></em><a class="headerlink" href="#gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP" title="Permalink to this definition"></a></dt>
+<dd><p>String representation for a pair of samples whose relationship is ambiguous.
+This is used in the case of a pair of samples which kinship/IBD values do not correspond to any biological relationship between two individuals.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.get_duplicated_samples">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">get_duplicated_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relationship_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'i'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'j'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relationship'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#get_duplicated_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.get_duplicated_samples" title="Permalink to this definition"></a></dt>
+<dd><p>Extract the list of duplicate samples using a Table ouput from pc_relate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relationship_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with relationships between pairs of samples</p></li>
+<li><p><strong>i_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 1st sample</p></li>
+<li><p><strong>j_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 2nd sample</p></li>
+<li><p><strong>rel_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the sample pair relationship annotated with get_relationship_expr</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of sets of samples that are duplicates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.get_duplicated_samples_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">get_duplicated_samples_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duplicated_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples_rankings_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank_ann</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rank'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#get_duplicated_samples_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.get_duplicated_samples_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Create a HT with duplicated samples sets.</p>
+<p>Each row is indexed by the sample that is kept and also contains the set of duplicate samples that should be filtered.</p>
+<p><cite>samples_rankings_ht</cite> is a HT containing a global rank for each of the samples (smaller is better).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>duplicated_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – List of sets of duplicated samples</p></li>
+<li><p><strong>samples_rankings_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – HT with global rank for each sample</p></li>
+<li><p><strong>rank_ann</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Annotation in <cite>samples_ranking_ht</cite> containing each sample global rank (smaller is better).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HT with duplicate sample sets, including which to keep/filter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.explode_duplicate_samples_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">explode_duplicate_samples_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dups_ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#explode_duplicate_samples_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.explode_duplicate_samples_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Explode the result of <cite>get_duplicated_samples_ht</cite>, so that each line contains a single sample.</p>
+<p>An additional annotation is added: <cite>dup_filtered</cite> indicating which of the duplicated samples was kept.
+Requires a field <cite>filtered</cite> which type should be the same as the input duplicated samples Table key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dups_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input HT</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Flattened HT</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.get_relationship_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">get_relationship_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kin_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd0_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd1_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd2_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_degree_kin_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.19,</span> <span class="pre">0.4)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_min_kin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd0_0_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.025</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd0_25_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">0.425)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd1_0_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-0.15,</span> <span class="pre">0.1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd1_50_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.275,</span> <span class="pre">0.75)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd1_100_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd2_0_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.125</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd2_25_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">0.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd2_100_thresholds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.75,</span> <span class="pre">1.25)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#get_relationship_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.get_relationship_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Return an expression indicating the relationship between a pair of samples given their kin coefficient and IBDO, IBD1, IBD2 values.</p>
+<p>The kinship coefficient values in the defaults are in line with those output from
+<cite>hail.methods.pc_relate &lt;https://hail.is/docs/0.2/methods/genetics.html?highlight=pc_relate#hail.methods.pc_relate&gt;</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kin_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Kin coefficient expression</p></li>
+<li><p><strong>ibd0_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – IBDO expression</p></li>
+<li><p><strong>ibd1_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – IBD1 expression</p></li>
+<li><p><strong>ibd2_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – IDB2 expression</p></li>
+<li><p><strong>first_degree_kin_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) kinship threshold for 1st degree relatives</p></li>
+<li><p><strong>second_degree_min_kin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – min kinship threshold for 2nd degree relatives</p></li>
+<li><p><strong>ibd0_0_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – max IBD0 threshold for 0 IBD0 sharing</p></li>
+<li><p><strong>ibd0_25_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) thresholds for 0.25 IBD0 sharing</p></li>
+<li><p><strong>ibd1_0_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) thresholds for 0 IBD1 sharing. Note that the min is there because pc_relate can output large negative values in some corner cases.</p></li>
+<li><p><strong>ibd1_50_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) thresholds for 0.5 IBD1 sharing</p></li>
+<li><p><strong>ibd1_100_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – min IBD1 threshold for 1.0 IBD1 sharing</p></li>
+<li><p><strong>ibd2_0_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – max IBD2 threshold for 0 IBD2 sharing</p></li>
+<li><p><strong>ibd2_25_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) thresholds for 0.25 IBD2 sharing</p></li>
+<li><p><strong>ibd2_100_thresholds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – (min, max) thresholds for 1.00 IBD2 sharing. Note that the min is there because pc_relate can output much larger IBD2 values in some corner cases.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The relationship annotation using the constants defined in this module.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.get_slope_int_relationship_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">get_slope_int_relationship_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kin_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_child_max_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_sibling_lower_cutoff_slope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_sibling_lower_cutoff_intercept</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_upper_sibling_lower_cutoff_slope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_upper_sibling_lower_cutoff_intercept</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_twin_min_kin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_degree_min_kin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_twin_ibd1_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_twin_ibd1_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibd1_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#get_slope_int_relationship_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.get_slope_int_relationship_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Return an expression indicating the relationship between a pair of samples given slope and intercept cutoffs.</p>
+<p>The kinship coefficient (<cite>kin_expr</cite>) and an additional metric (<cite>y_expr</cite>) are used
+to define the relationship between a pair of samples. For this function the
+slope and intercepts should refer to cutoff lines where the x-axis, or independent
+variable is the kinship coefficient and the y-axis, or dependent variable, is
+the metric defined by <cite>y_expr</cite>. Typically, the y-axis metric IBS0, IBS0/IBS2, or
+IBD0.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>No defaults are provided for the slope and intercept cutoffs because they are
+highly dependent on the dataset and the metric used in <cite>y_expr</cite>.</p>
+</div>
+<dl class="simple">
+<dt>The relationship expression is determined as follows:</dt><dd><ul class="simple">
+<li><p>If <cite>kin_expr</cite> &lt; <cite>second_degree_min_kin</cite> -&gt;  UNRELATED</p></li>
+<li><dl class="simple">
+<dt>If <cite>kin_expr</cite> &gt; <cite>duplicate_twin_min_kin</cite>:</dt><dd><ul>
+<li><dl class="simple">
+<dt>If <cite>y_expr</cite> &lt; <cite>parent_child_max_y</cite>:</dt><dd><ul>
+<li><dl class="simple">
+<dt>If <cite>ibd1_expr</cite> is defined:</dt><dd><ul>
+<li><p>If <cite>duplicate_twin_ibd1_min</cite> &lt;= <cite>ibd1_expr</cite> &lt;= `
+duplicate_twin_ibd1_max` -&gt; DUPLICATE_OR_TWINS</p></li>
+<li><p>Else -&gt; AMBIGUOUS_RELATIONSHIP</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Else -&gt; DUPLICATE_OR_TWINS</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>If <cite>y_expr</cite> &lt; <cite>parent_child_max_y</cite> -&gt; PARENT_CHILD</p></li>
+<li><dl class="simple">
+<dt>If pair is over second_degree_sibling_lower_cutoff line:</dt><dd><ul>
+<li><p>If pair is over second_degree_upper_sibling_lower_cutoff line -&gt; SIBLINGS</p></li>
+<li><p>Else -&gt; SECOND_DEGREE_RELATIVES</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>If none of the above conditions are met -&gt; AMBIGUOUS_RELATIONSHIP</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kin_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Kin coefficient expression. Used as the x-axis, or independent
+variable, for the slope and intercept cutoffs.</p></li>
+<li><p><strong>y_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – Expression for the metric to use as the y-axis, or dependent
+variable, for the slope and intercept cutoffs. This is typically an expression
+for IBS0, IBS0/IBS2, or IBD0.</p></li>
+<li><p><strong>parent_child_max_y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Maximum value of the metric defined by <cite>y_expr</cite> for a
+parent-child pair.</p></li>
+<li><p><strong>second_degree_sibling_lower_cutoff_slope</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Slope of the line to use as a
+lower cutoff for second degree relatives and siblings from parent-child pairs.</p></li>
+<li><p><strong>second_degree_sibling_lower_cutoff_intercept</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Intercept of the line to use
+as a lower cutoff for second degree relatives and siblings from parent-child
+pairs.</p></li>
+<li><p><strong>second_degree_upper_sibling_lower_cutoff_slope</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Slope of the line to use as
+an upper cutoff for second degree relatives and a lower cutoff for siblings.</p></li>
+<li><p><strong>second_degree_upper_sibling_lower_cutoff_intercept</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Intercept of the line to
+use as an upper cutoff for second degree relatives and a lower cutoff for
+siblings.</p></li>
+<li><p><strong>duplicate_twin_min_kin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum kinship for duplicate or twin pairs.
+Default is 0.42.</p></li>
+<li><p><strong>second_degree_min_kin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum kinship threshold for 2nd degree relatives.
+Default is 0.08838835. Bycroft et al. (2018) calculates a theoretical kinship
+of 0.08838835 for a second degree relationship cutoff, but this cutoff should be
+determined by evaluation of the kinship distribution.</p></li>
+<li><p><strong>ibd1_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Optional IBD1 expression. If this expression is provided,
+<cite>duplicate_twin_ibd1_min</cite> and <cite>duplicate_twin_ibd1_max</cite> will be used as an
+additional cutoff for duplicate or twin pairs.</p></li>
+<li><p><strong>duplicate_twin_ibd1_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum IBD1 cutoff for duplicate or twin pairs.
+Note: the min is because pc_relate can output large negative values in some
+corner cases.</p></li>
+<li><p><strong>duplicate_twin_ibd1_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Maximum IBD1 cutoff for duplicate or twin pairs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relationship annotation using the constants defined in this module.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.infer_families">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">infer_families</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relationship_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_samples_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'i'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'j'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relationship_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relationship'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#infer_families"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.infer_families" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a pedigree containing trios inferred from the <cite>relationship_ht</cite>.</p>
+<p>This function takes a hail Table with a row for each pair of related individuals i, j in the data (it’s OK to have
+unrelated samples too).</p>
+<dl class="simple">
+<dt>The <cite>relationship_col</cite> should be a column specifying the relationship between each two samples as defined in this</dt><dd><p>module’s constants.</p>
+</dd>
+</dl>
+<p>This function returns a pedigree containing trios inferred from the data. Family ID can be the same for multiple
+trios if one or more members of the trios are related (e.g. sibs, multi-generational family). Trios are ordered by family ID.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function only returns complete trios defined as: one child, one father and one mother (sex is required for both parents).</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relationship_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input relationship table</p></li>
+<li><p><strong>sex</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]) – A Table or dict giving the sex for each sample (<cite>TRUE`=female, `FALSE`=male). If a Table is given, it should have a field `is_female</cite>.</p></li>
+<li><p><strong>duplicated_samples</strong> – All duplicated samples TO REMOVE (If not provided, this function won’t work as it assumes that each child has exactly two parents)</p></li>
+<li><p><strong>i_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 1st sample of the pair in the relationship table</p></li>
+<li><p><strong>j_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 2nd sample of the pair in the relationship table</p></li>
+<li><p><strong>relationship_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column contatining the relationship for the sample pair as defined in this module constants.</p></li>
+<li><p><strong>duplicate_samples_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pedigree of complete trios</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.create_fake_pedigree">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">create_fake_pedigree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_real_probands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">real_pedigree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_list_stratification</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#create_fake_pedigree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.create_fake_pedigree" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a pedigree made of trios created by sampling 3 random samples in the sample list.</p>
+<ul class="simple">
+<li><p>If <cite>real_pedigree</cite> is given, then children in the resulting fake trios will not
+include any trio with proband - parents that are in the real ones.</p></li>
+<li><p>Each sample can be used only once as a proband in the resulting trios.</p></li>
+<li><p>Sex of probands in fake trios is random.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of fake trios desired in the pedigree.</p></li>
+<li><p><strong>sample_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of samples.</p></li>
+<li><p><strong>exclude_real_probands</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, then fake trios probands cannot be in the
+real trios probands.</p></li>
+<li><p><strong>max_tries</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of sampling to try before bailing out (preventing
+infinite loop if <cite>n</cite> is too large w.r.t. the number of samples).</p></li>
+<li><p><strong>real_pedigree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a>]) – Optional pedigree to exclude children from.</p></li>
+<li><p><strong>sample_list_stratification</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional dictionary with samples as keys and
+a value that should be used to stratify samples in <cite>sample_list</cite> into groups
+that the trio should be picked from. This ensures that each fake trio will
+contain samples from only the same stratification. For example, if all samples
+within a fake trio should be chosen from the same platform, this can be a
+dictionary of sample: platform.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/genetics/hail.genetics.Pedigree.html#hail.genetics.Pedigree" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pedigree</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Fake pedigree.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.compute_related_samples_to_drop">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">compute_related_samples_to_drop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relatedness_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kin_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_related_hard_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_samples_when_related</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#compute_related_samples_to_drop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.compute_related_samples_to_drop" title="Permalink to this definition"></a></dt>
+<dd><p>Compute a Table with the list of samples to drop (and their global rank) to get the maximal independent set of unrelated samples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p><cite>relatedness_ht</cite> should be keyed by exactly two fields of the same type, identifying the pair of samples for each row.</p></li>
+<li><p><cite>rank_ht</cite> should be keyed by a single key of the same type as a single sample identifier in <cite>relatedness_ht</cite>.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relatedness_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – relatedness HT, as produced by e.g. pc-relate</p></li>
+<li><p><strong>kin_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Kinship threshold to consider two samples as related</p></li>
+<li><p><strong>rank_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with a global rank for each sample (smaller is preferred)</p></li>
+<li><p><strong>filtered_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.SetExpression.html#hail.expr.SetExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetExpression</span></code></a>]) – An optional set of samples to exclude (e.g. these samples were hard-filtered)  These samples will then appear in the resulting samples to drop.</p></li>
+<li><p><strong>min_related_hard_filter</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If provided, any sample that is related to more samples than this parameter will be filtered prior to computing the maximal independent set and appear in the results.</p></li>
+<li><p><strong>keep_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.SetExpression.html#hail.expr.SetExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetExpression</span></code></a>]) – An optional set of samples that must be kept. An error is raised (when <cite>keep_samples_when_related</cite> is False) if any two samples in the list are among the related pairs.</p></li>
+<li><p><strong>keep_samples_when_related</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Don’t raise an error if <cite>keep_samples</cite> contains related samples, and keep related samples. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table with the list of the samples to drop along with their rank.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.filter_to_trios">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">filter_to_trios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mtds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fam_ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#filter_to_trios"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.filter_to_trios" title="Permalink to this definition"></a></dt>
+<dd><p>Filter a Table, MatrixTable or VariantDataset to a set of trios in <cite>fam_ht</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Using <cite>filter_cols</cite> in MatrixTable will not affect the number of rows
+(variants), however, using <cite>filter_samples</cite> in VariantDataset will remove the
+variants that are not present in any of the trios.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mtds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]) – A Variant Dataset or a Matrix Table or a Table to filter to only trios.</p></li>
+<li><p><strong>fam_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – A Table of trios to filter to, loaded using <cite>hl.import_fam</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table, MatrixTable or VariantDataset with only the trios in <cite>fam_ht</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.generate_trio_stats_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">generate_trio_stats_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trio_mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmitted_strata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'raw':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">de_novo_strata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'raw':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ac_strata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'raw':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proband_is_female_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#generate_trio_stats_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.generate_trio_stats_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a row-wise expression containing trio transmission stats.</p>
+<dl class="simple">
+<dt>The expression will generate the following counts:</dt><dd><ul class="simple">
+<li><p>Number of alleles in het parents transmitted to the proband</p></li>
+<li><p>Number of alleles in het parents not transmitted to the proband</p></li>
+<li><p>Number of de novo mutations</p></li>
+<li><p>Parent allele count</p></li>
+<li><p>Proband allele count</p></li>
+</ul>
+</dd>
+</dl>
+<p>Transmission and de novo mutation metrics and allele counts can be stratified using additional filters.
+<cite>transmitted_strata</cite>, <cite>de_novo_strata</cite>, and <cite>ac_strata</cite> all expect a dictionary of filtering expressions keyed
+by their desired suffix to append for labeling. The default will perform counts using all genotypes and append
+‘raw’ to the label.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Expects that <cite>mt</cite> is dense if dealing with a sparse MT <cite>hl.experimental.densify</cite> must be run first.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trio_mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – A trio standard trio MT (with the format as produced by hail.methods.trio_matrix)</p></li>
+<li><p><strong>transmitted_strata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Strata for the transmission counts</p></li>
+<li><p><strong>de_novo_strata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Strata for the de novo counts</p></li>
+<li><p><strong>ac_strata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Strata for the parent and child allele counts</p></li>
+<li><p><strong>proband_is_female_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – An optional expression giving the sex the proband. If not given, DNMs are only computed for autosomes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An expression with the counts</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.generate_sib_stats_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">generate_sib_stats_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sib_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'i'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'j'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'raw':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_female</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#generate_sib_stats_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.generate_sib_stats_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a row-wise expression containing the number of alternate alleles in common between sibling pairs.</p>
+<p>The sibling sharing counts can be stratified using additional filters using <cite>stata</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function expects that the <cite>mt</cite> has either been split or filtered to only bi-allelics
+If a sample has multiple sibling pairs, only one pair will be counted</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input matrix table</p></li>
+<li><p><strong>sib_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table defining sibling pairs with one sample in a col (<cite>i_col</cite>) and the second in another col (<cite>j_col</cite>)</p></li>
+<li><p><strong>i_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 1st sample of the pair in the relationship table</p></li>
+<li><p><strong>j_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the 2nd sample of the pair in the relationship table</p></li>
+<li><p><strong>strata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Dict with additional strata to use when computing shared sibling variant counts</p></li>
+<li><p><strong>is_female</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – An optional column in mt giving the sample sex. If not given, counts are only computed for autosomes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table with the sibling shared variant counts</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.calculate_de_novo_post_prob">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">calculate_de_novo_post_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proband_pl_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">father_pl_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mother_pl_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diploid_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi_x_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi_y_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_prior_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pop_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.3333333333333333e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">de_novo_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.3333333333333334e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#calculate_de_novo_post_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.calculate_de_novo_post_prob" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the posterior probability of a <em>de novo</em> mutation.</p>
+<p>This function computes the posterior probability of a <em>de novo</em> mutation (<cite>P_dn</cite>)
+based on the genotype likelihoods of the proband and parents, along with the
+population frequency prior for the variant. The method is adapted from Kaitlin
+Samocha’s <a class="reference external" href="https://github.com/ksamocha/de_novo_scripts">de novo caller</a>
+and Hail’s <a class="reference external" href="https://hail.is/docs/0.2/methods/genetics.html#hail.methods.de_novo">de_novo</a> function.
+However, neither approach explicitly documented how to compute <em>de novo</em>
+probabilities for hemizygous genotypes in XY individuals. To address this,
+we provide the full set of equations in this docstring.</p>
+<p>The posterior probability of an event being truly <em>de novo</em> vs. the probability it was a missed heterozygote call in one of the two parents is:</p>
+<div class="math notranslate nohighlight">
+\[P_{dn} = \frac{P(DN \mid \text{data})}{P(DN \mid \text{data}) + P(\text{missed het in parent(s)} \mid \text{data})}\]</div>
+<p>The terms are defined as follows:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(P(DN \mid \text{data})\)</span> is the probability that the variant is <em>de novo</em>, given the observed genotype data.</p></li>
+<li><p><span class="math notranslate nohighlight">\(P(\text{missed het in parent(s)} \mid \text{data})\)</span> is the probability that the heterozygous variant was <strong>missed in at least one parent</strong>.</p></li>
+</ul>
+<p>Applying Bayesian Theorem to the numerator and denominator yields:</p>
+<div class="math notranslate nohighlight">
+\[P_{dn} = \frac{P(\text{data} \mid DN) \cdot P(DN)}{P(\text{data} \mid DN) \cdot P(DN) + P(\text{data} \mid \text{missed het in parent(s)}) \cdot P(\text{missed het in parent(s)})}\]</div>
+<p>where:</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(P(\text{data} \mid DN)\)</span>: Probability of observing the data under the assumption of a <em>de novo</em> mutation.</p>
+<ul>
+<li><p><strong>Autosomes and PAR regions</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid DN) = P(\text{hom_ref in father}) \cdot P(\text{hom_ref in mother}) \cdot P(\text{het in proband})\]</div>
+</li>
+</ul>
+<p>Probability of a observing a <em>de novo</em> mutation given the data specifically for hemizygous calls in XY individuals</p>
+<blockquote>
+<div><p>Note that hemizygous calls in XY individuals will be reported as homozygous alternate without any sex ploidy adjustments, which is why the formulas below use <cite>P(hom_alt in proband)</cite></p>
+</div></blockquote>
+<ul>
+<li><p><strong>X non-PAR regions (XY only)</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid DN) = P(\text{hom_ref in mother}) \cdot P(\text{hom_alt in proband})\]</div>
+</li>
+<li><p><strong>Y non-PAR regions (XY only)</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid DN) = P(\text{hom_ref in father}) \cdot P(\text{hom_alt in proband})\]</div>
+</li>
+</ul>
+</li>
+<li><p><span class="math notranslate nohighlight">\(P(DN)\)</span>: The prior probability of a <em>de novo</em> mutation from literature, defined as:</p>
+<div class="math notranslate nohighlight">
+\[P(DN) = \frac{1}{3 \times 10^7}\]</div>
+</li>
+<li><p><span class="math notranslate nohighlight">\(P(\text{data} \mid \text{missed het in parent(s)})\)</span>: Probability of observing the data under the assumption of a missed het in a parent.</p>
+<ul>
+<li><p><strong>Autosomes and PAR regions</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid \text{missed het in parents}) = ( P(\text{het in father}) \cdot P(\text{hom_ref in mother}) + P(\text{hom_ref in father}) \cdot P(\text{het in mother})) \cdot P(\text{het in proband})\]</div>
+</li>
+<li><p><strong>X non-PAR regions (XY only)</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid \text{missed het in mother}) = (P(\text{het in mother}) + P(\text{hom_alt in mother})) \cdot P(\text{hom_alt in proband})\]</div>
+</li>
+<li><p><strong>Y non-PAR regions (XY only)</strong>:</p>
+<div class="math notranslate nohighlight">
+\[P(\text{data} \mid \text{missed het in father}) = (P(\text{het in father}) + P(\text{hom_alt in father})) \cdot P(\text{hom_alt in proband})\]</div>
+</li>
+</ul>
+</li>
+<li><p><span class="math notranslate nohighlight">\(P(\text{missed het in parent(s)}\)</span>: Prior that at least one parent is heterozygous. Depends on alternate allele frequency:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[P(\text{het in one parent}) = 1 - (1 - \text{freq_prior})^4\]</div>
+<p>where <span class="math notranslate nohighlight">\(\text{freq_prior}\)</span> is the population frequency prior for the variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>proband_pl_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Phred-scaled genotype likelihoods for the proband.</p></li>
+<li><p><strong>father_pl_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Phred-scaled genotype likelihoods for the father.</p></li>
+<li><p><strong>mother_pl_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Phred-scaled genotype likelihoods for the mother.</p></li>
+<li><p><strong>diploid_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Boolean expression indicating a diploid genotype.</p></li>
+<li><p><strong>hemi_x_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Boolean expression indicating a hemizygous genotype on the X chromosome.</p></li>
+<li><p><strong>hemi_y_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Boolean expression indicating a hemizygous genotype on the Y chromosome.</p></li>
+<li><p><strong>freq_prior_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Population frequency prior for the variant.</p></li>
+<li><p><strong>min_pop_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum population frequency prior (default: <span class="math notranslate nohighlight">\(\text{100/3e7}\)</span>).</p></li>
+<li><p><strong>de_novo_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Prior probability of a <em>de novo</em> mutation (default: <span class="math notranslate nohighlight">\(\text{1/3e7}\)</span>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Posterior probability of a <em>de novo</em> mutation (<cite>P_dn</cite>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.relatedness.default_get_de_novo_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.relatedness.</span></span><span class="sig-name descname"><span class="pre">default_get_de_novo_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alleles_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proband_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">father_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mother_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_xx_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_prior_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pop_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.3333333333333333e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">de_novo_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.3333333333333334e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_dp_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_gq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_proband_ab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_parent_ab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_de_novo_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_conf_dp_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_threshold_snp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_med_conf_ab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_conf_ab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_conf_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">med_conf_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/relatedness.html#default_get_de_novo_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.relatedness.default_get_de_novo_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Get the <em>de novo</em> status of a variant based on the proband and parent genotypes.</p>
+<p>Confidence thresholds (from Kaitlin Samocha’s <a class="reference external" href="https://github.com/ksamocha/de_novo_scripts">de novo caller</a>):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Category</p></th>
+<th class="head"><p>P(<em>de novo</em>)</p></th>
+<th class="head"><p>AB</p></th>
+<th class="head"><p>AD</p></th>
+<th class="head"><p>DP</p></th>
+<th class="head"><p>DR</p></th>
+<th class="head"><p>GQ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FAIL</p></td>
+<td><p>&lt; 0.05</p></td>
+<td><p>AB(parents) &gt; 0.05 OR
+AB(proband) &lt; 0.2</p></td>
+<td><p>0</p></td>
+<td></td>
+<td><p>&lt; 0.1</p></td>
+<td><p>&lt; 20</p></td>
+</tr>
+<tr class="row-odd"><td><p>HIGH (Indel)</p></td>
+<td><p>&gt; 0.99</p></td>
+<td><p>&gt; 0.3</p></td>
+<td></td>
+<td></td>
+<td><p>&gt; 0.2</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>HIGH (SNV) 1</p></td>
+<td><p>&gt; 0.99</p></td>
+<td><p>&gt; 0.3</p></td>
+<td></td>
+<td></td>
+<td><p>&gt; 0.2</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>HIGH (SNV) 2</p></td>
+<td><p>&gt; 0.5</p></td>
+<td><p>&gt; 0.3</p></td>
+<td></td>
+<td><p>&gt; 10</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>MEDIUM</p></td>
+<td><p>&gt; 0.5</p></td>
+<td><p>&gt; 0.3</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>LOW</p></td>
+<td><p>&gt;= 0.05</p></td>
+<td><p>&gt;= 0.2</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>AB: Proband AB. FAIL criteria also includes threshold for parent(s).</p></li>
+<li><p>AD: Sum of parent(s) AD.</p></li>
+<li><p>DP: Proband DP.</p></li>
+<li><p>DR: Defined as DP(proband) / DP(parent(s)).</p></li>
+<li><p>GQ: Proband GQ.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The “LOW” confidence category differs slightly from the criteria in the
+original code (P(<em>de novo</em>) &gt; 0.05  and  AB(proband &gt; 0.2), as it is
+designed to fill the gap for variants that do not meet the FAIL criteria but
+would otherwise remain unclassified.</p>
+<p>The <em>de novo</em> confidence is calculated as a simplified version of the one
+previously described in Kaitlin Samocha’s [<em>de novo</em> caller](<a class="reference external" href="https://github.com/ksamocha/de_novo_scripts">https://github.com/ksamocha/de_novo_scripts</a>)
+and Hail’s [<em>de_novo</em>](<a class="reference external" href="https://hail.is/docs/0.2/methods/genetics.html#hail.methods.de_novo">https://hail.is/docs/0.2/methods/genetics.html#hail.methods.de_novo</a>)
+method. This simplified version is the same as Hail’s methods when using the
+<cite>ignore_in_sample_allele_frequency</cite> parameter. The main difference is that
+this mode should be used when families larger than a single trio are in the
+dataset, in which an allele might be <em>de novo</em> in a parent and transmitted to a
+child in the dataset. This mode will not consider the allele count (AC) in
+the dataset, and will only consider the Phred-scaled likelihoods (PL) of the
+child and parents, allele balance (AB) of the child and parents,
+the genotype quality (GQ) of the child, the depth (DP) of the child and
+parents, and the population frequency prior.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This method assumes that the PL and AD fields are present in the genotype fields
+of the child and parents. If they are missing, this method will not work.
+Many of our larger datasets have the PL and AD fields intentionally removed to
+save storage space. If this is the reason that the PL and AD fields are
+missing, the only way to use this method is to set them to their approximate
+values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">PL</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">PL</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">GQ</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">GQ</span><span class="p">])</span>
+<span class="n">AD</span><span class="o">=</span><span class="n">hl</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">AD</span><span class="p">,</span> <span class="p">[</span><span class="n">DP</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – Variant locus.</p></li>
+<li><p><strong>alleles_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Variant alleles. Function assumes all variants are
+biallelic, meaning that multiallelic variants in the input dataset should be
+split prior to running this function.</p></li>
+<li><p><strong>proband_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Proband genotype info; required fields: GT, DP, GQ, AD, PL.</p></li>
+<li><p><strong>father_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Father genotype info; required fields: GT, DP, GQ, AD, PL.</p></li>
+<li><p><strong>mother_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Mother genotype info; required fields: GT, DP, GQ, AD, PL.</p></li>
+<li><p><strong>is_xx_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Whether the proband has XX sex karyotype.</p></li>
+<li><p><strong>freq_prior_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Population frequency prior for the variant.</p></li>
+<li><p><strong>min_pop_prior</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum population frequency prior. Default is 100 / 3e7.</p></li>
+<li><p><strong>de_novo_prior</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Prior probability of a <em>de novo</em> mutation. Default is 1 / 3e7.</p></li>
+<li><p><strong>min_dp_ratio</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum depth ratio for proband to parents. Default is 0.1.</p></li>
+<li><p><strong>min_gq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Minimum genotype quality for the proband. Default is 20.</p></li>
+<li><p><strong>min_proband_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum allele balance for the proband. Default is 0.2.</p></li>
+<li><p><strong>max_parent_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Maximum allele balance for parents. Default is 0.05.</p></li>
+<li><p><strong>min_de_novo_p</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum probability for variant to be called <em>de novo</em>. Default is 0.05.</p></li>
+<li><p><strong>high_conf_dp_ratio</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – DP ratio threshold of proband DP to combined DP in parents for high confidence. Default is 0.2.</p></li>
+<li><p><strong>dp_threshold_snp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Minimum depth for high-confidence SNPs. Default is 10.</p></li>
+<li><p><strong>high_med_conf_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – AB threshold for high/medium confidence. Default is 0.3.</p></li>
+<li><p><strong>low_conf_ab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – AB threshold for low confidence. Default is 0.2.</p></li>
+<li><p><strong>high_conf_p</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – P(<em>de novo</em>) threshold for high confidence. Default is 0.99.</p></li>
+<li><p><strong>med_conf_p</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – P(<em>de novo</em>) threshold for medium confidence. Default is 0.5.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression with variant <em>de novo</em> status and confidence of <em>de novo</em> call.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="platform.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.platform" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sex.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.sex" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

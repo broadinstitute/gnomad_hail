@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.random_forest &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.variant_qc.training" href="training.html" />
+    <link rel="prev" title="gnomad.variant_qc.pipeline" href="pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">variant_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ld.html">ld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">random_forest</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.run_rf_test"><code class="docutils literal notranslate"><span class="pre">run_rf_test()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.check_ht_fields_for_spark"><code class="docutils literal notranslate"><span class="pre">check_ht_fields_for_spark()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_columns_quantiles"><code class="docutils literal notranslate"><span class="pre">get_columns_quantiles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.median_impute_features"><code class="docutils literal notranslate"><span class="pre">median_impute_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.ht_to_rf_df"><code class="docutils literal notranslate"><span class="pre">ht_to_rf_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_features_importance"><code class="docutils literal notranslate"><span class="pre">get_features_importance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_labels"><code class="docutils literal notranslate"><span class="pre">get_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.test_model"><code class="docutils literal notranslate"><span class="pre">test_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.apply_rf_model"><code class="docutils literal notranslate"><span class="pre">apply_rf_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.save_model"><code class="docutils literal notranslate"><span class="pre">save_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.load_model"><code class="docutils literal notranslate"><span class="pre">load_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.train_rf"><code class="docutils literal notranslate"><span class="pre">train_rf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_rf_runs"><code class="docutils literal notranslate"><span class="pre">get_rf_runs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_run_data"><code class="docutils literal notranslate"><span class="pre">get_run_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.random_forest.pretty_print_runs"><code class="docutils literal notranslate"><span class="pre">pretty_print_runs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="training.html">training</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.variant_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.random_forest</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/variant_qc/random_forest.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-variant-qc-random-forest">
+<h1>gnomad.variant_qc.random_forest<a class="headerlink" href="#gnomad-variant-qc-random-forest" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.run_rf_test" title="gnomad.variant_qc.random_forest.run_rf_test"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.run_rf_test</span></code></a>(mt)</p></td>
+<td><p>Run a dummy test RF on a given MT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.check_ht_fields_for_spark" title="gnomad.variant_qc.random_forest.check_ht_fields_for_spark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.check_ht_fields_for_spark</span></code></a>(ht, ...)</p></td>
+<td><p>Check specified fields of a hail table for Spark DataFrame conversion (type and name).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_columns_quantiles" title="gnomad.variant_qc.random_forest.get_columns_quantiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.get_columns_quantiles</span></code></a>(ht, ...)</p></td>
+<td><p>Compute approximate quantiles of specified numeric fields from non-missing values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.median_impute_features" title="gnomad.variant_qc.random_forest.median_impute_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.median_impute_features</span></code></a>(ht)</p></td>
+<td><p>Numerical features in the Table are median-imputed by Hail's <cite>approx_median</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.ht_to_rf_df" title="gnomad.variant_qc.random_forest.ht_to_rf_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.ht_to_rf_df</span></code></a>(ht, ...)</p></td>
+<td><p>Create a Spark dataframe ready for RF from a HT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_features_importance" title="gnomad.variant_qc.random_forest.get_features_importance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.get_features_importance</span></code></a>(...)</p></td>
+<td><p>Extract the features importance from a Pipeline model containing a RandomForestClassifier stage.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_labels" title="gnomad.variant_qc.random_forest.get_labels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.get_labels</span></code></a>(...)</p></td>
+<td><p>Return the labels from the StringIndexer stage at index 0 from an RF pipeline model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.test_model" title="gnomad.variant_qc.random_forest.test_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.test_model</span></code></a>(ht, ...)</p></td>
+<td><p>A wrapper to test a model on a set of examples with known labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.apply_rf_model" title="gnomad.variant_qc.random_forest.apply_rf_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.apply_rf_model</span></code></a>(ht, ...)</p></td>
+<td><p>Apply a Random Forest (RF) pipeline model to a Table and annotate the RF probabilities and predictions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.save_model" title="gnomad.variant_qc.random_forest.save_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.save_model</span></code></a>(...)</p></td>
+<td><p>Save a Random Forest pipeline model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.load_model" title="gnomad.variant_qc.random_forest.load_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.load_model</span></code></a>(...)</p></td>
+<td><p>Load a Random Forest pipeline model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.train_rf" title="gnomad.variant_qc.random_forest.train_rf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.train_rf</span></code></a>(ht, ...)</p></td>
+<td><p>Train a Random Forest (RF) pipeline model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_rf_runs" title="gnomad.variant_qc.random_forest.get_rf_runs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.get_rf_runs</span></code></a>(...)</p></td>
+<td><p>Load RF run data from JSON file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.get_run_data" title="gnomad.variant_qc.random_forest.get_run_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.get_run_data</span></code></a>(...)</p></td>
+<td><p>Create a Dict containing information about the RF input arguments and feature importance.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.random_forest.pretty_print_runs" title="gnomad.variant_qc.random_forest.pretty_print_runs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.random_forest.pretty_print_runs</span></code></a>(runs)</p></td>
+<td><p>Print the information for the RF runs loaded from the json file storing the RF run hashes -&gt; info.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.variant_qc.random_forest"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.run_rf_test">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">run_rf_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/tmp'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#run_rf_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.run_rf_test" title="Permalink to this definition"></a></dt>
+<dd><p>Run a dummy test RF on a given MT.</p>
+<ol class="arabic simple">
+<li><p>Creates row annotations and labels to run model on</p></li>
+<li><p>Trains a RF pipeline model (including median imputation of missing values in created annotations)</p></li>
+<li><p>Saves the RF pipeline model</p></li>
+<li><p>Applies the model to the MT and prints features importance</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MT</p></li>
+<li><p><strong>output</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Output files prefix to save the RF model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>RF model and MatrixTable after applying RF model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.check_ht_fields_for_spark">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">check_ht_fields_for_spark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#check_ht_fields_for_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.check_ht_fields_for_spark" title="Permalink to this definition"></a></dt>
+<dd><p>Check specified fields of a hail table for Spark DataFrame conversion (type and name).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – input Table</p></li>
+<li><p><strong>fields</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Fields to test</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.get_columns_quantiles">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">get_columns_quantiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#get_columns_quantiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.get_columns_quantiles" title="Permalink to this definition"></a></dt>
+<dd><p>Compute approximate quantiles of specified numeric fields from non-missing values. Non-numeric fields are ignored.</p>
+<p>This function returns a Dict of column name -&gt; list of quantiles in the same order specified.
+If a column only has NAs, None is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – input HT</p></li>
+<li><p><strong>fields</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – list of features to impute. If none given, all numerical features with missing data are imputed</p></li>
+<li><p><strong>quantiles</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – list of quantiles to return (e.g. [0.5] would return the median)</p></li>
+<li><p><strong>relative_error</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The relative error on the quantile approximation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict of column -&gt; quantiles</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.median_impute_features">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">median_impute_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#median_impute_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.median_impute_features" title="Permalink to this definition"></a></dt>
+<dd><p>Numerical features in the Table are median-imputed by Hail’s <cite>approx_median</cite>.</p>
+<p>If a <cite>strata</cite> dict is given, imputation is done based on the median of of each stratification.</p>
+<dl class="simple">
+<dt>The annotations that are added to the Table are</dt><dd><ul class="simple">
+<li><p>feature_imputed - A row annotation indicating if each numerical feature was imputed or not.</p></li>
+<li><p>features_median - A global annotation containing the median of the numerical features. If <cite>strata</cite> is given,
+this struct will also be broken down by the given strata.</p></li>
+<li><p>variants_by_strata - An additional global annotation with the variant counts by strata that will only be
+added if imputing by a given <cite>strata</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing all samples and features for median imputation.</p></li>
+<li><p><strong>strata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]]) – Whether to impute features median by specific strata (default False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Feature Table imputed using approximate median values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.ht_to_rf_df">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">ht_to_rf_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#ht_to_rf_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.ht_to_rf_df" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Spark dataframe ready for RF from a HT.</p>
+<p>Rows with any missing features are dropped.
+Missing labels are replaced with ‘NA’</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only basic types are supported!</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input HT</p></li>
+<li><p><strong>features</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Features that will be used for RF</p></li>
+<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional label column that will be predicted by RF</p></li>
+<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional index column to keep (E.g. for joining results back at later stage)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Spark Dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.get_features_importance">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">get_features_importance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf_pipeline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assembler_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#get_features_importance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.get_features_importance" title="Permalink to this definition"></a></dt>
+<dd><p>Extract the features importance from a Pipeline model containing a RandomForestClassifier stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rf_pipeline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>) – Input pipeline</p></li>
+<li><p><strong>rf_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – index of the RandomForestClassifier stage</p></li>
+<li><p><strong>assembler_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – index of the VectorAssembler stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>feature importance for each feature in the RF model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.get_labels">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">get_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf_pipeline</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#get_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.get_labels" title="Permalink to this definition"></a></dt>
+<dd><p>Return the labels from the StringIndexer stage at index 0 from an RF pipeline model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rf_pipeline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>) – Input pipeline</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>labels</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.test_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">test_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_col_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rf_prediction'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#test_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.test_model" title="Permalink to this definition"></a></dt>
+<dd><p>A wrapper to test a model on a set of examples with known labels.</p>
+<ol class="arabic simple">
+<li><p>Runs the model on the data</p></li>
+<li><p>Prints confusion matrix and accuracy</p></li>
+<li><p>Returns confusion matrix as a list of struct</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input table</p></li>
+<li><p><strong>rf_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>) – RF Model</p></li>
+<li><p><strong>features</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Columns containing features that were used in the model</p></li>
+<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing label to be predicted</p></li>
+<li><p><strong>prediction_col_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Where to store the prediction</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/types.html#hail.expr.types.tstruct" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tstruct</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list containing structs with {label, prediction, n}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.apply_rf_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">apply_rf_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability_col_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rf_probability'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_col_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rf_prediction'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#apply_rf_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.apply_rf_model" title="Permalink to this definition"></a></dt>
+<dd><p>Apply a Random Forest (RF) pipeline model to a Table and annotate the RF probabilities and predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input HT</p></li>
+<li><p><strong>rf_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>) – Random Forest pipeline model</p></li>
+<li><p><strong>features</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of feature columns in the pipeline. !Should match the model list of features!</p></li>
+<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional column containing labels. !Should match the model labels!</p></li>
+<li><p><strong>probability_col_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the column that will store the RF probabilities</p></li>
+<li><p><strong>prediction_col_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the column that will store the RF predictions</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with RF columns</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.save_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf_pipeline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#save_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.save_model" title="Permalink to this definition"></a></dt>
+<dd><p>Save a Random Forest pipeline model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rf_pipeline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code>) – Pipeline to save</p></li>
+<li><p><strong>out_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Output path</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, will overwrite existing file(s) at output location</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.load_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.load_model" title="Permalink to this definition"></a></dt>
+<dd><p>Load a Random Forest pipeline model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Location of model to load</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Random Forest pipeline model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.train_rf">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">train_rf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_trees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#train_rf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.train_rf" title="Permalink to this definition"></a></dt>
+<dd><p>Train a Random Forest (RF) pipeline model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input HT</p></li>
+<li><p><strong>features</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of columns to be used as features</p></li>
+<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Column containing the label to predict</p></li>
+<li><p><strong>num_trees</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of trees to use</p></li>
+<li><p><strong>max_depth</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum tree depth</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineModel</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Random Forest pipeline model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.get_rf_runs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">get_rf_runs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf_json_fp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#get_rf_runs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.get_rf_runs" title="Permalink to this definition"></a></dt>
+<dd><p>Load RF run data from JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rf_json_fp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – File path to rf json file.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing the content of the JSON file, or an empty dictionary if the file wasn’t found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.get_run_data">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">get_run_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_intervals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_importance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_results</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#get_run_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.get_run_data" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Dict containing information about the RF input arguments and feature importance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_args</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – Dictionary of model input arguments</p></li>
+<li><p><strong>test_intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Intervals withheld from training to be used in testing</p></li>
+<li><p><strong>features_importance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Feature importance returned by the RF</p></li>
+<li><p><strong>test_results</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/types.html#hail.expr.types.tstruct" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tstruct</span></code></a>]) – Accuracy results from applying RF model to the test intervals</p></li>
+<li><p><strong>input_args</strong> – </p></li>
+<li><p><strong>test_intervals</strong> – </p></li>
+<li><p><strong>features_importance</strong> – </p></li>
+<li><p><strong>test_results</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict of RF information</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.random_forest.pretty_print_runs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.random_forest.</span></span><span class="sig-name descname"><span class="pre">pretty_print_runs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rf_label'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_col_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rf_prediction'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/random_forest.html#pretty_print_runs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.random_forest.pretty_print_runs" title="Permalink to this definition"></a></dt>
+<dd><p>Print the information for the RF runs loaded from the json file storing the RF run hashes -&gt; info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>) – Dictionary containing JSON input loaded from RF run file</p></li>
+<li><p><strong>label_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the RF label column</p></li>
+<li><p><strong>prediction_col_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the RF prediction column</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nothing – only prints information</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pipeline.html" class="btn btn-neutral float-left" title="gnomad.variant_qc.pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="training.html" class="btn btn-neutral float-right" title="gnomad.variant_qc.training" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.pipeline &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.platform" href="platform.html" />
+    <link rel="prev" title="gnomad.sample_qc.filtering" href="filtering.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.pipeline.filter_rows_for_qc"><code class="docutils literal notranslate"><span class="pre">filter_rows_for_qc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.pipeline.get_qc_mt"><code class="docutils literal notranslate"><span class="pre">get_qc_mt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.pipeline.infer_sex_karyotype"><code class="docutils literal notranslate"><span class="pre">infer_sex_karyotype()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.pipeline.annotate_sex"><code class="docutils literal notranslate"><span class="pre">annotate_sex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.sample_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/sample_qc/pipeline.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-sample-qc-pipeline">
+<h1>gnomad.sample_qc.pipeline<a class="headerlink" href="#gnomad-sample-qc-pipeline" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.pipeline.filter_rows_for_qc" title="gnomad.sample_qc.pipeline.filter_rows_for_qc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.pipeline.filter_rows_for_qc</span></code></a>(mt)</p></td>
+<td><p>Annotate rows with <cite>sites_callrate</cite>, <cite>site_inbreeding_coeff</cite> and <cite>af</cite>, then apply thresholds.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.pipeline.get_qc_mt" title="gnomad.sample_qc.pipeline.get_qc_mt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.pipeline.get_qc_mt</span></code></a>(mt[, ...])</p></td>
+<td><p>Create a QC-ready MT.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.pipeline.infer_sex_karyotype" title="gnomad.sample_qc.pipeline.infer_sex_karyotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.pipeline.infer_sex_karyotype</span></code></a>(...)</p></td>
+<td><p>Create a Table with X_karyotype, Y_karyotype, and sex_karyotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.pipeline.annotate_sex" title="gnomad.sample_qc.pipeline.annotate_sex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.pipeline.annotate_sex</span></code></a>(mtds)</p></td>
+<td><p>Impute sample sex based on X-chromosome heterozygosity and sex chromosome ploidy.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.pipeline"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.pipeline.filter_rows_for_qc">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">filter_rows_for_qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_af</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_callrate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_inbreeding_coeff_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hardy_weinberg_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_hard_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bi_allelic_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snv_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/pipeline.html#filter_rows_for_qc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.pipeline.filter_rows_for_qc" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate rows with <cite>sites_callrate</cite>, <cite>site_inbreeding_coeff</cite> and <cite>af</cite>, then apply thresholds.</p>
+<p>AF and callrate thresholds are taken from gnomAD QC; inbreeding coeff, MQ, FS and QD filters are taken from
+GATK best practices.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function expect the typical <code class="docutils literal notranslate"><span class="pre">info</span></code> annotation of type struct with fields <code class="docutils literal notranslate"><span class="pre">MQ</span></code>, <code class="docutils literal notranslate"><span class="pre">FS</span></code> and <code class="docutils literal notranslate"><span class="pre">QD</span></code>
+if applying hard filters.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MT</p></li>
+<li><p><strong>min_af</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site AF to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_callrate</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site call rate to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_inbreeding_coeff_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site inbreeding coefficient to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_hardy_weinberg_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site HW test p-value to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>apply_hard_filters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to apply standard GAKT default site hard filters: QD &gt;= 2, FS &lt;= 60 and MQ &gt;= 30.</p></li>
+<li><p><strong>bi_allelic_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to only keep bi-allelic sites or include multi-allelic sites too.</p></li>
+<li><p><strong>snv_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to only keep SNVs or include other variant types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>annotated and filtered table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.pipeline.get_qc_mt">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">get_qc_mt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bi_allelic_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snv_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_af</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_callrate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_inbreeding_coeff_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hardy_weinberg_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_hard_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ld_r2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_lcr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_decoy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_segdup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_exome_low_coverage_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_conf_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/pipeline.html#get_qc_mt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.pipeline.get_qc_mt" title="Permalink to this definition"></a></dt>
+<dd><p>Create a QC-ready MT.</p>
+<dl class="simple">
+<dt>Has options to filter to the following:</dt><dd><ul class="simple">
+<li><p>Variants outside known problematic regions</p></li>
+<li><p>Bi-allelic sites only</p></li>
+<li><p>SNVs only</p></li>
+<li><p>Variants passing hard thresholds</p></li>
+<li><p>Variants passing the set call rate and MAF thresholds</p></li>
+<li><p>Genotypes passing on gnomAD ADJ criteria (GQ&gt;=20, DP&gt;=10, AB&gt;0.2 for hets)</p></li>
+</ul>
+</dd>
+</dl>
+<p>In addition, the MT will be LD-pruned if <cite>ld_r2</cite> is set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MT.</p></li>
+<li><p><strong>bi_allelic_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to only keep bi-allelic sites or include multi-allelic sites too.</p></li>
+<li><p><strong>snv_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to only keep SNVs or include other variant types.</p></li>
+<li><p><strong>adj_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only ADJ genotypes are kept. This filter is applied before the call rate and AF calculation.</p></li>
+<li><p><strong>min_af</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum allele frequency to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_callrate</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum call rate to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_inbreeding_coeff_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site inbreeding coefficient to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>min_hardy_weinberg_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum site HW test p-value to keep. Not applied if set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>apply_hard_filters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to apply standard GAKT default site hard filters: QD &gt;= 2, FS &lt;= 60 and MQ &gt;= 30.</p></li>
+<li><p><strong>ld_r2</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Minimum r2 to keep when LD-pruning (set to <cite>None</cite> for no LD pruning).</p></li>
+<li><p><strong>filter_lcr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Filter LCR regions.</p></li>
+<li><p><strong>filter_decoy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Filter decoy regions.</p></li>
+<li><p><strong>filter_segdup</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Filter segmental duplication regions.</p></li>
+<li><p><strong>filter_exome_low_coverage_regions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only high coverage exome regions (computed from gnomAD are kept).</p></li>
+<li><p><strong>high_conf_regions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – If given, the data will be filtered to only include variants in those regions.</p></li>
+<li><p><strong>checkpoint_path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – If given, the QC MT will be checkpointed to the specified path before running LD pruning. If not specified, persist will be used instead.</p></li>
+<li><p><strong>n_partitions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If given, the QC MT will be repartitioned to the specified number of partitions before running LD pruning. <cite>checkpoint_path</cite> must also be specified as the MT will first be written to the <cite>checkpoint_path</cite> before being reread with the new number of partitions.</p></li>
+<li><p><strong>block_size</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If given, set the block size to this value when LD pruning.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Filtered MT.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.pipeline.infer_sex_karyotype">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">infer_sex_karyotype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ploidy_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gaussian_mixture_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_ploidy_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aneuploidy_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chr_x_frac_hom_alt_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_chr_x_hom_alt_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/pipeline.html#infer_sex_karyotype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.pipeline.infer_sex_karyotype" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Table with X_karyotype, Y_karyotype, and sex_karyotype.</p>
+<p>This function uses <cite>get_ploidy_cutoffs</cite> to determine X and Y ploidy cutoffs and then <cite>get_sex_expr</cite> to get
+karyotype annotations from those cutoffs.</p>
+<p>By default <cite>f_stat_cutoff</cite> will be used to roughly split samples into ‘XX’ and ‘XY’ for use in <cite>get_ploidy_cutoffs</cite>.
+If <cite>use_gaussian_mixture_model</cite> is True a gaussian mixture model will be used to split samples into ‘XX’ and ‘XY’
+instead of f-stat.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ploidy_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table with chromosome X and chromosome Y ploidy values and optionally f-stat.</p></li>
+<li><p><strong>f_stat_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – f-stat to roughly divide ‘XX’ from ‘XY’ samples. Assumes XX samples are below cutoff and XY
+are above cutoff. Default is 0.5.</p></li>
+<li><p><strong>use_gaussian_mixture_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Use gaussian mixture model to split samples into ‘XX’ and ‘XY’ instead of f-stat.</p></li>
+<li><p><strong>normal_ploidy_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when determining sex chromosome ploidy cutoffs
+for XX, XY karyotypes.</p></li>
+<li><p><strong>aneuploidy_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when determining sex chromosome ploidy cutoffs for
+aneuploidies.</p></li>
+<li><p><strong>chr_x_frac_hom_alt_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Fraction of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X.</p></li>
+<li><p><strong>normal_chr_x_hom_alt_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of standard deviations to use when determining cutoffs for the fraction
+of homozygous alternate genotypes (hom-alt/(hom-alt + het)) on chromosome X for for XX and XY karyotypes. Only
+used if <cite>chr_x_frac_hom_alt_expr</cite> is supplied.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table of samples imputed sex karyotype.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.pipeline.annotate_sex">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.pipeline.</span></span><span class="sig-name descname"><span class="pre">annotate_sex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mtds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_sparse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">included_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalization_contig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chr20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sites_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aaf_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aaf_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_only_x_ploidy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_only_y_ploidy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_filter_lcr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_filter_segdup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_filter_decoy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variants_snv_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_mt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_x_frac_variants_hom_alt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_fstat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_karyotype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gaussian_mixture_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/pipeline.html#annotate_sex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.pipeline.annotate_sex" title="Permalink to this definition"></a></dt>
+<dd><p>Impute sample sex based on X-chromosome heterozygosity and sex chromosome ploidy.</p>
+<dl>
+<dt>Return Table with the following fields:</dt><dd><ul class="simple">
+<li><p>s (str): Sample</p></li>
+<li><p><cite>normalization_contig`_mean_dp (float32): Sample’s mean coverage over the specified `normalization_contig</cite>.</p></li>
+<li><p>chrX_mean_dp (float32): Sample’s mean coverage over chromosome X.</p></li>
+<li><p>chrY_mean_dp (float32): Sample’s mean coverage over chromosome Y.</p></li>
+<li><p>chrX_ploidy (float32): Sample’s imputed ploidy over chromosome X.</p></li>
+<li><p>chrY_ploidy (float32): Sample’s imputed ploidy over chromosome Y.</p></li>
+</ul>
+<dl class="simple">
+<dt>If <cite>compute_fstat</cite>:</dt><dd><ul class="simple">
+<li><p>f_stat (float64): Sample f-stat. Calculated using hl.impute_sex.</p></li>
+<li><p>n_called (int64): Number of variants with a genotype call. Calculated using hl.impute_sex.</p></li>
+<li><p>expected_homs (float64): Expected number of homozygotes. Calculated using hl.impute_sex.</p></li>
+<li><p>observed_homs (int64): Observed number of homozygotes. Calculated using hl.impute_sex.</p></li>
+</ul>
+</dd>
+<dt>If <cite>infer_karyotype</cite>:</dt><dd><ul class="simple">
+<li><p>X_karyotype (str): Sample’s chromosome X karyotype.</p></li>
+<li><p>Y_karyotype (str): Sample’s chromosome Y karyotype.</p></li>
+<li><p>sex_karyotype (str): Sample’s sex karyotype.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In order to infer sex karyotype (<cite>infer_karyotype`=True), one of `compute_fstat</cite> or
+<cite>use_gaussian_mixture_model</cite> must be set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mtds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]) – Input MatrixTable or VariantDataset.</p></li>
+<li><p><strong>is_sparse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether input MatrixTable is in sparse data format. Default is True.</p></li>
+<li><p><strong>excluded_intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional table of intervals to exclude from the computation. This option is currently
+not implemented for imputing sex chromosome ploidy on a VDS.</p></li>
+<li><p><strong>included_intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional table of intervals to use in the computation. REQUIRED for exomes.</p></li>
+<li><p><strong>normalization_contig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Which chromosome to use to normalize sex chromosome coverage. Used in determining sex
+chromosome ploidies. Default is “chr20”.</p></li>
+<li><p><strong>sites_ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional Table of sites and alternate allele frequencies for filtering the input MatrixTable prior to imputing sex.</p></li>
+<li><p><strong>aaf_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional. Name of field in input MatrixTable with alternate allele frequency.</p></li>
+<li><p><strong>gt_expr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of entry field storing the genotype. Default is ‘GT’.</p></li>
+<li><p><strong>f_stat_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – f-stat to roughly divide ‘XX’ from ‘XY’ samples. Assumes XX samples are below cutoff and XY
+samples are above cutoff. Default is 0.5.</p></li>
+<li><p><strong>aaf_threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum alternate allele frequency to be used in f-stat calculations. Default is 0.001.</p></li>
+<li><p><strong>variants_only_x_ploidy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use depth of only variant data for the x ploidy estimation.</p></li>
+<li><p><strong>variants_only_y_ploidy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use depth of only variant data for the y ploidy estimation.</p></li>
+<li><p><strong>variants_filter_lcr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out variants in LCR regions for variants only ploidy estimation and
+fraction of homozygous alternate variants on chromosome X. Default is True.</p></li>
+<li><p><strong>variants_filter_segdup</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out variants in segdup regions for variants only ploidy estimation
+and fraction of homozygous alternate variants on chromosome X. Default is True.</p></li>
+<li><p><strong>variants_filter_decoy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out variants in decoy regions for variants only ploidy estimation
+and fraction of homozygous alternate variants on chromosome X. Default is False. Note: this option doesn’t
+exist for GRCh38.</p></li>
+<li><p><strong>variants_snv_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only single nucleotide variants for variants only ploidy estimation
+and fraction of homozygous alternate variants on chromosome X. Default is False.</p></li>
+<li><p><strong>coverage_mt</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Optional precomputed coverage MatrixTable to use in reference based VDS ploidy estimation.</p></li>
+<li><p><strong>compute_x_frac_variants_hom_alt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to return an annotation for the fraction of homozygous alternate
+variants on chromosome X. Default is False.</p></li>
+<li><p><strong>compute_fstat</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to compute f-stat. Default is True.</p></li>
+<li><p><strong>infer_karyotype</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to infer sex karyotypes. Default is True.</p></li>
+<li><p><strong>use_gaussian_mixture_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use gaussian mixture model to split samples into ‘XX’ and ‘XY’
+instead of f-stat. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table of samples and their imputed sex karyotypes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="filtering.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.filtering" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="platform.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.platform" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

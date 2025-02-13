@@ -1,0 +1,8 @@
+gnomad.utils.gen_stats
+======================
+
+
+
+.. gnomad_automodulesummary:: gnomad.utils.gen_stats
+
+.. automodule:: gnomad.utils.gen_stats

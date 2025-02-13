@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.variant_qc.training &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Resource Sources" href="../../resource_sources.html" />
+    <link rel="prev" title="gnomad.variant_qc.random_forest" href="random_forest.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">variant_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ld.html">ld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="random_forest.html">random_forest</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">training</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.variant_qc.training.sample_training_examples"><code class="docutils literal notranslate"><span class="pre">sample_training_examples()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.variant_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.variant_qc.training</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/variant_qc/training.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-variant-qc-training">
+<h1>gnomad.variant_qc.training<a class="headerlink" href="#gnomad-variant-qc-training" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.variant_qc.training.sample_training_examples" title="gnomad.variant_qc.training.sample_training_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.variant_qc.training.sample_training_examples</span></code></a>(ht, ...)</p></td>
+<td><p>Return a Table of all positive and negative training examples in <cite>ht</cite> with an annotation indicating those that should be used for training.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.variant_qc.training"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.variant_qc.training.sample_training_examples">
+<span class="sig-prename descclassname"><span class="pre">gnomad.variant_qc.training.</span></span><span class="sig-name descname"><span class="pre">sample_training_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp_to_tp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/variant_qc/training.html#sample_training_examples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.variant_qc.training.sample_training_examples" title="Permalink to this definition"></a></dt>
+<dd><p>Return a Table of all positive and negative training examples in <cite>ht</cite> with an annotation indicating those that should be used for training.</p>
+<p>If <cite>fp_to_tp</cite> is greater than 0, this true positive (TP) to false positive (FP) ratio will be used to determine
+sampling of training variants.</p>
+<dl class="simple">
+<dt>The returned Table has the following annotations:</dt><dd><ul class="simple">
+<li><p>train: indicates if the variant should be used for training. A row is given False for the annotation if True
+for <cite>test_expr</cite>, True for both <cite>tp_expr and fp_expr</cite>, or it is pruned out to obtain the desired <cite>fp_to_tp</cite> ratio.</p></li>
+<li><p>label: indicates if a variant is a ‘TP’ or ‘FP’ and will also be labeled as such for variants defined by <cite>test_expr</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>This function does not support multi-allelic variants.</p></li>
+<li><p>The function will give some stats about the TPs/FPs provided (Ti, Tv, indels).</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>tp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Expression for TP examples.</p></li>
+<li><p><strong>fp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Expression for FP examples.</p></li>
+<li><p><strong>fp_to_tp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – FP to TP ratio. If set to &lt;= 0, all training examples are used.</p></li>
+<li><p><strong>test_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Optional expression to exclude a set of variants from training set. Still contains TP/FP label annotation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table subset with corresponding TP and FP examples with desired FP to TP ratio.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="random_forest.html" class="btn btn-neutral float-left" title="gnomad.variant_qc.random_forest" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../resource_sources.html" class="btn btn-neutral float-right" title="Resource Sources" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

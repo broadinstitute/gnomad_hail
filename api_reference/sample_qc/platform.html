@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc.platform &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.relatedness" href="relatedness.html" />
+    <link rel="prev" title="gnomad.sample_qc.pipeline" href="pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">sample_qc</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">platform</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.platform.compute_callrate_mt"><code class="docutils literal notranslate"><span class="pre">compute_callrate_mt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.platform.run_platform_pca"><code class="docutils literal notranslate"><span class="pre">run_platform_pca()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.sample_qc.platform.assign_platform_from_pcs"><code class="docutils literal notranslate"><span class="pre">assign_platform_from_pcs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.sample_qc</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc.platform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/sample_qc/platform.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-sample-qc-platform">
+<h1>gnomad.sample_qc.platform<a class="headerlink" href="#gnomad-sample-qc-platform" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.platform.compute_callrate_mt" title="gnomad.sample_qc.platform.compute_callrate_mt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.platform.compute_callrate_mt</span></code></a>(mt, ...)</p></td>
+<td><p>Compute a sample/interval MT with each entry containing the call rate for that sample/interval.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.sample_qc.platform.run_platform_pca" title="gnomad.sample_qc.platform.run_platform_pca"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.platform.run_platform_pca</span></code></a>(...)</p></td>
+<td><p>Run PCA on a sample/interval MT with each entry containing the call rate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.sample_qc.platform.assign_platform_from_pcs" title="gnomad.sample_qc.platform.assign_platform_from_pcs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.sample_qc.platform.assign_platform_from_pcs</span></code></a>(...)</p></td>
+<td><p>Assign platforms using HBDSCAN on the results of call rate PCA.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.sample_qc.platform"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.platform.compute_callrate_mt">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.platform.</span></span><span class="sig-name descname"><span class="pre">compute_callrate_mt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intervals_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bi_allelic_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autosomes_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/platform.html#compute_callrate_mt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.platform.compute_callrate_mt" title="Permalink to this definition"></a></dt>
+<dd><p>Compute a sample/interval MT with each entry containing the call rate for that sample/interval.</p>
+<p>This can be used as input for imputing exome sequencing platforms.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The input interval HT should have a key of type Interval.
+The resulting table will have a key of the same type as the <cite>intervals_ht</cite> table and
+contain an <cite>interval_info</cite> field containing all non-key fields of the <cite>intervals_ht</cite>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input MT</p></li>
+<li><p><strong>intervals_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table containing the intervals. This table has to be keyed by locus.</p></li>
+<li><p><strong>bi_allelic_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only bi-allelic sites are used for the computation</p></li>
+<li><p><strong>autosomes_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, only autosomal intervals are used.</p></li>
+<li><p><strong>matches</strong> – If set, returns all intervals in intervals_ht that overlap the locus in the input MT.</p></li>
+<li><p><strong>match</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callrate MT</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.platform.run_platform_pca">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.platform.</span></span><span class="sig-name descname"><span class="pre">run_platform_pca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callrate_mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binarization_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/platform.html#run_platform_pca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.platform.run_platform_pca" title="Permalink to this definition"></a></dt>
+<dd><p>Run PCA on a sample/interval MT with each entry containing the call rate.</p>
+<p>When <cite>binzarization_threshold</cite> is set, the callrate is transformed to a 0/1 value based on the threshold.
+E.g. with the default threshold of 0.25, all entries with a callrate &lt; 0.25 are considered as 0s, others as 1s.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callrate_mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – Input callrate MT</p></li>
+<li><p><strong>binarization_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – binzarization_threshold. None is no threshold desired</p></li>
+<li><p><strong>n_pcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of PCs to compute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>eigenvalues, scores_ht, loadings_ht</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.sample_qc.platform.assign_platform_from_pcs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.sample_qc.platform.</span></span><span class="sig-name descname"><span class="pre">assign_platform_from_pcs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">platform_pca_scores_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pc_scores_ann</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scores'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdbscan_min_cluster_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdbscan_min_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/sample_qc/platform.html#assign_platform_from_pcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.sample_qc.platform.assign_platform_from_pcs" title="Permalink to this definition"></a></dt>
+<dd><p>Assign platforms using HBDSCAN on the results of call rate PCA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>platform_pca_scores_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input table with the PCA score for each sample</p></li>
+<li><p><strong>pc_scores_ann</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Field containing the scores</p></li>
+<li><p><strong>hdbscan_min_cluster_size</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – HDBSCAN <cite>min_cluster_size</cite> parameter. If not specified the smallest of 500 and 0.1*n_samples will be used.</p></li>
+<li><p><strong>hdbscan_min_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – HDBSCAN <cite>min_samples</cite> parameter</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table with a <cite>qc_platform</cite> annotation containing the platform based on HDBSCAN clustering</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pipeline.html" class="btn btn-neutral float-left" title="gnomad.sample_qc.pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="relatedness.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.relatedness" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

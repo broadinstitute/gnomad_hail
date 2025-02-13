@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.vep &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.assessment" href="../assessment/index.html" />
+    <link rel="prev" title="gnomad.utils.vcf" href="vcf.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">vep</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.CURRENT_VEP_VERSION"><code class="docutils literal notranslate"><span class="pre">CURRENT_VEP_VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.CSQ_CODING"><code class="docutils literal notranslate"><span class="pre">CSQ_CODING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.CSQ_SPLICE"><code class="docutils literal notranslate"><span class="pre">CSQ_SPLICE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.POSSIBLE_REFS"><code class="docutils literal notranslate"><span class="pre">POSSIBLE_REFS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.VEP_CONFIG_PATH"><code class="docutils literal notranslate"><span class="pre">VEP_CONFIG_PATH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.VEP_CSQ_FIELDS"><code class="docutils literal notranslate"><span class="pre">VEP_CSQ_FIELDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.VEP_CSQ_HEADER"><code class="docutils literal notranslate"><span class="pre">VEP_CSQ_HEADER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.LOFTEE_LABELS"><code class="docutils literal notranslate"><span class="pre">LOFTEE_LABELS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.LOF_CSQ_SET"><code class="docutils literal notranslate"><span class="pre">LOF_CSQ_SET</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.get_vep_help"><code class="docutils literal notranslate"><span class="pre">get_vep_help()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.get_vep_context"><code class="docutils literal notranslate"><span class="pre">get_vep_context()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.vep_or_lookup_vep"><code class="docutils literal notranslate"><span class="pre">vep_or_lookup_vep()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.get_most_severe_consequence_expr"><code class="docutils literal notranslate"><span class="pre">get_most_severe_consequence_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.add_most_severe_consequence_to_consequence"><code class="docutils literal notranslate"><span class="pre">add_most_severe_consequence_to_consequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.process_consequences"><code class="docutils literal notranslate"><span class="pre">process_consequences()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_canonical_transcripts"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_canonical_transcripts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_mane_select_transcripts"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_mane_select_transcripts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_synonymous_variants"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_synonymous_variants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_gene_list"><code class="docutils literal notranslate"><span class="pre">filter_vep_to_gene_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.vep_struct_to_csq"><code class="docutils literal notranslate"><span class="pre">vep_struct_to_csq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.get_most_severe_consequence_for_summary"><code class="docutils literal notranslate"><span class="pre">get_most_severe_consequence_for_summary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_transcript_csqs"><code class="docutils literal notranslate"><span class="pre">filter_vep_transcript_csqs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.filter_vep_transcript_csqs_expr"><code class="docutils literal notranslate"><span class="pre">filter_vep_transcript_csqs_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root"><code class="docutils literal notranslate"><span class="pre">add_most_severe_csq_to_tc_within_vep_root()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.vep.explode_by_vep_annotation"><code class="docutils literal notranslate"><span class="pre">explode_by_vep_annotation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.vep</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/vep.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-vep">
+<h1>gnomad.utils.vep<a class="headerlink" href="#gnomad-utils-vep" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.CURRENT_VEP_VERSION" title="gnomad.utils.vep.CURRENT_VEP_VERSION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.CURRENT_VEP_VERSION</span></code></a></p></td>
+<td><p>Versions of VEP used in gnomAD data, the latest version is 105.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.CSQ_CODING" title="gnomad.utils.vep.CSQ_CODING"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.CSQ_CODING</span></code></a></p></td>
+<td><p>Constant containing all coding consequences.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.CSQ_SPLICE" title="gnomad.utils.vep.CSQ_SPLICE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.CSQ_SPLICE</span></code></a></p></td>
+<td><p>Constant containing all splice consequences.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.POSSIBLE_REFS" title="gnomad.utils.vep.POSSIBLE_REFS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.POSSIBLE_REFS</span></code></a></p></td>
+<td><p>Constant containing supported references</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.VEP_CONFIG_PATH" title="gnomad.utils.vep.VEP_CONFIG_PATH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.VEP_CONFIG_PATH</span></code></a></p></td>
+<td><p>Constant that contains the local path to the VEP config file</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.VEP_CSQ_FIELDS" title="gnomad.utils.vep.VEP_CSQ_FIELDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.VEP_CSQ_FIELDS</span></code></a></p></td>
+<td><p>Constant that defines the order of VEP annotations used in VCF export, currently stored in a dictionary with the VEP version as the key.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.VEP_CSQ_HEADER" title="gnomad.utils.vep.VEP_CSQ_HEADER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.VEP_CSQ_HEADER</span></code></a></p></td>
+<td><p>Constant that contains description for VEP used in VCF export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.LOFTEE_LABELS" title="gnomad.utils.vep.LOFTEE_LABELS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.LOFTEE_LABELS</span></code></a></p></td>
+<td><p>Constant that contains annotations added by LOFTEE.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.LOF_CSQ_SET" title="gnomad.utils.vep.LOF_CSQ_SET"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.LOF_CSQ_SET</span></code></a></p></td>
+<td><p>Set containing loss-of-function consequence strings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.get_vep_help" title="gnomad.utils.vep.get_vep_help"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.get_vep_help</span></code></a>([vep_config_path])</p></td>
+<td><p>Return the output of vep --help which includes the VEP version.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.get_vep_context" title="gnomad.utils.vep.get_vep_context"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.get_vep_context</span></code></a>([ref])</p></td>
+<td><p>Get VEP context resource for the genome build <cite>ref</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.vep_or_lookup_vep" title="gnomad.utils.vep.vep_or_lookup_vep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.vep_or_lookup_vep</span></code></a>(ht[, ...])</p></td>
+<td><p>VEP a table, or lookup variants in a reference database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.get_most_severe_consequence_expr" title="gnomad.utils.vep.get_most_severe_consequence_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.get_most_severe_consequence_expr</span></code></a>(...)</p></td>
+<td><p>Get the most severe consequence from a collection of consequences.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.add_most_severe_consequence_to_consequence" title="gnomad.utils.vep.add_most_severe_consequence_to_consequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.add_most_severe_consequence_to_consequence</span></code></a>(tc)</p></td>
+<td><p>Add a <cite>most_severe_consequence</cite> field to a transcript consequence or array of transcript consequences.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.process_consequences" title="gnomad.utils.vep.process_consequences"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.process_consequences</span></code></a>(t[, ...])</p></td>
+<td><p>Add most_severe_consequence into [vep_root].transcript_consequences, and worst_csq_by_gene, any_lof into [vep_root].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_canonical_transcripts" title="gnomad.utils.vep.filter_vep_to_canonical_transcripts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_to_canonical_transcripts</span></code></a>(mt)</p></td>
+<td><p>Filter VEP transcript consequences to those in the canonical transcript.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_mane_select_transcripts" title="gnomad.utils.vep.filter_vep_to_mane_select_transcripts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_to_mane_select_transcripts</span></code></a>(mt)</p></td>
+<td><p>Filter VEP transcript consequences to those in the MANE Select transcript.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_synonymous_variants" title="gnomad.utils.vep.filter_vep_to_synonymous_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_to_synonymous_variants</span></code></a>(mt)</p></td>
+<td><p>Filter VEP transcript consequences to those with a most severe consequence of 'synonymous_variant'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_to_gene_list" title="gnomad.utils.vep.filter_vep_to_gene_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_to_gene_list</span></code></a>(t, ...)</p></td>
+<td><p>Filter VEP transcript consequences to those in a set of genes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.vep_struct_to_csq" title="gnomad.utils.vep.vep_struct_to_csq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.vep_struct_to_csq</span></code></a>(vep_expr)</p></td>
+<td><p>Given a VEP Struct, returns and array of VEP VCF CSQ strings (one per consequence in the struct).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.get_most_severe_consequence_for_summary" title="gnomad.utils.vep.get_most_severe_consequence_for_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.get_most_severe_consequence_for_summary</span></code></a>(ht)</p></td>
+<td><p>Prepare a hail Table for summary statistics generation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_transcript_csqs" title="gnomad.utils.vep.filter_vep_transcript_csqs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_transcript_csqs</span></code></a>(t)</p></td>
+<td><p>Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.filter_vep_transcript_csqs_expr" title="gnomad.utils.vep.filter_vep_transcript_csqs_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.filter_vep_transcript_csqs_expr</span></code></a>(...)</p></td>
+<td><p>Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root" title="gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root</span></code></a>(t)</p></td>
+<td><p>Add most_severe_consequence annotation to 'transcript_consequences' within the vep root annotation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.vep.explode_by_vep_annotation" title="gnomad.utils.vep.explode_by_vep_annotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.vep.explode_by_vep_annotation</span></code></a>(t)</p></td>
+<td><p>Explode the specified VEP annotation on the input Table/MatrixTable.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.vep"></span><dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.CURRENT_VEP_VERSION">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">CURRENT_VEP_VERSION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'105'</span></em><a class="headerlink" href="#gnomad.utils.vep.CURRENT_VEP_VERSION" title="Permalink to this definition"></a></dt>
+<dd><p>Versions of VEP used in gnomAD data, the latest version is 105.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.CSQ_CODING">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">CSQ_CODING</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['transcript_ablation',</span> <span class="pre">'splice_acceptor_variant',</span> <span class="pre">'splice_donor_variant',</span> <span class="pre">'stop_gained',</span> <span class="pre">'frameshift_variant',</span> <span class="pre">'stop_lost',</span> <span class="pre">'start_lost',</span> <span class="pre">'initiator_codon_variant',</span> <span class="pre">'transcript_amplification',</span> <span class="pre">'inframe_insertion',</span> <span class="pre">'inframe_deletion',</span> <span class="pre">'missense_variant',</span> <span class="pre">'protein_altering_variant',</span> <span class="pre">'splice_donor_5th_base_variant',</span> <span class="pre">'splice_region_variant',</span> <span class="pre">'splice_donor_region_variant',</span> <span class="pre">'splice_polypyrimidine_tract_variant',</span> <span class="pre">'incomplete_terminal_codon_variant',</span> <span class="pre">'start_retained_variant',</span> <span class="pre">'stop_retained_variant',</span> <span class="pre">'synonymous_variant',</span> <span class="pre">'coding_sequence_variant',</span> <span class="pre">'coding_transcript_variant']</span></em><a class="headerlink" href="#gnomad.utils.vep.CSQ_CODING" title="Permalink to this definition"></a></dt>
+<dd><p>Constant containing all coding consequences.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.CSQ_SPLICE">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">CSQ_SPLICE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['splice_acceptor_variant',</span> <span class="pre">'splice_donor_variant',</span> <span class="pre">'splice_region_variant']</span></em><a class="headerlink" href="#gnomad.utils.vep.CSQ_SPLICE" title="Permalink to this definition"></a></dt>
+<dd><p>Constant containing all splice consequences.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.POSSIBLE_REFS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">POSSIBLE_REFS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('GRCh37',</span> <span class="pre">'GRCh38')</span></em><a class="headerlink" href="#gnomad.utils.vep.POSSIBLE_REFS" title="Permalink to this definition"></a></dt>
+<dd><p>Constant containing supported references</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.VEP_CONFIG_PATH">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">VEP_CONFIG_PATH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'file:///vep_data/vep-gcloud.json'</span></em><a class="headerlink" href="#gnomad.utils.vep.VEP_CONFIG_PATH" title="Permalink to this definition"></a></dt>
+<dd><p>Constant that contains the local path to the VEP config file</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.VEP_CSQ_FIELDS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">VEP_CSQ_FIELDS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'101':</span> <span class="pre">'Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|VARIANT_CLASS|MINIMISED|SYMBOL_SOURCE|HGNC_ID|CANONICAL|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|GENE_PHENO|SIFT|PolyPhen|DOMAINS|HGVS_OFFSET|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|LoF|LoF_filter|LoF_flags|LoF_info',</span> <span class="pre">'105':</span> <span class="pre">'Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE_SELECT|MANE_PLUS_CLINICAL|TSL|APPRIS|CCDS|ENSP|UNIPROT_ISOFORM|SOURCE|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|TRANSCRIPTION_FACTORS|LoF|LoF_filter|LoF_flags|LoF_info'}</span></em><a class="headerlink" href="#gnomad.utils.vep.VEP_CSQ_FIELDS" title="Permalink to this definition"></a></dt>
+<dd><p>Constant that defines the order of VEP annotations used in VCF export, currently stored in a dictionary with the VEP version as the key.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.VEP_CSQ_HEADER">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">VEP_CSQ_HEADER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Consequence</span> <span class="pre">annotations</span> <span class="pre">from</span> <span class="pre">Ensembl</span> <span class="pre">VEP.</span> <span class="pre">Format:</span> <span class="pre">Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE_SELECT|MANE_PLUS_CLINICAL|TSL|APPRIS|CCDS|ENSP|UNIPROT_ISOFORM|SOURCE|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|TRANSCRIPTION_FACTORS|LoF|LoF_filter|LoF_flags|LoF_info'</span></em><a class="headerlink" href="#gnomad.utils.vep.VEP_CSQ_HEADER" title="Permalink to this definition"></a></dt>
+<dd><p>Constant that contains description for VEP used in VCF export.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.LOFTEE_LABELS">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">LOFTEE_LABELS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['HC',</span> <span class="pre">'LC',</span> <span class="pre">'OS']</span></em><a class="headerlink" href="#gnomad.utils.vep.LOFTEE_LABELS" title="Permalink to this definition"></a></dt>
+<dd><p>Constant that contains annotations added by LOFTEE.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.vep.LOF_CSQ_SET">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">LOF_CSQ_SET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'frameshift_variant',</span> <span class="pre">'splice_acceptor_variant',</span> <span class="pre">'splice_donor_variant',</span> <span class="pre">'stop_gained'}</span></em><a class="headerlink" href="#gnomad.utils.vep.LOF_CSQ_SET" title="Permalink to this definition"></a></dt>
+<dd><p>Set containing loss-of-function consequence strings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.get_vep_help">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">get_vep_help</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vep_config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#get_vep_help"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.get_vep_help" title="Permalink to this definition"></a></dt>
+<dd><p>Return the output of vep –help which includes the VEP version.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If no <cite>vep_config_path</cite> is supplied, this function will only work for Dataproc clusters
+created with <cite>hailctl dataproc start –vep</cite>. It assumes that the command is <cite>/path/to/vep</cite>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vep_config_path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional path to use as the VEP config file. If None, <cite>VEP_CONFIG_URI</cite> environment variable is used</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VEP help string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.get_vep_context">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">get_vep_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#get_vep_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.get_vep_context" title="Permalink to this definition"></a></dt>
+<dd><p>Get VEP context resource for the genome build <cite>ref</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ref</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Genome build. If None, <cite>hl.default_reference</cite> is used</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../resources/resource_utils.html#gnomad.resources.resource_utils.VersionedTableResource" title="gnomad.resources.resource_utils.VersionedTableResource"><code class="xref py py-class docutils literal notranslate"><span class="pre">VersionedTableResource</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VEPed context resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.vep_or_lookup_vep">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">vep_or_lookup_vep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_vep_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#vep_or_lookup_vep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.vep_or_lookup_vep" title="Permalink to this definition"></a></dt>
+<dd><p>VEP a table, or lookup variants in a reference database.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If <cite>reference_vep_ht</cite> is supplied, no check is performed to confirm <cite>reference_vep_ht</cite> was
+generated with the same version of VEP / VEP configuration as the VEP referenced in <cite>vep_config_path</cite>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> – Input Table</p></li>
+<li><p><strong>reference_vep_ht</strong> – A reference database with VEP annotations (must be in top-level <cite>vep</cite>)</p></li>
+<li><p><strong>reference</strong> – If reference_vep_ht is not specified, find a suitable one in reference (if None, grabs from hl.default_reference)</p></li>
+<li><p><strong>vep_config_path</strong> – vep_config to pass to hl.vep (if None, a suitable one for <cite>reference</cite> is chosen)</p></li>
+<li><p><strong>vep_version</strong> – Version of VEPed context Table to use (if None, the default <cite>vep_context</cite> resource will be used)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VEPed Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.get_most_severe_consequence_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">get_most_severe_consequence_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csq_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#get_most_severe_consequence_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.get_most_severe_consequence_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Get the most severe consequence from a collection of consequences.</p>
+<p>This is for a given transcript, as there are often multiple annotations for a single
+transcript: e.g. splice_region_variant&amp;intron_variant -&gt; splice_region_variant</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of consequences.</p></li>
+<li><p><strong>csq_order</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list indicating the order of VEP consequences, sorted
+from high to low impact. Default is None, which uses the value of the
+<cite>CSQ_ORDER</cite> global.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Most severe consequence in <cite>csq_expr</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.add_most_severe_consequence_to_consequence">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">add_most_severe_consequence_to_consequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">most_severe_csq_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'most_severe_consequence'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#add_most_severe_consequence_to_consequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.add_most_severe_consequence_to_consequence" title="Permalink to this definition"></a></dt>
+<dd><p>Add a <cite>most_severe_consequence</cite> field to a transcript consequence or array of transcript consequences.</p>
+<p>For a single transcript consequence, <cite>tc</cite> should be a StructExpression with a
+<cite>consequence_terms</cite> field, e.g. Struct(consequence_terms=[‘missense_variant’]).
+For an array of transcript consequences, <cite>tc</cite> should be an ArrayExpression of
+StructExpressions with a <cite>consequence_terms</cite> field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tc</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – Transcript consequence or array of transcript consequences to annotate.</p></li>
+<li><p><strong>csq_order</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list indicating the order of VEP consequences, sorted
+from high to low impact. Default is None, which uses the value of the
+<cite>CSQ_ORDER</cite> global.</p></li>
+<li><p><strong>most_severe_csq_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Field name to use for most severe consequence. Default
+is ‘most_severe_consequence’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Transcript consequence or array of transcript consequences annotated with
+the most severe consequence.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.process_consequences">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">process_consequences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalize_flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_polyphen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#process_consequences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.process_consequences" title="Permalink to this definition"></a></dt>
+<dd><p>Add most_severe_consequence into [vep_root].transcript_consequences, and worst_csq_by_gene, any_lof into [vep_root].</p>
+<p><cite>most_severe_consequence</cite> is the worst consequence for a transcript.</p>
+<p>Each transcript consequence is annotated with a <cite>csq_score</cite> which is a combination
+of the index of the consequence’s <cite>most_severe_consequence</cite> in <cite>csq_order</cite> and an
+extra deduction for loss-of-function consequences, and polyphen predictions if
+<cite>has_polyphen</cite> is True. Lower scores translate to higher severity.</p>
+<dl class="simple">
+<dt>The score adjustment is as follows:</dt><dd><ul class="simple">
+<li><p>lof == ‘HC’ &amp; NO lof_flags (-1000 if penalize_flags, -500 if not)</p></li>
+<li><p>lof == ‘HC’ &amp; lof_flags (-500)</p></li>
+<li><p>lof == ‘OS’ (-20)</p></li>
+<li><p>lof == ‘LC’ (-10)</p></li>
+<li><p>everything else (0)</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>From gnomAD v4.0 on, the PolyPhen annotation was removed from the VEP Struct
+in the release HTs. When using this function with gnomAD v4.0 or later,
+set <cite>has_polyphen</cite> to False.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Root for VEP annotation (probably “vep”).</p></li>
+<li><p><strong>penalize_flags</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to penalize LOFTEE flagged variants, or treat them
+as equal to HC.</p></li>
+<li><p><strong>csq_order</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list indicating the order of VEP consequences, sorted
+from high to low impact. Default is None, which uses the value of the
+<cite>CSQ_ORDER</cite> global.</p></li>
+<li><p><strong>has_polyphen</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether the input VEP Struct has a PolyPhen annotation which
+will be used to modify the consequence score. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MT with better formatted consequences.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_to_canonical_transcripts">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_to_canonical_transcripts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_empty_csq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_to_canonical_transcripts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_to_canonical_transcripts" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences to those in the canonical transcript.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>filter_empty_csq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out rows where ‘transcript_consequences’ is empty. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with VEP transcript consequences filtered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_to_mane_select_transcripts">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_to_mane_select_transcripts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_empty_csq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_to_mane_select_transcripts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_to_mane_select_transcripts" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences to those in the MANE Select transcript.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>filter_empty_csq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out rows where ‘transcript_consequences’ is empty. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with VEP transcript consequences filtered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_to_synonymous_variants">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_to_synonymous_variants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_empty_csq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_to_synonymous_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_to_synonymous_variants" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences to those with a most severe consequence of ‘synonymous_variant’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>filter_empty_csq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out rows where ‘transcript_consequences’ is empty. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with VEP transcript consequences filtered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_to_gene_list">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_to_gene_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_by_gene_symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_empty_csq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_to_gene_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_to_gene_list" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences to those in a set of genes.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Filtering to a list of genes by their ‘gene_id’ or ‘gene_symbol’ will filter to
+all variants that are annotated to the gene, including
+[‘upstream_gene_variant’, ‘downstream_gene_variant’], which will not be the
+same as if you filter to a gene interval. If you only want variants inside
+certain gene boundaries and a faster filter, you can first filter <cite>t</cite> to an
+interval list and then apply this filter.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>genes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Genes of interest to filter VEP transcript consequences to.</p></li>
+<li><p><strong>match_by_gene_symbol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to match values in <cite>genes</cite> to VEP transcript
+consequences by ‘gene_symbol’ instead of ‘gene_id’. Default is False.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>filter_empty_csq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out rows where ‘transcript_consequences’
+is empty. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Table or MatrixTable with VEP transcript consequences filtered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.vep_struct_to_csq">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">vep_struct_to_csq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vep_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE_SELECT|MANE_PLUS_CLINICAL|TSL|APPRIS|CCDS|ENSP|UNIPROT_ISOFORM|SOURCE|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|TRANSCRIPTION_FACTORS|LoF|LoF_filter|LoF_flags|LoF_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_polyphen_sift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#vep_struct_to_csq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.vep_struct_to_csq" title="Permalink to this definition"></a></dt>
+<dd><p>Given a VEP Struct, returns and array of VEP VCF CSQ strings (one per consequence in the struct).</p>
+<p>The fields and their order will correspond to those passed in <cite>csq_fields</cite>, which corresponds to the
+VCF header that is required to interpret the VCF CSQ INFO field.</p>
+<p>Note that the order is flexible and that all fields that are in the default value are supported.
+These fields will be formatted in the same way that their VEP CSQ counterparts are.</p>
+<p>While other fields can be added if their name are the same as those in the struct. Their value will be the result of calling
+hl.str(), so it may differ from their usual VEP CSQ representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vep_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – The input VEP Struct</p></li>
+<li><p><strong>csq_fields</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The | delimited list of fields to include in the CSQ (in that order), default is the CSQ fields of the CURRENT_VEP_VERSION.</p></li>
+<li><p><strong>has_polyphen_sift</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether the input VEP Struct has PolyPhen and SIFT annotations. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The corresponding CSQ strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.get_most_severe_consequence_for_summary">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">get_most_severe_consequence_for_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['transcript_ablation',</span> <span class="pre">'splice_acceptor_variant',</span> <span class="pre">'splice_donor_variant',</span> <span class="pre">'stop_gained',</span> <span class="pre">'frameshift_variant',</span> <span class="pre">'stop_lost',</span> <span class="pre">'start_lost',</span> <span class="pre">'initiator_codon_variant',</span> <span class="pre">'transcript_amplification',</span> <span class="pre">'inframe_insertion',</span> <span class="pre">'inframe_deletion',</span> <span class="pre">'missense_variant',</span> <span class="pre">'protein_altering_variant',</span> <span class="pre">'splice_donor_5th_base_variant',</span> <span class="pre">'splice_region_variant',</span> <span class="pre">'splice_donor_region_variant',</span> <span class="pre">'splice_polypyrimidine_tract_variant',</span> <span class="pre">'incomplete_terminal_codon_variant',</span> <span class="pre">'start_retained_variant',</span> <span class="pre">'stop_retained_variant',</span> <span class="pre">'synonymous_variant',</span> <span class="pre">'coding_sequence_variant',</span> <span class="pre">'coding_transcript_variant',</span> <span class="pre">'mature_miRNA_variant',</span> <span class="pre">'5_prime_UTR_variant',</span> <span class="pre">'3_prime_UTR_variant',</span> <span class="pre">'non_coding_transcript_exon_variant',</span> <span class="pre">'non_coding_exon_variant',</span> <span class="pre">'intron_variant',</span> <span class="pre">'NMD_transcript_variant',</span> <span class="pre">'non_coding_transcript_variant',</span> <span class="pre">'nc_transcript_variant',</span> <span class="pre">'upstream_gene_variant',</span> <span class="pre">'downstream_gene_variant',</span> <span class="pre">'TFBS_ablation',</span> <span class="pre">'TFBS_amplification',</span> <span class="pre">'TF_binding_site_variant',</span> <span class="pre">'regulatory_region_ablation',</span> <span class="pre">'regulatory_region_amplification',</span> <span class="pre">'feature_elongation',</span> <span class="pre">'regulatory_region_variant',</span> <span class="pre">'feature_truncation',</span> <span class="pre">'intergenic_variant',</span> <span class="pre">'sequence_variant']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loftee_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['HC',</span> <span class="pre">'LC',</span> <span class="pre">'OS']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#get_most_severe_consequence_for_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.get_most_severe_consequence_for_summary" title="Permalink to this definition"></a></dt>
+<dd><p>Prepare a hail Table for summary statistics generation.</p>
+<dl class="simple">
+<dt>Adds the following annotations:</dt><dd><ul class="simple">
+<li><p>most_severe_csq: Most severe consequence for variant</p></li>
+<li><p>protein_coding: Whether the variant is present on a protein-coding transcript</p></li>
+<li><p>lof: Whether the variant is a loss-of-function variant</p></li>
+<li><p>no_lof_flags: Whether the variant has any LOFTEE flags (True if no flags)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Assumes input Table is annotated with VEP and that VEP annotations have been filtered to canonical transcripts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>csq_order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Order of VEP consequences, sorted from high to low impact. Default is CSQ_ORDER.</p></li>
+<li><p><strong>loftee_labels</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Annotations added by LOFTEE. Default is LOFTEE_LABELS.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table annotated with VEP summary annotations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_transcript_csqs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_transcript_csqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synonymous</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">canonical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensembl_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_empty_csq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_transcript_csqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_transcript_csqs" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</p>
+<p>If <cite>filter_empty_csq</cite> parameter is set to True, the Table/MatrixTable is filtered
+to variants where ‘transcript_consequences’ within the VEP annotation is not empty
+after the specified filtering criteria is applied.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default, the Table/MatrixTable is filtered to variants where
+‘transcript_consequences’ within the VEP annotation is not empty after filtering
+to Ensembl canonical transcripts with a most severe consequence of
+‘synonymous_variant’.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Root for VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>synonymous</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to variants where the most severe consequence
+is ‘synonymous_variant’. Default is True.</p></li>
+<li><p><strong>canonical</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only canonical transcripts. Default is True.</p></li>
+<li><p><strong>ensembl_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only Ensembl transcripts. This option is
+useful for deduplicating transcripts that are the same between RefSeq and
+Emsembl. Default is True.</p></li>
+<li><p><strong>filter_empty_csq</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter out rows where ‘transcript_consequences’
+is empty, after filtering ‘transcript_consequences’ to the specified criteria.
+Default is True.</p></li>
+<li><p><strong>kwargs</strong> – Filtering criteria to apply to the VEP transcript consequences using
+<cite>filter_vep_transcript_csqs_expr</cite>. See that function for more details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with VEP transcript consequences filtered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.filter_vep_transcript_csqs_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">filter_vep_transcript_csqs_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csq_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synonymous</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">canonical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mane_select</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensembl_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_coding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loftee_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_lof_flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_csqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_by_gene_symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_filtering_criteria</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#filter_vep_transcript_csqs_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.filter_vep_transcript_csqs_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Filter VEP transcript consequences based on specified criteria, and optionally filter to variants where transcript consequences is not empty after filtering.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <cite>csqs</cite> is not None or <cite>synonymous</cite> is True, and ‘most_severe_consequence’
+is not already annotated on the <cite>csq_expr</cite> elements, the most severe
+consequence will be added to the <cite>csq_expr</cite> for filtering.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csq_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – VEP transcript consequences StructExpression or ArrayExpression.</p></li>
+<li><p><strong>synonymous</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to variants where the most severe consequence
+is ‘synonymous_variant’. Default is False.</p></li>
+<li><p><strong>canonical</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only canonical transcripts. Default is False.</p></li>
+<li><p><strong>mane_select</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only MANE Select transcripts. Default is
+False.</p></li>
+<li><p><strong>ensembl_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only Ensembl transcripts. This option is
+useful for deduplicating transcripts that are the same between RefSeq and
+Emsembl. Default is False.</p></li>
+<li><p><strong>protein_coding</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only protein-coding transcripts.
+Default is False.</p></li>
+<li><p><strong>loftee_labels</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – List of LOFTEE labels to filter to. Default is None, which
+filters to all LOFTEE labels.</p></li>
+<li><p><strong>no_lof_flags</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to consequences with no LOFTEE flags.
+Default is False.</p></li>
+<li><p><strong>csqs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of consequence terms to filter to. Transcript
+consequences are filtered to those where ‘most_severe_consequence’ is in the
+list of consequence terms <cite>csqs</cite>. Default is None.</p></li>
+<li><p><strong>keep_csqs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to keep transcript consequences that are in <cite>csqs</cite>. If
+set to False, transcript consequences that are in <cite>csqs</cite> will be removed.
+Default is True.</p></li>
+<li><p><strong>genes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of genes to filter VEP transcript consequences to.
+Default is None.</p></li>
+<li><p><strong>keep_genes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to keep transcript consequences that are in <cite>genes</cite>. If
+set to False, transcript consequences that are in <cite>genes</cite> will be removed.
+Default is True.</p></li>
+<li><p><strong>match_by_gene_symbol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to match values in <cite>genes</cite> to VEP transcript
+consequences by ‘gene_symbol’ instead of ‘gene_id’. Default is False.</p></li>
+<li><p><strong>additional_filtering_criteria</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]]]) – Optional list of additional filtering
+criteria to apply to the VEP transcript consequences.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>BooleanExpression indicating whether the consequence should be filtered
+or an ArrayExpression of the filtered VEP transcript consequences.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">add_most_severe_csq_to_tc_within_vep_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#add_most_severe_csq_to_tc_within_vep_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.add_most_severe_csq_to_tc_within_vep_root" title="Permalink to this definition"></a></dt>
+<dd><p>Add most_severe_consequence annotation to ‘transcript_consequences’ within the vep root annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Root for vep annotation (probably vep).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with most_severe_consequence annotation added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.vep.explode_by_vep_annotation">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.vep.</span></span><span class="sig-name descname"><span class="pre">explode_by_vep_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transcript_consequences'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/vep.html#explode_by_vep_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.vep.explode_by_vep_annotation" title="Permalink to this definition"></a></dt>
+<dd><p>Explode the specified VEP annotation on the input Table/MatrixTable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>vep_annotation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of annotation in <cite>vep_root</cite> to explode.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for root VEP annotation. Default is ‘vep’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table or MatrixTable with exploded VEP annotation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="vcf.html" class="btn btn-neutral float-left" title="gnomad.utils.vcf" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../assessment/index.html" class="btn btn-neutral float-right" title="gnomad.assessment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

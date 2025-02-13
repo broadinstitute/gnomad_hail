@@ -1,0 +1,8 @@
+gnomad.utils.constraint
+=======================
+
+Script containing generic constraint functions that may be used in the constraint pipeline.
+
+.. gnomad_automodulesummary:: gnomad.utils.constraint
+
+.. automodule:: gnomad.utils.constraint

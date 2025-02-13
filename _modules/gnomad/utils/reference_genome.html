@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.reference_genome &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.reference_genome</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.reference_genome</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y %I:%M:%S %p&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_reference_ht"><a class="viewcode-back" href="../../../api_reference/utils/reference_genome.html#gnomad.utils.reference_genome.get_reference_ht">[docs]</a><span class="k">def</span> <span class="nf">get_reference_ht</span><span class="p">(</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">contigs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">excluded_intervals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">add_all_substitutions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_n</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a reference Table with locus and alleles (containing only the reference allele by default) from the given reference genome.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If the `contigs` argument is not provided, all contigs (including obscure ones) will be added to the table.</span>
+<span class="sd">        This can be slow as contigs are added one by one.</span>
+
+<span class="sd">    :param ref: Input reference genome</span>
+<span class="sd">    :param contigs: An optional list of contigs that the Table should include</span>
+<span class="sd">    :param excluded_intervals: An optional list of intervals to exclude</span>
+<span class="sd">    :param add_all_substitutions: If set, then all possible substitutions are added in the alleles array</span>
+<span class="sd">    :param filter_n: If set, bases where the reference is unknown (n) are filtered.</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ref</span><span class="o">.</span><span class="n">has_sequence</span><span class="p">():</span>
+        <span class="n">add_reference_sequence</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">contigs</span><span class="p">:</span>
+        <span class="n">contigs</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">contigs</span>
+
+    <span class="k">if</span> <span class="n">add_all_substitutions</span><span class="p">:</span>
+        <span class="n">SUBSTITUTIONS_TABLE</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">context</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">contigs</span><span class="p">:</span>
+        <span class="n">n_partitions</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">contig_length</span><span class="p">(</span><span class="n">contig</span><span class="p">)</span> <span class="o">/</span> <span class="mi">5000000</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Creating reference contig </span><span class="si">%s</span><span class="s2"> with </span><span class="si">%d</span><span class="s2"> partitions.&quot;</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">n_partitions</span>
+        <span class="p">)</span>
+        <span class="n">_context</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">range_table</span><span class="p">(</span>
+            <span class="n">ref</span><span class="o">.</span><span class="n">contig_length</span><span class="p">(</span><span class="n">contig</span><span class="p">),</span> <span class="n">n_partitions</span><span class="o">=</span><span class="n">n_partitions</span>
+        <span class="p">)</span>
+
+        <span class="n">locus_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">locus</span><span class="p">(</span><span class="n">contig</span><span class="o">=</span><span class="n">contig</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">_context</span><span class="o">.</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">ref</span><span class="p">)</span>
+        <span class="n">ref_allele_expr</span> <span class="o">=</span> <span class="n">locus_expr</span><span class="o">.</span><span class="n">sequence_context</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">add_all_substitutions</span><span class="p">:</span>
+            <span class="n">alleles_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ref_allele_expr</span><span class="p">])</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">SUBSTITUTIONS_TABLE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_allele_expr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_array</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">alleles_expr</span> <span class="o">=</span> <span class="p">[</span><span class="n">ref_allele_expr</span><span class="p">]</span>
+
+        <span class="n">_context</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_context</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">locus</span><span class="o">=</span><span class="n">locus_expr</span><span class="p">,</span> <span class="n">alleles</span><span class="o">=</span><span class="n">alleles_expr</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="s2">&quot;locus&quot;</span><span class="p">,</span> <span class="s2">&quot;alleles&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">excluded_intervals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_context</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span><span class="n">_context</span><span class="p">,</span> <span class="n">excluded_intervals</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">filter_n</span><span class="p">:</span>
+            <span class="n">_context</span> <span class="o">=</span> <span class="n">_context</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_context</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">context</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_context</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="n">context</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_reference_sequence"><a class="viewcode-back" href="../../../api_reference/utils/reference_genome.html#gnomad.utils.reference_genome.add_reference_sequence">[docs]</a><span class="k">def</span> <span class="nf">add_reference_sequence</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add the fasta sequence to a Hail reference genome.</span>
+
+<span class="sd">    Only GRCh37 and GRCh38 references are supported.</span>
+
+<span class="sd">    :param ref: Input reference genome.</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ref</span><span class="o">.</span><span class="n">has_sequence</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">ref</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+            <span class="n">ref</span><span class="o">.</span><span class="n">add_sequence</span><span class="p">(</span>
+                <span class="s2">&quot;gs://hail-common/references/Homo_sapiens_assembly38.fasta.gz&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gs://hail-common/references/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ref</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">:</span>
+            <span class="n">ref</span><span class="o">.</span><span class="n">add_sequence</span><span class="p">(</span>
+                <span class="s2">&quot;gs://hail-common/references/human_g1k_v37.fasta.gz&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gs://hail-common/references/human_g1k_v37.fasta.fai&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;No known location for the fasta/fai files for genome </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">. Only&quot;</span>
+                <span class="s2">&quot; GRCh37 and GRCh38 are supported at this time.&quot;</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Reference genome sequence already present. Ignoring&quot;</span>
+            <span class="s2">&quot; add_reference_sequence.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ref</span></div>
+
+
+<div class="viewcode-block" id="get_reference_genome"><a class="viewcode-back" href="../../../api_reference/utils/reference_genome.html#gnomad.utils.reference_genome.get_reference_genome">[docs]</a><span class="k">def</span> <span class="nf">get_reference_genome</span><span class="p">(</span>
+    <span class="n">locus</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">],</span>
+    <span class="n">add_sequence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">ReferenceGenome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the reference genome associated with the input Locus expression.</span>
+
+<span class="sd">    :param locus: Input locus</span>
+<span class="sd">    :param add_sequence: If set, the fasta sequence is added to the reference genome</span>
+<span class="sd">    :return: Reference genome</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">locus</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">):</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">locus</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">reference_genome</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">locus</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">)</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">locus</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">point_type</span><span class="o">.</span><span class="n">reference_genome</span>
+    <span class="k">if</span> <span class="n">add_sequence</span><span class="p">:</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">add_reference_sequence</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ref</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

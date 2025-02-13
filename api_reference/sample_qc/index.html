@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.sample_qc &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.sample_qc.ancestry" href="ancestry.html" />
+    <link rel="prev" title="gnomad" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">sample_qc</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ancestry.html">ancestry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">platform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relatedness.html">relatedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sex.html">sex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+      <li class="breadcrumb-item active">gnomad.sample_qc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/sample_qc/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-sample-qc">
+<h1>gnomad.sample_qc<a class="headerlink" href="#gnomad-sample-qc" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ancestry.html">ancestry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.pc_project"><code class="docutils literal notranslate"><span class="pre">pc_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.apply_onnx_classification_model"><code class="docutils literal notranslate"><span class="pre">apply_onnx_classification_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.apply_sklearn_classification_model"><code class="docutils literal notranslate"><span class="pre">apply_sklearn_classification_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.convert_sklearn_rf_to_onnx"><code class="docutils literal notranslate"><span class="pre">convert_sklearn_rf_to_onnx()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.assign_population_pcs"><code class="docutils literal notranslate"><span class="pre">assign_population_pcs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ancestry.html#gnomad.sample_qc.ancestry.run_pca_with_relateds"><code class="docutils literal notranslate"><span class="pre">run_pca_with_relateds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.sample_qc.filtering.compute_qc_metrics_residuals"><code class="docutils literal notranslate"><span class="pre">compute_qc_metrics_residuals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.sample_qc.filtering.compute_stratified_metrics_filter"><code class="docutils literal notranslate"><span class="pre">compute_stratified_metrics_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.sample_qc.filtering.compute_stratified_sample_qc"><code class="docutils literal notranslate"><span class="pre">compute_stratified_sample_qc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.sample_qc.filtering.merge_sample_qc_expr"><code class="docutils literal notranslate"><span class="pre">merge_sample_qc_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#gnomad.sample_qc.filtering.determine_nearest_neighbors"><code class="docutils literal notranslate"><span class="pre">determine_nearest_neighbors()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#gnomad.sample_qc.pipeline.filter_rows_for_qc"><code class="docutils literal notranslate"><span class="pre">filter_rows_for_qc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#gnomad.sample_qc.pipeline.get_qc_mt"><code class="docutils literal notranslate"><span class="pre">get_qc_mt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#gnomad.sample_qc.pipeline.infer_sex_karyotype"><code class="docutils literal notranslate"><span class="pre">infer_sex_karyotype()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#gnomad.sample_qc.pipeline.annotate_sex"><code class="docutils literal notranslate"><span class="pre">annotate_sex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="platform.html">platform</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="platform.html#gnomad.sample_qc.platform.compute_callrate_mt"><code class="docutils literal notranslate"><span class="pre">compute_callrate_mt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="platform.html#gnomad.sample_qc.platform.run_platform_pca"><code class="docutils literal notranslate"><span class="pre">run_platform_pca()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="platform.html#gnomad.sample_qc.platform.assign_platform_from_pcs"><code class="docutils literal notranslate"><span class="pre">assign_platform_from_pcs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="relatedness.html">relatedness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.UNRELATED"><code class="docutils literal notranslate"><span class="pre">UNRELATED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.SECOND_DEGREE_RELATIVES"><code class="docutils literal notranslate"><span class="pre">SECOND_DEGREE_RELATIVES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.PARENT_CHILD"><code class="docutils literal notranslate"><span class="pre">PARENT_CHILD</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.SIBLINGS"><code class="docutils literal notranslate"><span class="pre">SIBLINGS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.DUPLICATE_OR_TWINS"><code class="docutils literal notranslate"><span class="pre">DUPLICATE_OR_TWINS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.AMBIGUOUS_RELATIONSHIP"><code class="docutils literal notranslate"><span class="pre">AMBIGUOUS_RELATIONSHIP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.get_duplicated_samples"><code class="docutils literal notranslate"><span class="pre">get_duplicated_samples()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.get_duplicated_samples_ht"><code class="docutils literal notranslate"><span class="pre">get_duplicated_samples_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.explode_duplicate_samples_ht"><code class="docutils literal notranslate"><span class="pre">explode_duplicate_samples_ht()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.get_relationship_expr"><code class="docutils literal notranslate"><span class="pre">get_relationship_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.get_slope_int_relationship_expr"><code class="docutils literal notranslate"><span class="pre">get_slope_int_relationship_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.infer_families"><code class="docutils literal notranslate"><span class="pre">infer_families()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.create_fake_pedigree"><code class="docutils literal notranslate"><span class="pre">create_fake_pedigree()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.compute_related_samples_to_drop"><code class="docutils literal notranslate"><span class="pre">compute_related_samples_to_drop()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.filter_to_trios"><code class="docutils literal notranslate"><span class="pre">filter_to_trios()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.generate_trio_stats_expr"><code class="docutils literal notranslate"><span class="pre">generate_trio_stats_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.generate_sib_stats_expr"><code class="docutils literal notranslate"><span class="pre">generate_sib_stats_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.calculate_de_novo_post_prob"><code class="docutils literal notranslate"><span class="pre">calculate_de_novo_post_prob()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="relatedness.html#gnomad.sample_qc.relatedness.default_get_de_novo_expr"><code class="docutils literal notranslate"><span class="pre">default_get_de_novo_expr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sex.html">sex</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.adjusted_sex_ploidy_expr"><code class="docutils literal notranslate"><span class="pre">adjusted_sex_ploidy_expr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.adjust_sex_ploidy"><code class="docutils literal notranslate"><span class="pre">adjust_sex_ploidy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.gaussian_mixture_model_karyotype_assignment"><code class="docutils literal notranslate"><span class="pre">gaussian_mixture_model_karyotype_assignment()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.get_ploidy_cutoffs"><code class="docutils literal notranslate"><span class="pre">get_ploidy_cutoffs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.get_chr_x_hom_alt_cutoffs"><code class="docutils literal notranslate"><span class="pre">get_chr_x_hom_alt_cutoffs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sex.html#gnomad.sample_qc.sex.get_sex_expr"><code class="docutils literal notranslate"><span class="pre">get_sex_expr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="gnomad" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ancestry.html" class="btn btn-neutral float-right" title="gnomad.sample_qc.ancestry" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

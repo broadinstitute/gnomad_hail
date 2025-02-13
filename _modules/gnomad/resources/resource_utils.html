@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.resources.resource_utils &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.resources.resource_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.resources.resource_utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span><span class="p">,</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+<span class="kn">from</span> <span class="nn">hail.linalg</span> <span class="kn">import</span> <span class="n">BlockMatrix</span>
+
+<span class="kn">from</span> <span class="nn">gnomad.resources.config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GnomadPublicResourceSource</span><span class="p">,</span>
+    <span class="n">gnomad_public_resource_configuration</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gnomad.resources&quot;</span><span class="p">)</span>
+
+
+<span class="n">GNOMAD_PUBLIC_BUCKETS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;gnomad-public&quot;</span><span class="p">,</span> <span class="s2">&quot;gnomad-public-requester-pays&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Public buckets used to stage gnomAD data.</span>
+
+<span class="sd">`gnomad-public` is a legacy bucket and contains one readme text file.</span>
+
+<span class="sd">The gnomAD Production Team writes output data to `gnomad-public-requester-pays`, and all data in this bucket</span>
+<span class="sd">syncs to the public bucket `gcp-public-data--gnomad`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Resource classes</span>
+
+
+<div class="viewcode-block" id="BaseResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BaseResource">[docs]</a><span class="k">class</span> <span class="nc">BaseResource</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic abstract resource class.</span>
+
+<span class="sd">    :param path: The resource path</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of (e.g. .vcf path for an imported VCF)</span>
+<span class="sd">    :param import_func: A function used to import the resource. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Expected file extensions for this resource type. If path doesn&#39;t end with one of these, a warning is logged.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">import_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">import_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">import_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires at least one of path or&quot;</span>
+                <span class="s2">&quot; import_func arguments.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_args</span> <span class="o">=</span> <span class="n">import_args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span> <span class="o">=</span> <span class="n">import_func</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_file_extensions</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_file_extensions</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Created the following </span><span class="si">%s</span><span class="s2"> with a path that doesn&#39;t end with </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot; or &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_file_extensions</span><span class="p">),</span>
+                <span class="bp">self</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">attr_str</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;path=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attr_str</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;import_args=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(</span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attr_str</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span>
+
+    <span class="k">def</span> <span class="nf">_set_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">path</span>  <span class="c1"># pylint: disable=attribute-defined-outside-init</span>
+
+    <span class="c1"># Defining path property this way instead of using a decorator allows _get_path and _set_path</span>
+    <span class="c1"># to be overridden in subclasses without having to reconfigure the property.</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
+        <span class="n">fget</span><span class="o">=</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(),</span>
+        <span class="n">fset</span><span class="o">=</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_path</span><span class="p">(</span><span class="n">path</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BaseResource.import_resource">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to import the resource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If ``True``, overwrite an existing file at the destination.</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to the underlying hail write function (acceptable parameters depend on specific resource types)</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="TableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.TableResource">[docs]</a><span class="k">class</span> <span class="nc">TableResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Hail Table resource.</span>
+
+<span class="sd">    :param path: The Table path (typically ending in .ht)</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</span>
+<span class="sd">    :param import_func: A function used to import the Table. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.ht&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TableResource.ht"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.TableResource.ht">[docs]</a>    <span class="k">def</span> <span class="nf">ht</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">force_import</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">read_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and return the Hail Table resource.</span>
+
+<span class="sd">        :param force_import: If ``True``, force the import of the resource even if it</span>
+<span class="sd">            already exists.</span>
+<span class="sd">        :param read_args: Any additional arguments to pass to hl.read_table.</span>
+<span class="sd">        :return: Hail Table resource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">force_import</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">read_args</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="TableResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.TableResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the TableResource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If ``True``, overwrite an existing file at the destination.</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to hl.Table.write</span>
+<span class="sd">        :return: Nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MatrixTableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.MatrixTableResource">[docs]</a><span class="k">class</span> <span class="nc">MatrixTableResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Hail MatrixTable resource.</span>
+
+<span class="sd">    :param path: The MatrixTable path (typically ending in .mt)</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</span>
+<span class="sd">    :param import_func: A function used to import the MatrixTable. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.mt&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MatrixTableResource.mt"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.MatrixTableResource.mt">[docs]</a>    <span class="k">def</span> <span class="nf">mt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">force_import</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">read_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and return the Hail MatrixTable resource.</span>
+
+<span class="sd">        :param force_import: If ``True``, force the import of the resource even if it</span>
+<span class="sd">            already exists.</span>
+<span class="sd">        :param read_args: Any additional arguments to pass to hl.read_matrix_table.</span>
+<span class="sd">        :return: Hail MatrixTable resource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">force_import</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">read_matrix_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">read_args</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="MatrixTableResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.MatrixTableResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the MatrixTable resource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If set, existing file(s) will be overwritten</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to hl.MatrixTable.write</span>
+<span class="sd">        :return: Nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="VariantDatasetResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VariantDatasetResource">[docs]</a><span class="k">class</span> <span class="nc">VariantDatasetResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Hail VariantDataset resource.</span>
+
+<span class="sd">    :param path: The VariantDataset path (typically ending in .vds)</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</span>
+<span class="sd">    :param import_func: A function used to import the VariantDataset. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.vds&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="VariantDatasetResource.vds"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VariantDatasetResource.vds">[docs]</a>    <span class="k">def</span> <span class="nf">vds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">force_import</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">read_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and return the Hail VariantDataset resource.</span>
+
+<span class="sd">        :param force_import: If ``True``, force the import of the resource even if it</span>
+<span class="sd">            already exists.</span>
+<span class="sd">        :param read_args: Any additional arguments to pass to hl.vds.read_vds.</span>
+<span class="sd">        :return: Hail VariantDataset resource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">force_import</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">read_vds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">read_args</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="VariantDatasetResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VariantDatasetResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the VariantDataset resource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If set, existing file(s) will be overwritten</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to hl.vds.VariantDataset.write</span>
+<span class="sd">        :return: Nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PedigreeResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.PedigreeResource">[docs]</a><span class="k">class</span> <span class="nc">PedigreeResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A pedigree resource.</span>
+
+<span class="sd">    :param path: The Pedigree path (typically ending in .fam or .ped)</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of and/or passed to the import_func (e.g. .vcf path for an imported VCF)</span>
+<span class="sd">    :param import_func: A function used to import the Pedigree. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    :param quant_pheno: If ``True``, phenotype is interpreted as quantitative.</span>
+<span class="sd">    :param delimiter: Field delimiter regex.</span>
+<span class="sd">    :param missing: The string used to denote missing values. For case-control, 0, -9, and non-numeric are also treated as missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.fam&quot;</span><span class="p">,</span> <span class="s2">&quot;.ped&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">import_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">import_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Pedigree</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">quant_pheno</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">s+&quot;</span><span class="p">,</span>
+        <span class="n">missing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;NA&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">import_args</span><span class="o">=</span><span class="n">import_args</span><span class="p">,</span>
+            <span class="n">import_func</span><span class="o">=</span><span class="n">import_func</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quant_pheno</span> <span class="o">=</span> <span class="n">quant_pheno</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delimiter</span> <span class="o">=</span> <span class="n">delimiter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing</span> <span class="o">=</span> <span class="n">missing</span>
+
+<div class="viewcode-block" id="PedigreeResource.ht"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.PedigreeResource.ht">[docs]</a>    <span class="k">def</span> <span class="nf">ht</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the pedigree into a family HT using hl.import_fam().</span>
+
+<span class="sd">        :return: Family table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_fam</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">quant_pheno</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quant_pheno</span><span class="p">,</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delimiter</span><span class="p">,</span>
+            <span class="n">missing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="PedigreeResource.pedigree"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.PedigreeResource.pedigree">[docs]</a>    <span class="k">def</span> <span class="nf">pedigree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Pedigree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the pedigree into an hl.Pedigree using hl.Pedigree.read().</span>
+
+<span class="sd">        :param delimiter: Delimiter used in the ped file</span>
+<span class="sd">        :return: pedigree</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">Pedigree</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delimiter</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PedigreeResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.PedigreeResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the Pedigree resource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If set, existing file(s) will be overwritten. IMPORTANT: Currently there is no implementation of this method when `overwrite` is set the `False`</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to hl.Pedigree.write</span>
+<span class="sd">        :return: Nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BlockMatrixResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BlockMatrixResource">[docs]</a><span class="k">class</span> <span class="nc">BlockMatrixResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Hail BlockMatrix resource.</span>
+
+<span class="sd">    :param path: The BlockMatrix path (typically ending in .bm)</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be kept track of and/or passed to the import_func.</span>
+<span class="sd">    :param import_func: A function used to import the BlockMatrix. `import_func` will be passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.bm&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BlockMatrixResource.bm"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BlockMatrixResource.bm">[docs]</a>    <span class="k">def</span> <span class="nf">bm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockMatrix</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and return the Hail MatrixTable resource.</span>
+
+<span class="sd">        :param read_args: Any additional arguments to pass to BlockMatrix.read.</span>
+<span class="sd">        :return: Hail MatrixTable resource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">BlockMatrix</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">read_args</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="BlockMatrixResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BlockMatrixResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the BlockMatrixResource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If ``True``, overwrite an existing file at the destination.</span>
+<span class="sd">        :param kwargs: Any additional parameters to be passed to BlockMatrix.write</span>
+<span class="sd">        :return: Nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ExpressionResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.ExpressionResource">[docs]</a><span class="k">class</span> <span class="nc">ExpressionResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Hail Expression resource.</span>
+
+<span class="sd">    :param path: The Expression path (typically ending in .he).</span>
+<span class="sd">    :param import_args: Any sources that are required for the import and need to be</span>
+<span class="sd">        kept track of and/or passed to the import_func (e.g. .vcf path for an imported</span>
+<span class="sd">        VCF).</span>
+<span class="sd">    :param import_func: A function used to import the Expression. `import_func` will be</span>
+<span class="sd">        passed the `import_args` dictionary as kwargs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_file_extensions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.he&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ExpressionResource.he"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.ExpressionResource.he">[docs]</a>    <span class="k">def</span> <span class="nf">he</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">force_import</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">read_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and return the Hail Expression resource.</span>
+
+<span class="sd">        :param force_import: If ``True``, force the import of the resource even if it</span>
+<span class="sd">            already exists.</span>
+<span class="sd">        :param read_args: Any additional arguments to pass to hl.experimental.read_expression.</span>
+<span class="sd">        :return: Hail Expression resource.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">force_import</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">experimental</span><span class="o">.</span><span class="n">read_expression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">read_args</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="ExpressionResource.import_resource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.ExpressionResource.import_resource">[docs]</a>    <span class="k">def</span> <span class="nf">import_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Import the Expression resource using its import_func and writes it in its path.</span>
+
+<span class="sd">        :param overwrite: If set, existing file(s) will be overwritten.</span>
+<span class="sd">        :param kwargs: Any other parameters to be passed to hl.experimental.</span>
+<span class="sd">            write_expression.</span>
+<span class="sd">        :return: Nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_func</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">import_args</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BaseVersionedResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.BaseVersionedResource">[docs]</a><span class="k">class</span> <span class="nc">BaseVersionedResource</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for a versioned resource.</span>
+
+<span class="sd">    The attributes and methods of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+
+<span class="sd">    :param default_version: The default version of this resource (must be in the `versions` dict)</span>
+<span class="sd">    :param versions: A dict of version name -&gt; resource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">BaseResource</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;default_version&quot;</span><span class="p">,</span> <span class="s2">&quot;versions&quot;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseResource</span><span class="p">]):</span>
+        <span class="n">default_resource</span> <span class="o">=</span> <span class="n">versions</span><span class="p">[</span><span class="n">default_version</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">version_resource</span> <span class="ow">in</span> <span class="n">versions</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">version_resource</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_class</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires all versions to be of type&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">version_resource</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">default_resource</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires all versions to be of the same&quot;</span>
+                    <span class="s2">&quot; type&quot;</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_version</span> <span class="o">=</span> <span class="n">default_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">versions</span> <span class="o">=</span> <span class="n">versions</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">{cls}</span><span class="s2">(default_version=</span><span class="si">{default_version}</span><span class="s2">, versions={{</span><span class="si">{versions}</span><span class="s2">}})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="n">default_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_version</span><span class="p">,</span>
+                <span class="n">versions</span><span class="o">=</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">&quot;: </span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c1"># If __getattr__ is called for &#39;default_version&#39;, &#39;version&#39;, etc. then</span>
+        <span class="c1"># something has gone wrong.</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__slots__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;VersionedResource has not been initialized&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">versions</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">default_version</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedTableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VersionedTableResource">[docs]</a><span class="k">class</span> <span class="nc">VersionedTableResource</span><span class="p">(</span><span class="n">BaseVersionedResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Versioned Table resource.</span>
+
+<span class="sd">    The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+
+<span class="sd">    :param default_version: The default version of this Table resource (must to be in the `versions` dict)</span>
+<span class="sd">    :param versions: A dict of version name -&gt; TableResource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">TableResource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TableResource</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedMatrixTableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VersionedMatrixTableResource">[docs]</a><span class="k">class</span> <span class="nc">VersionedMatrixTableResource</span><span class="p">(</span><span class="n">BaseVersionedResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Versioned MatrixTable resource.</span>
+
+<span class="sd">    The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+
+<span class="sd">    :param default_version: The default version of this MatrixTable resource (must to be in the `versions` dict)</span>
+<span class="sd">    :param versions: A dict of version name -&gt; MatrixTableResource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">MatrixTableResource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MatrixTableResource</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedVariantDatasetResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VersionedVariantDatasetResource">[docs]</a><span class="k">class</span> <span class="nc">VersionedVariantDatasetResource</span><span class="p">(</span><span class="n">BaseVersionedResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Versioned VariantDataset resource.</span>
+
+<span class="sd">    The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+<span class="sd">    :param default_version: The default version of this VariantDataset resource (must to be in the `versions` dict)</span>
+
+<span class="sd">    :param versions: A dict of version name -&gt; VariantDatasetResource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">VariantDatasetResource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VariantDatasetResource</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedPedigreeResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VersionedPedigreeResource">[docs]</a><span class="k">class</span> <span class="nc">VersionedPedigreeResource</span><span class="p">(</span><span class="n">BaseVersionedResource</span><span class="p">,</span> <span class="n">PedigreeResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Versioned Pedigree resource.</span>
+
+<span class="sd">    The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+
+<span class="sd">    :param default_version: The default version of this Pedigree resource (must be in the `versions` dict)</span>
+<span class="sd">    :param versions: A dict of version name -&gt; PedigreeResource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">PedigreeResource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PedigreeResource</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedBlockMatrixResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.VersionedBlockMatrixResource">[docs]</a><span class="k">class</span> <span class="nc">VersionedBlockMatrixResource</span><span class="p">(</span><span class="n">BaseVersionedResource</span><span class="p">,</span> <span class="n">BlockMatrixResource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Versioned BlockMatrix resource.</span>
+
+<span class="sd">    The attributes (path, import_args and import_func) of the versioned resource are those of the default version of the resource.</span>
+<span class="sd">    In addition, all versions of the resource are stored in the `versions` attribute.</span>
+
+<span class="sd">    :param default_version: The default version of this BlockMatrix resource (must to be in the `versions` dict)</span>
+<span class="sd">    :param versions: A dict of version name -&gt; BlockMatrixResource.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resource_class</span> <span class="o">=</span> <span class="n">BlockMatrixResource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">versions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BlockMatrixResource</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceNotAvailable"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.ResourceNotAvailable">[docs]</a><span class="k">class</span> <span class="nc">ResourceNotAvailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised if a resource is not available from the selected source.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GnomadPublicResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicResource">[docs]</a><span class="k">class</span> <span class="nc">GnomadPublicResource</span><span class="p">(</span><span class="n">BaseResource</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for the gnomAD project&#39;s public resources.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">read_resource_methods</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">()</span>
+
+        <span class="c1"># Some resources may not be available from all sources due to delays in syncing, etc.</span>
+        <span class="c1"># This wraps all methods that read the resource and adds a check for if the resource</span>
+        <span class="c1"># is available from the selected source. If the resource is not available, this</span>
+        <span class="c1"># throws a more helpful error than if the read were simply allowed to fail.</span>
+        <span class="k">def</span> <span class="nf">_wrap_read_resource_method</span><span class="p">(</span><span class="n">method_name</span><span class="p">):</span>
+            <span class="n">original_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+
+            <span class="nd">@wraps</span><span class="p">(</span><span class="n">original_method</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">read_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="c1"># If one of the known sources is selected, check if the resource is available.</span>
+                <span class="c1"># For custom sources, skip the check and attempt to read the resource.</span>
+                <span class="n">resource_source</span> <span class="o">=</span> <span class="n">gnomad_public_resource_configuration</span><span class="o">.</span><span class="n">source</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_resource_available</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">resource_source</span> <span class="o">==</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">GNOMAD</span><span class="p">:</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="s2">&quot;This resource is not currently available from the gnomAD&quot;</span>
+                            <span class="s2">&quot; project public buckets.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_source</span><span class="p">,</span> <span class="n">GnomadPublicResourceSource</span><span class="p">):</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="s2">&quot;This resource is not currently available from&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">resource_source</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="s2">&quot;This resource is not currently available from&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">resource_source</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">)</span>
+
+                    <span class="k">raise</span> <span class="n">ResourceNotAvailable</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">To load resources from a different source (for&quot;</span>
+                        <span class="s2">&quot; example, Google Cloud Public Datasets) instead, use:</span><span class="se">\n\n</span><span class="s2">&gt;&gt;&gt;&quot;</span>
+                        <span class="s2">&quot; from gnomad.resources.config import&quot;</span>
+                        <span class="s2">&quot; gnomad_public_resource_configuration,&quot;</span>
+                        <span class="s2">&quot; GnomadPublicResourceSource</span><span class="se">\n</span><span class="s2">&gt;&gt;&gt;&quot;</span>
+                        <span class="s2">&quot; gnomad_public_resource_configuration.source =&quot;</span>
+                        <span class="s2">&quot; GnomadPublicResourceSource.GOOGLE_CLOUD_PUBLIC_DATASETS</span><span class="se">\n\n</span><span class="s2">To&quot;</span>
+                        <span class="s2">&quot; get all available sources for gnomAD resources, use:</span><span class="se">\n\n</span><span class="s2">&gt;&gt;&gt;&quot;</span>
+                        <span class="s2">&quot; from gnomad.resources.config import&quot;</span>
+                        <span class="s2">&quot; GnomadPublicResourceSource</span><span class="se">\n</span><span class="s2">&gt;&gt;&gt;&quot;</span>
+                        <span class="s2">&quot; list(GnomadPublicResourceSource)&quot;</span>
+                    <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">original_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">read_resource</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">read_resource_methods</span><span class="p">:</span>
+            <span class="n">_wrap_read_resource_method</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">resource_source</span> <span class="o">=</span> <span class="n">gnomad_public_resource_configuration</span><span class="o">.</span><span class="n">source</span>
+        <span class="k">if</span> <span class="n">resource_source</span> <span class="o">==</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">GNOMAD</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span>
+
+        <span class="n">relative_path</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">path</span><span class="p">,</span> <span class="n">bucket</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">path</span><span class="p">[</span><span class="mi">5</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span> <span class="p">:]</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gs://</span><span class="si">{</span><span class="n">bucket</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">path</span>
+            <span class="p">),</span>
+            <span class="n">GNOMAD_PUBLIC_BUCKETS</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">resource_source</span> <span class="o">==</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">GOOGLE_CLOUD_PUBLIC_DATASETS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;gs://gcp-public-data--gnomad</span><span class="si">{</span><span class="n">relative_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="n">resource_source</span> <span class="o">==</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">REGISTRY_OF_OPEN_DATA_ON_AWS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;s3a://gnomad-public-us-east-1</span><span class="si">{</span><span class="n">relative_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="n">resource_source</span> <span class="o">==</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">AZURE_OPEN_DATASETS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;wasbs://dataset@datasetgnomad.blob.core.windows.net</span><span class="si">{</span><span class="n">relative_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resource_source</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}{</span><span class="n">relative_path</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># pylint: disable=no-member</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gs://</span><span class="si">{</span><span class="n">bucket</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">GNOMAD_PUBLIC_BUCKETS</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;GnomadPublicResource requires a path to a file in one of the public&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; gnomAD buckets (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GNOMAD_PUBLIC_BUCKETS</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_set_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GnomadPublicResource.is_resource_available"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicResource.is_resource_available">[docs]</a>    <span class="k">def</span> <span class="nf">is_resource_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if this resource is available from the selected source.</span>
+
+<span class="sd">        :return: True if the resource is available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+
+        <span class="c1"># Hail Tables, MatrixTables, and BlockMatrices are directories.</span>
+        <span class="c1"># For those, check for the existence of the _SUCCESS object.</span>
+        <span class="n">path_to_test</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/_SUCCESS&quot;</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.ht&quot;</span><span class="p">,</span> <span class="s2">&quot;.mt&quot;</span><span class="p">,</span> <span class="s2">&quot;.bm&quot;</span><span class="p">))</span>
+            <span class="k">else</span> <span class="n">path</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">current_backend</span><span class="p">()</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_test</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="GnomadPublicTableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicTableResource">[docs]</a><span class="k">class</span> <span class="nc">GnomadPublicTableResource</span><span class="p">(</span>
+    <span class="n">TableResource</span><span class="p">,</span> <span class="n">GnomadPublicResource</span><span class="p">,</span> <span class="n">read_resource_methods</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;ht&quot;</span><span class="p">,)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource class for a public Hail Table published by the gnomAD project.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GnomadPublicMatrixTableResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicMatrixTableResource">[docs]</a><span class="k">class</span> <span class="nc">GnomadPublicMatrixTableResource</span><span class="p">(</span>
+    <span class="n">MatrixTableResource</span><span class="p">,</span> <span class="n">GnomadPublicResource</span><span class="p">,</span> <span class="n">read_resource_methods</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;mt&quot;</span><span class="p">,)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource class for a public Hail MatrixTable published by the gnomAD project.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GnomadPublicPedigreeResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicPedigreeResource">[docs]</a><span class="k">class</span> <span class="nc">GnomadPublicPedigreeResource</span><span class="p">(</span>
+    <span class="n">PedigreeResource</span><span class="p">,</span> <span class="n">GnomadPublicResource</span><span class="p">,</span> <span class="n">read_resource_methods</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;ht&quot;</span><span class="p">,</span> <span class="s2">&quot;pedigree&quot;</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource class for a public pedigree published by the gnomAD project.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GnomadPublicBlockMatrixResource"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.GnomadPublicBlockMatrixResource">[docs]</a><span class="k">class</span> <span class="nc">GnomadPublicBlockMatrixResource</span><span class="p">(</span>
+    <span class="n">BlockMatrixResource</span><span class="p">,</span> <span class="n">GnomadPublicResource</span><span class="p">,</span> <span class="n">read_resource_methods</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;bm&quot;</span><span class="p">,)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource class for a public Hail BlockMatrix published by the gnomAD project.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DataException"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.DataException">[docs]</a><span class="k">class</span> <span class="nc">DataException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># noqa: D101</span>
+    <span class="k">pass</span></div>
+
+
+<span class="n">NO_CHR_TO_CHR_CONTIG_RECODING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;1&quot;</span><span class="p">:</span> <span class="s2">&quot;chr1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;2&quot;</span><span class="p">:</span> <span class="s2">&quot;chr2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3&quot;</span><span class="p">:</span> <span class="s2">&quot;chr3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;4&quot;</span><span class="p">:</span> <span class="s2">&quot;chr4&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;5&quot;</span><span class="p">:</span> <span class="s2">&quot;chr5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;6&quot;</span><span class="p">:</span> <span class="s2">&quot;chr6&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;7&quot;</span><span class="p">:</span> <span class="s2">&quot;chr7&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;8&quot;</span><span class="p">:</span> <span class="s2">&quot;chr8&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;9&quot;</span><span class="p">:</span> <span class="s2">&quot;chr9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr10&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr11&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;13&quot;</span><span class="p">:</span> <span class="s2">&quot;chr13&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;14&quot;</span><span class="p">:</span> <span class="s2">&quot;chr14&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;15&quot;</span><span class="p">:</span> <span class="s2">&quot;chr15&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;16&quot;</span><span class="p">:</span> <span class="s2">&quot;chr16&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;17&quot;</span><span class="p">:</span> <span class="s2">&quot;chr17&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;18&quot;</span><span class="p">:</span> <span class="s2">&quot;chr18&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;19&quot;</span><span class="p">:</span> <span class="s2">&quot;chr19&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;20&quot;</span><span class="p">:</span> <span class="s2">&quot;chr20&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;21&quot;</span><span class="p">:</span> <span class="s2">&quot;chr21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;22&quot;</span><span class="p">:</span> <span class="s2">&quot;chr22&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="s2">&quot;chrX&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="s2">&quot;chrY&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MT&quot;</span><span class="p">:</span> <span class="s2">&quot;chrM&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">DBSNP_B154_CHR_CONTIG_RECODING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;NC_000001.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000002.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000003.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000004.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr4&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000005.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000006.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr6&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000007.14&quot;</span><span class="p">:</span> <span class="s2">&quot;chr7&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000008.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr8&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000009.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr9&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000010.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr10&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000011.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr11&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000012.12&quot;</span><span class="p">:</span> <span class="s2">&quot;chr12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000013.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr13&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000014.9&quot;</span><span class="p">:</span> <span class="s2">&quot;chr14&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000015.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr15&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000016.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr16&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000017.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr17&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000018.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr18&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000019.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chr19&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000020.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr20&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000021.9&quot;</span><span class="p">:</span> <span class="s2">&quot;chr21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000022.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chr22&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000023.11&quot;</span><span class="p">:</span> <span class="s2">&quot;chrX&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NC_000024.10&quot;</span><span class="p">:</span> <span class="s2">&quot;chrY&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="import_sites_vcf"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.import_sites_vcf">[docs]</a><span class="k">def</span> <span class="nf">import_sites_vcf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import site-level data from a VCF into a Hail Table.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_vcf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="import_gencode"><a class="viewcode-back" href="../../../api_reference/resources/resource_utils.html#gnomad.resources.resource_utils.import_gencode">[docs]</a><span class="k">def</span> <span class="nf">import_gencode</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import GENCODE annotations GTF file as a Hail Table.</span>
+
+<span class="sd">    :param gtf_path: Path to GENCODE GTF file.</span>
+<span class="sd">    :return: Table with GENCODE annotation information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">experimental</span><span class="o">.</span><span class="n">import_gtf</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Only get gene and transcript stable IDs (without version numbers if they</span>
+    <span class="c1"># exist), early versions of GENCODE have no version numbers but later ones do.</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="n">gene_id</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">gene_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">transcript_id</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">transcript_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ht</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+gnomad.sample_qc
+================
+
+
+
+.. toctree::
+    :maxdepth: 2
+
+    ancestry <ancestry>
+    filtering <filtering>
+    pipeline <pipeline>
+    platform <platform>
+    relatedness <relatedness>
+    sex <sex>

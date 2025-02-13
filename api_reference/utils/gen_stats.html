@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.gen_stats &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.intervals" href="intervals.html" />
+    <link rel="prev" title="gnomad.utils.filtering" href="filtering.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">gen_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.gen_stats.to_phred"><code class="docutils literal notranslate"><span class="pre">to_phred()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.gen_stats.from_phred"><code class="docutils literal notranslate"><span class="pre">from_phred()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.gen_stats.get_median_and_mad_expr"><code class="docutils literal notranslate"><span class="pre">get_median_and_mad_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.gen_stats.merge_stats_counters_expr"><code class="docutils literal notranslate"><span class="pre">merge_stats_counters_expr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.gen_stats</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/gen_stats.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-gen-stats">
+<h1>gnomad.utils.gen_stats<a class="headerlink" href="#gnomad-utils-gen-stats" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.gen_stats.to_phred" title="gnomad.utils.gen_stats.to_phred"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.gen_stats.to_phred</span></code></a>(linear_expr)</p></td>
+<td><p>Compute the phred-scaled value of the linear-scale input.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.gen_stats.from_phred" title="gnomad.utils.gen_stats.from_phred"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.gen_stats.from_phred</span></code></a>(...)</p></td>
+<td><p>Compute the linear-scale value of the phred-scaled input.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.gen_stats.get_median_and_mad_expr" title="gnomad.utils.gen_stats.get_median_and_mad_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.gen_stats.get_median_and_mad_expr</span></code></a>(...)</p></td>
+<td><p>Compute the median and median absolute deviation (MAD) for the given expression.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.gen_stats.merge_stats_counters_expr" title="gnomad.utils.gen_stats.merge_stats_counters_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.gen_stats.merge_stats_counters_expr</span></code></a>(stats)</p></td>
+<td><p>Merge multiple stats counters, assuming that they were computed on non-overlapping data.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.gen_stats"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.gen_stats.to_phred">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.gen_stats.</span></span><span class="sig-name descname"><span class="pre">to_phred</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">linear_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/gen_stats.html#to_phred"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.gen_stats.to_phred" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the phred-scaled value of the linear-scale input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>linear_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – input</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Phred-scaled value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.gen_stats.from_phred">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.gen_stats.</span></span><span class="sig-name descname"><span class="pre">from_phred</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phred_score_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/gen_stats.html#from_phred"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.gen_stats.from_phred" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the linear-scale value of the phred-scaled input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>phred_score_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – phred-scaled value</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>linear-scale value of the phred-scaled input.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.gen_stats.get_median_and_mad_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.gen_stats.</span></span><span class="sig-name descname"><span class="pre">get_median_and_mad_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4826</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/gen_stats.html#get_median_and_mad_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.gen_stats.get_median_and_mad_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the median and median absolute deviation (MAD) for the given expression.</p>
+<p>..note:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">default</span> <span class="n">value</span> <span class="n">of</span> <span class="n">k</span> <span class="n">assumes</span> <span class="n">normally</span> <span class="n">distributed</span> <span class="n">data</span><span class="o">.</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayNumericExpression.html#hail.expr.ArrayNumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayNumericExpression</span></code></a>) – Expression to compute median and MAD for</p></li>
+<li><p><strong>k</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The scaling factor for MAD calculation. Default assumes normally distributed data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Struct with median and MAD</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.gen_stats.merge_stats_counters_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.gen_stats.</span></span><span class="sig-name descname"><span class="pre">merge_stats_counters_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/gen_stats.html#merge_stats_counters_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.gen_stats.merge_stats_counters_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Merge multiple stats counters, assuming that they were computed on non-overlapping data.</p>
+<p>Examples:
+- Merge stats computed on indel and snv separately
+- Merge stats computed on bi-allelic and multi-allelic variants separately
+- Merge stats computed on autosomes and sex chromosomes separately</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>stats</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – An array of stats counters to merge</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Merged stats Struct</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="filtering.html" class="btn btn-neutral float-left" title="gnomad.utils.filtering" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intervals.html" class="btn btn-neutral float-right" title="gnomad.utils.intervals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

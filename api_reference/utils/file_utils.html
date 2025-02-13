@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.file_utils &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.filtering" href="filtering.html" />
+    <link rel="prev" title="gnomad.utils.constraint" href="constraint.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">file_utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.file_exists"><code class="docutils literal notranslate"><span class="pre">file_exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.check_file_exists_raise_error"><code class="docutils literal notranslate"><span class="pre">check_file_exists_raise_error()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.write_temp_gcs"><code class="docutils literal notranslate"><span class="pre">write_temp_gcs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.select_primitives_from_ht"><code class="docutils literal notranslate"><span class="pre">select_primitives_from_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.get_file_stats"><code class="docutils literal notranslate"><span class="pre">get_file_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.read_list_data"><code class="docutils literal notranslate"><span class="pre">read_list_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.repartition_for_join"><code class="docutils literal notranslate"><span class="pre">repartition_for_join()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.file_utils.create_vds"><code class="docutils literal notranslate"><span class="pre">create_vds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.file_utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/file_utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-file-utils">
+<h1>gnomad.utils.file_utils<a class="headerlink" href="#gnomad-utils-file-utils" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.file_exists" title="gnomad.utils.file_utils.file_exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.file_exists</span></code></a>(fname)</p></td>
+<td><p>Check whether a file exists.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.check_file_exists_raise_error" title="gnomad.utils.file_utils.check_file_exists_raise_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.check_file_exists_raise_error</span></code></a>(fname)</p></td>
+<td><p>Check whether the file or all files in a list of files exist and optionally raise an exception.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.write_temp_gcs" title="gnomad.utils.file_utils.write_temp_gcs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.write_temp_gcs</span></code></a>(t, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.select_primitives_from_ht" title="gnomad.utils.file_utils.select_primitives_from_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.select_primitives_from_ht</span></code></a>(ht)</p></td>
+<td><p>Select only primitive types (string, int, float, bool) from a Table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.get_file_stats" title="gnomad.utils.file_utils.get_file_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.get_file_stats</span></code></a>(url)</p></td>
+<td><p>Get size (as both int and str) and md5 for file at specified URL.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.read_list_data" title="gnomad.utils.file_utils.read_list_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.read_list_data</span></code></a>(...)</p></td>
+<td><p>Read a file input into a python list (each line will be an element).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.repartition_for_join" title="gnomad.utils.file_utils.repartition_for_join"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.repartition_for_join</span></code></a>(ht_path)</p></td>
+<td><p>Calculate new partition intervals using input Table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.file_utils.create_vds" title="gnomad.utils.file_utils.create_vds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.file_utils.create_vds</span></code></a>(...[, ...])</p></td>
+<td><p>Combine GVCFs into a single VDS.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.file_utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.file_exists">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.file_exists" title="Permalink to this definition"></a></dt>
+<dd><p>Check whether a file exists.</p>
+<p>Supports either local or Google cloud (gs://) paths.
+If the file is a Hail file (.ht, .mt, .bm, .parquet, .he, and .vds extensions), it
+checks that _SUCCESS is present.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – File name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether the file exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.check_file_exists_raise_error">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">check_file_exists_raise_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_not_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_exists_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'The</span> <span class="pre">following</span> <span class="pre">files</span> <span class="pre">already</span> <span class="pre">exist:</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_not_exists_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'The</span> <span class="pre">following</span> <span class="pre">files</span> <span class="pre">do</span> <span class="pre">not</span> <span class="pre">exist:</span> <span class="pre">'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#check_file_exists_raise_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.check_file_exists_raise_error" title="Permalink to this definition"></a></dt>
+<dd><p>Check whether the file or all files in a list of files exist and optionally raise an exception.</p>
+<p>This can be useful when writing out to files at the end of a pipeline to first check if the file already
+exists and therefore requires the file to be removed or overwrite specified so the pipeline doesn’t fail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – File path, or list of file paths to check the existence of.</p></li>
+<li><p><strong>error_if_exists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to raise an exception if any of the files exist. Default is True.</p></li>
+<li><p><strong>error_if_not_exists</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to raise an exception if any of the files do not exist. Default is False.</p></li>
+<li><p><strong>error_if_exists_msg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String of the error message to print if any of the files exist.</p></li>
+<li><p><strong>error_if_not_exists_msg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String of the error message to print if any of the files do not exist.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Boolean indicating if <cite>fname</cite> or all files in <cite>fname</cite> exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.write_temp_gcs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">write_temp_gcs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gcs_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#write_temp_gcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.write_temp_gcs" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – </p></li>
+<li><p><strong>gcs_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>temp_path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.select_primitives_from_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">select_primitives_from_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#select_primitives_from_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.select_primitives_from_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Select only primitive types (string, int, float, bool) from a Table.</p>
+<p>Particularly useful for exporting a Table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with only primitive types selected</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.get_file_stats">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">get_file_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#get_file_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.get_file_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Get size (as both int and str) and md5 for file at specified URL.</p>
+<p>Typically used to get stats on VCFs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Path to file of interest.</p></li>
+<li><p><strong>project_id</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Google project ID. Specify if URL points to a requester-pays bucket.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple of file size and md5.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.read_list_data">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">read_list_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#read_list_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.read_list_data" title="Permalink to this definition"></a></dt>
+<dd><p>Read a file input into a python list (each line will be an element).</p>
+<p>Supports Google storage paths and .gz compression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_file_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – File path</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of lines</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.repartition_for_join">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">repartition_for_join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_partition_percent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#repartition_for_join"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.repartition_for_join" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate new partition intervals using input Table.</p>
+<p>Reading in all Tables using the same partition intervals (via
+<cite>_intervals</cite>) before they are joined makes the joins much more efficient.
+For more information, see:
+<a class="reference external" href="https://discuss.hail.is/t/room-for-improvement-when-joining-multiple-hts/2278/8">https://discuss.hail.is/t/room-for-improvement-when-joining-multiple-hts/2278/8</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Path to Table to use for interval partition calculation.</p></li>
+<li><p><strong>new_partition_percent</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Percent of initial dataset partitions to use.
+Value should be greater than 1 so that input Table will have more
+partitions for the join. Defaults to 1.1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.IntervalExpression.html#hail.expr.IntervalExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">IntervalExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of IntervalExpressions calculated over new set of partitions
+(number of partitions in HT * desired percent increase).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.file_utils.create_vds">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.file_utils.</span></span><span class="sig-name descname"><span class="pre">create_vds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vdses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gvcfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_genome_default_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_exome_default_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gvcf_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_genome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRCh38'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/file_utils.html#create_vds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.file_utils.create_vds" title="Permalink to this definition"></a></dt>
+<dd><p>Combine GVCFs into a single VDS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Path to write output VDS.</p></li>
+<li><p><strong>temp_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Directory path to write temporary files. A bucket with a life-cycle
+policy is recommended.</p></li>
+<li><p><strong>vdses</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Path to file containing VDS paths with no header.</p></li>
+<li><p><strong>gvcfs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Path to file containing GVCF paths with no header.</p></li>
+<li><p><strong>save_path</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Path to write combiner to on failure. Can be used to restart
+combiner from a failed state. If not specified, defaults to temp_path +
+combiner_plan.json.</p></li>
+<li><p><strong>use_genome_default_intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Use the default genome intervals.</p></li>
+<li><p><strong>use_exome_default_intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Use the default exome intervals.</p></li>
+<li><p><strong>intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Path to text file with intervals to use for VDS creation.</p></li>
+<li><p><strong>gvcf_batch_size</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Number of GVCFs to combine into a Variant Dataset at once.</p></li>
+<li><p><strong>reference_genome</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reference genome to use. Default is GRCh38.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Combined VDS.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="constraint.html" class="btn btn-neutral float-left" title="gnomad.utils.constraint" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="filtering.html" class="btn btn-neutral float-right" title="gnomad.utils.filtering" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

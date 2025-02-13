@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.filtering &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.filtering</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.utils.filtering</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">hail</span> <span class="k">as</span> <span class="nn">hl</span>
+
+<span class="kn">import</span> <span class="nn">gnomad.utils.annotations</span> <span class="k">as</span> <span class="nn">annotate_utils</span>
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="n">DataException</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.intervals</span> <span class="kn">import</span> <span class="n">pad_intervals</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.parse</span> <span class="kn">import</span> <span class="n">parse_locus_intervals</span>
+<span class="kn">from</span> <span class="nn">gnomad.utils.reference_genome</span> <span class="kn">import</span> <span class="n">get_reference_genome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> (</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)s</span><span class="s2">): </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="filter_to_adj"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_adj">[docs]</a><span class="k">def</span> <span class="nf">filter_to_adj</span><span class="p">(</span><span class="n">mt</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter genotypes to adj criteria.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;adj&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">entry</span><span class="p">):</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">annotate_utils</span><span class="o">.</span><span class="n">annotate_adj</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">filter_entries</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">adj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">adj</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_by_frequency"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_by_frequency">[docs]</a><span class="k">def</span> <span class="nf">filter_by_frequency</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allele_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">population</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">subpop</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">downsampling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">keep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">adj</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter MatrixTable or Table with gnomAD-format frequency data (assumed bi-allelic/split).</span>
+
+<span class="sd">    gnomAD frequency data format expectation is: Array[Struct(Array[AC], Array[AF], AN, homozygote_count, meta)].</span>
+
+<span class="sd">    At least one of frequency or allele_count is required.</span>
+
+<span class="sd">    Subpop can be specified without a population if desired.</span>
+
+<span class="sd">    :param t: Input MatrixTable or Table</span>
+<span class="sd">    :param direction: One of &quot;above&quot;, &quot;below&quot;, and &quot;equal&quot; (how to apply the filter)</span>
+<span class="sd">    :param frequency: Frequency to filter by (one of frequency or allele_count is required)</span>
+<span class="sd">    :param allele_count: Allele count to filter by (one of frequency or allele_count is required)</span>
+<span class="sd">    :param population: Population in which to filter frequency</span>
+<span class="sd">    :param subpop: Sub-population in which to filter frequency</span>
+<span class="sd">    :param downsampling: Downsampling in which to filter frequency</span>
+<span class="sd">    :param keep: Whether to keep rows passing this frequency (passed to filter_rows)</span>
+<span class="sd">    :param adj: Whether to use adj frequency</span>
+<span class="sd">    :return: Filtered MatrixTable or Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allele_count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one of frequency or allele_count must be specified&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;above&quot;</span><span class="p">,</span> <span class="s2">&quot;below&quot;</span><span class="p">,</span> <span class="s2">&quot;equal&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;direction needs to be one of &quot;above&quot;, &quot;below&quot;, or &quot;equal&quot;&#39;</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="s2">&quot;adj&quot;</span> <span class="k">if</span> <span class="n">adj</span> <span class="k">else</span> <span class="s2">&quot;raw&quot;</span>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">group</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;above&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">frequency</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;below&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">frequency</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">frequency</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">allele_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;above&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">allele_count</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;below&quot;</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">allele_count</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">allele_count</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">population</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">population</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">subpop</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subpop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">subpop</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># If one supplies a subpop but not a population, this will ensure this</span>
+        <span class="c1"># gets it right</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">population</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">downsampling</span><span class="p">:</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;downsampling&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">downsampling</span><span class="p">))</span>
+        <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">population</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pop&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subpop</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No downsampling data for subpopulations implemented&quot;</span><span class="p">)</span>
+    <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="n">size</span><span class="p">)</span>
+
+    <span class="n">filt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">combine_functions</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">filt</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">freq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="combine_functions"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.combine_functions">[docs]</a><span class="k">def</span> <span class="nf">combine_functions</span><span class="p">(</span>
+    <span class="n">func_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">bool</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]],</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">StructExpression</span><span class="p">,</span>
+    <span class="n">operator_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">iand</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combine a list of boolean functions to an Expression using the specified operator.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        The `operator_func` is applied cumulatively from left to right of the `func_list`.</span>
+
+<span class="sd">    :param func_list: A list of boolean functions that can be applied to `x`.</span>
+<span class="sd">    :param x: Expression to be passed to each function in `func_list`.</span>
+<span class="sd">    :param operator_func: Operator function to combine the functions in `func_list`. Default is `operator.iand`.</span>
+<span class="sd">    :return: A boolean from the combined operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">func_list</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">func_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">cond</span> <span class="o">=</span> <span class="n">operator_func</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">c</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">cond</span></div>
+
+
+<div class="viewcode-block" id="low_conf_regions_expr"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.low_conf_regions_expr">[docs]</a><span class="k">def</span> <span class="nf">low_conf_regions_expr</span><span class="p">(</span>
+    <span class="n">locus_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">LocusExpression</span><span class="p">,</span>
+    <span class="n">filter_lcr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_decoy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_segdup</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">filter_exome_low_coverage_regions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">filter_telomeres_and_centromeres</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">high_conf_regions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an expression to filter low confidence regions.</span>
+
+<span class="sd">    :param locus_expr: Locus expression to use for filtering.</span>
+<span class="sd">    :param filter_lcr: Whether to filter LCR regions</span>
+<span class="sd">    :param filter_decoy: Whether to filter decoy regions</span>
+<span class="sd">    :param filter_segdup: Whether to filter Segdup regions</span>
+<span class="sd">    :param filter_exome_low_coverage_regions: Whether to filter exome low confidence regions</span>
+<span class="sd">    :param filter_telomeres_and_centromeres: Whether to filter telomeres and centromeres</span>
+<span class="sd">    :param high_conf_regions: Paths to set of high confidence regions to restrict to (union of regions)</span>
+<span class="sd">    :return: Bool expression of whether loci are not low confidence (TRUE) or low confidence (FALSE)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">locus_expr</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">gnomad.resources.grch37.reference_data</span> <span class="k">as</span> <span class="nn">resources</span>
+    <span class="k">elif</span> <span class="n">build</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">gnomad.resources.grch38.reference_data</span> <span class="k">as</span> <span class="nn">resources</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported reference genome build: </span><span class="si">{</span><span class="n">build</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">criteria</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">filter_lcr</span><span class="p">:</span>
+        <span class="n">lcr</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">lcr_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">lcr</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_decoy</span><span class="p">:</span>
+        <span class="n">decoy</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">decoy_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">decoy</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_segdup</span><span class="p">:</span>
+        <span class="n">segdup</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">seg_dup_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">segdup</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_exome_low_coverage_regions</span><span class="p">:</span>
+        <span class="n">high_cov</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">high_coverage_intervals</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">high_cov</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">filter_telomeres_and_centromeres</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">build</span> <span class="o">!=</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+                <span class="s2">&quot;The telomeres_and_centromeres resource only exists for GRCh38&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">telomeres_and_centromeres</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">telomeres_and_centromeres</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">telomeres_and_centromeres</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">high_conf_regions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">high_conf_regions</span><span class="p">:</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_locus_intervals</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">region</span><span class="p">[</span><span class="n">locus_expr</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">criteria</span><span class="p">:</span>
+        <span class="n">filter_criteria</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">iand</span><span class="p">,</span> <span class="n">criteria</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filter_criteria</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No low confidence regions requested for filtering.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_low_conf_regions"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_low_conf_regions">[docs]</a><span class="k">def</span> <span class="nf">filter_low_conf_regions</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter low-confidence regions.</span>
+
+<span class="sd">    :param t: MatrixTable or Table to filter.</span>
+<span class="sd">    :param kwargs: Keyword arguments to pass to `low_conf_regions_expr`.</span>
+<span class="sd">    :return: MatrixTable or Table with low confidence regions removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filter_criteria</span> <span class="o">=</span> <span class="n">low_conf_regions_expr</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">filter_criteria</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filter_criteria</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="filter_to_autosomes"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_autosomes">[docs]</a><span class="k">def</span> <span class="nf">filter_to_autosomes</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter the Table or MatrixTable to autosomes only.</span>
+
+<span class="sd">    This assumes that the input contains a field named `locus` of type Locus</span>
+
+<span class="sd">    :param t: Input MT/HT</span>
+<span class="sd">    :return:  MT/HT autosomes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">get_reference_genome</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span>
+    <span class="n">autosomes</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">reference</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">reference</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">reference</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">[</span><span class="n">autosomes</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="add_filters_expr"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.add_filters_expr">[docs]</a><span class="k">def</span> <span class="nf">add_filters_expr</span><span class="p">(</span>
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">BooleanExpression</span><span class="p">],</span>
+    <span class="n">current_filters</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">SetExpression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">SetExpression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an expression to create or add filters.</span>
+
+<span class="sd">    For each entry in the `filters` dictionary, if the value evaluates to `True`,</span>
+<span class="sd">    then the key is added as a filter name.</span>
+
+<span class="sd">    Current filters are kept if provided using `current_filters`</span>
+
+<span class="sd">    :param filters: The filters and their expressions</span>
+<span class="sd">    :param current_filters: The set of current filters</span>
+<span class="sd">    :return: An expression that can be used to annotate the filters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">current_filters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">current_filters</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+        <span class="n">current_filters</span><span class="p">,</span>
+        <span class="p">[</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">filter_condition</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="n">filter_name</span><span class="p">]),</span> <span class="n">hl</span><span class="o">.</span><span class="n">empty_set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">tstr</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">filter_name</span><span class="p">,</span> <span class="n">filter_condition</span> <span class="ow">in</span> <span class="n">filters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="subset_samples_and_variants"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.subset_samples_and_variants">[docs]</a><span class="k">def</span> <span class="nf">subset_samples_and_variants</span><span class="p">(</span>
+    <span class="n">mtds</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">],</span>
+    <span class="n">sample_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">table_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span>
+    <span class="n">sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">gt_expr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GT&quot;</span><span class="p">,</span>
+    <span class="n">remove_dead_alleles</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subset the MatrixTable or VariantDataset to the provided list of samples and their variants.</span>
+
+<span class="sd">    :param mtds: Input MatrixTable or VariantDataset</span>
+<span class="sd">    :param sample_path: Path to a file with list of samples</span>
+<span class="sd">    :param header: Whether file with samples has a header. Default is True</span>
+<span class="sd">    :param table_key: Key to sample Table. Default is &quot;s&quot;</span>
+<span class="sd">    :param sparse: Whether the MatrixTable is sparse. Default is False</span>
+<span class="sd">    :param gt_expr: Name of field in MatrixTable containing genotype expression. Default is &quot;GT&quot;</span>
+<span class="sd">    :param remove_dead_alleles: Remove alleles observed in no samples. This option is currently only relevant when `mtds` is a VariantDataset. Default is False</span>
+<span class="sd">    :return: MatrixTable or VariantDataset subsetted to specified samples and their variants</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sample_ht</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">import_table</span><span class="p">(</span><span class="n">sample_path</span><span class="p">,</span> <span class="n">no_header</span><span class="o">=</span><span class="ow">not</span> <span class="n">header</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">table_key</span><span class="p">)</span>
+    <span class="n">sample_count</span> <span class="o">=</span> <span class="n">sample_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">is_vds</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mtds</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_vds</span><span class="p">:</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">variant_data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">remove_dead_alleles</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Removal of alleles observed in no samples is currently only&quot;</span>
+                <span class="s2">&quot; implemented when the input dataset is a VariantDataset.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">mt</span> <span class="o">=</span> <span class="n">mtds</span>
+    <span class="n">missing_ht</span> <span class="o">=</span> <span class="n">sample_ht</span><span class="o">.</span><span class="n">anti_join</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">cols</span><span class="p">())</span>
+    <span class="n">missing_ht_count</span> <span class="o">=</span> <span class="n">missing_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">full_count</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">count_cols</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">missing_ht_count</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">missing_samples</span> <span class="o">=</span> <span class="n">missing_ht</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="n">DataException</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Only </span><span class="si">{</span><span class="n">sample_count</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">missing_ht_count</span><span class="si">}</span><span class="s2"> out of&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">sample_count</span><span class="si">}</span><span class="s2"> subsetting-table IDs matched IDs in the&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="s1">&#39;VariantDataset&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_vds</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;MatrixTable&#39;</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">IDs that aren&#39;t in the&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; MT: </span><span class="si">{</span><span class="n">missing_samples</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_vds</span><span class="p">:</span>
+        <span class="n">mtds</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">filter_samples</span><span class="p">(</span>
+            <span class="n">mtds</span><span class="p">,</span> <span class="n">sample_ht</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">remove_dead_alleles</span><span class="o">=</span><span class="n">remove_dead_alleles</span>
+        <span class="p">)</span>
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">variant_data</span><span class="o">.</span><span class="n">count_cols</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mtds</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">semi_join_cols</span><span class="p">(</span><span class="n">sample_ht</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="p">:</span>
+            <span class="n">mtds</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mtds</span><span class="p">[</span><span class="n">gt_expr</span><span class="p">]</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()</span> <span class="o">|</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">mtds</span><span class="o">.</span><span class="n">END</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mtds</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mtds</span><span class="p">[</span><span class="n">gt_expr</span><span class="p">]</span><span class="o">.</span><span class="n">is_non_ref</span><span class="p">()))</span>
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="n">mtds</span><span class="o">.</span><span class="n">count_cols</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Finished subsetting samples. Kept </span><span class="si">%d</span><span class="s2"> out of </span><span class="si">%d</span><span class="s2"> samples in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">n_cols</span><span class="p">,</span>
+        <span class="n">full_count</span><span class="p">,</span>
+        <span class="s2">&quot;VariantDataset&quot;</span> <span class="k">if</span> <span class="n">is_vds</span> <span class="k">else</span> <span class="s2">&quot;MatrixTable&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mtds</span></div>
+
+
+<div class="viewcode-block" id="filter_to_clinvar_pathogenic"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_clinvar_pathogenic">[docs]</a><span class="k">def</span> <span class="nf">filter_to_clinvar_pathogenic</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">clnrevstat_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNREVSTAT&quot;</span><span class="p">,</span>
+    <span class="n">clnsig_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNSIG&quot;</span><span class="p">,</span>
+    <span class="n">clnsigconf_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CLNSIGCONF&quot;</span><span class="p">,</span>
+    <span class="n">remove_no_assertion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">remove_conflicting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a MatrixTable or Table that filters the clinvar data to pathogenic and likely pathogenic variants.</span>
+
+<span class="sd">    Example use:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from gnomad.resources.grch38.reference_data import clinvar</span>
+<span class="sd">        clinvar_ht = clinvar.ht()</span>
+<span class="sd">        clinvar_ht = filter_to_clinvar_pathogenic(clinvar_ht)</span>
+
+<span class="sd">    :param: t: Input dataset that contains clinvar data, could either be a MatrixTable or Table.</span>
+<span class="sd">    :param clnrevstat_field: The field string for the expression that contains the review status of the clinical significance of clinvar variants.</span>
+<span class="sd">    :param clnsig_field: The field string for the expression that contains the clinical signifcance of the clinvar variant.</span>
+<span class="sd">    :param clnsigconf_field: The field string for the expression that contains the conflicting clinical significance values for the variant. For variants with no conflicting significance, this field should be undefined.</span>
+<span class="sd">    :param remove_no_assertion: Flag for removing entries in which the clnrevstat (clinical significance) has no assertions (zero stars).</span>
+<span class="sd">    :param remove_conflicting: Flag for removing entries with conflicting clinical interpretations.</span>
+<span class="sd">    :return: Filtered MatrixTable or Table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Found </span><span class="si">%d</span><span class="s2"> variants before filtering&quot;</span><span class="p">,</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">count_rows</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">path_expr</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnsig_field</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;pathogenic&quot;</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_no_assertion</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Variants without assertions will be removed.&quot;</span><span class="p">)</span>
+        <span class="n">no_star_assertions</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;no_assertion_provided&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;no_assertion_criteria_provided&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;no_interpretation_for_the_individual_variant&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">path_expr</span> <span class="o">=</span> <span class="n">path_expr</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnrevstat_field</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">no_star_assertions</span><span class="p">)</span><span class="o">.</span><span class="n">length</span><span class="p">()</span>
+            <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_conflicting</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Variants with conflicting clinical interpretations will be removed.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">path_expr</span> <span class="o">=</span> <span class="n">path_expr</span> <span class="o">&amp;</span> <span class="n">hl</span><span class="o">.</span><span class="n">is_missing</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="n">clnsigconf_field</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">path_expr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">path_expr</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Found </span><span class="si">%d</span><span class="s2"> variants after filtering to clinvar pathogenic variants.&quot;</span><span class="p">,</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">count_rows</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="filter_gencode_ht"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_gencode_ht">[docs]</a><span class="k">def</span> <span class="nf">filter_gencode_ht</span><span class="p">(</span>
+    <span class="n">gencode_ht</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reference_genome</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">protein_coding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">by_gene_symbol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a Gencode Table to specified criteria.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If no Gencode Table is provided, a `reference_genome` Gencode Table resource</span>
+<span class="sd">        will be used. If `version` is not provided, the default version of the Gencode</span>
+<span class="sd">        Table resource will be used.</span>
+
+<span class="sd">    :param gencode_ht: Gencode Table to use for filtering the input Table/MatrixTable</span>
+<span class="sd">        to CDS regions. Default is None, which will use the default version of the</span>
+<span class="sd">        Gencode Table resource.</span>
+<span class="sd">    :param reference_genome: Reference genome build of Gencode Table to use if none is</span>
+<span class="sd">        provided. Default is &quot;GRCh38&quot;.</span>
+<span class="sd">    :param version: Version of the Gencode Table to use if none is provided. Default is</span>
+<span class="sd">        None.</span>
+<span class="sd">    :param protein_coding: Whether to filter to only intervals where &quot;transcript_type&quot;</span>
+<span class="sd">        is &quot;protein_coding&quot;. Default is False.</span>
+<span class="sd">    :param feature: Optional feature(s) to filter to. Can be a single feature string or</span>
+<span class="sd">        list of features. Default is None.</span>
+<span class="sd">    :param genes: Optional gene(s) to filter to. Can be a single gene string or list of</span>
+<span class="sd">        genes. Default is None.</span>
+<span class="sd">    :param by_gene_symbol: Whether to filter by gene symbol. Default is True. If False,</span>
+<span class="sd">        will filter by gene ID.</span>
+<span class="sd">    :return: Gencode Table filtered to specified criteria.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">gencode_ht</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reference_genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must provide a Gencode Table or reference genome build.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">gencode_ht</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">reference_genome</span> <span class="o">==</span> <span class="s2">&quot;GRCh37&quot;</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">gnomad.resources.grch37.reference_data</span> <span class="kn">import</span> <span class="n">gencode</span>
+        <span class="k">elif</span> <span class="n">reference_genome</span> <span class="o">==</span> <span class="s2">&quot;GRCh38&quot;</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">gnomad.resources.grch38.reference_data</span> <span class="kn">import</span> <span class="n">gencode</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported reference genome build: </span><span class="si">{</span><span class="n">reference_genome</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gencode_ht</span> <span class="o">=</span> <span class="n">gencode</span><span class="o">.</span><span class="n">versions</span><span class="p">[</span><span class="n">version</span><span class="p">]</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;No Gencode Table or version was supplied, using Gencode version </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">gencode</span><span class="o">.</span><span class="n">default_version</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">gencode_ht</span> <span class="o">=</span> <span class="n">gencode</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+
+    <span class="n">filter_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">feature</span><span class="p">:</span>
+        <span class="n">feature</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">feature</span>
+        <span class="n">filter_expr</span> <span class="o">&amp;=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">gencode_ht</span><span class="o">.</span><span class="n">feature</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">protein_coding</span><span class="p">:</span>
+        <span class="n">filter_expr</span> <span class="o">&amp;=</span> <span class="n">gencode_ht</span><span class="o">.</span><span class="n">transcript_type</span> <span class="o">==</span> <span class="s2">&quot;protein_coding&quot;</span>
+
+    <span class="k">if</span> <span class="n">genes</span><span class="p">:</span>
+        <span class="n">genes</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">genes</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">by_gene_symbol</span><span class="p">:</span>
+            <span class="n">gene_field</span> <span class="o">=</span> <span class="s2">&quot;gene_name&quot;</span> <span class="k">if</span> <span class="n">by_gene_symbol</span> <span class="k">else</span> <span class="s2">&quot;gene_id&quot;</span>
+            <span class="n">filter_expr</span> <span class="o">&amp;=</span> <span class="n">genes</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">gencode_ht</span><span class="p">[</span><span class="n">gene_field</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">gencode_ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filter_expr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_by_intervals"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_by_intervals">[docs]</a><span class="k">def</span> <span class="nf">filter_by_intervals</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span>
+        <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">,</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">,</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Interval</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">padding_bp</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_collect_intervals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span><span class="p">,</span>
+    <span class="n">reference_genome</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter Table/MatrixTable by interval(s).</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable to filter.</span>
+<span class="sd">    :param intervals: Interval(s) to filter by. Can be a string, list of strings,</span>
+<span class="sd">        IntervalExpression, Interval, or list of Intervals. If a string or list of</span>
+<span class="sd">        strings, the interval string format has to be &quot;contig:start-end&quot;,</span>
+<span class="sd">        e.g.,&quot;1:1000-2000&quot; (GRCh37) or &quot;chr1:1000-2000&quot; (GRCh38).</span>
+<span class="sd">    :param padding_bp: Number of bases to pad the intervals by. Default is 0.</span>
+<span class="sd">    :param max_collect_intervals: Maximum number of intervals for the use of</span>
+<span class="sd">        `hl.filter_intervals` for filtering. When the number of intervals to filter is</span>
+<span class="sd">        greater than this number, `filter`/`filter_rows` will be used instead. The</span>
+<span class="sd">        reason for this is that `hl.filter_intervals` is faster, but when the</span>
+<span class="sd">        number of intervals is too large, this can cause memory errors. Default is</span>
+<span class="sd">        3000.</span>
+<span class="sd">    :param reference_genome: Reference genome build to use for parsing the intervals</span>
+<span class="sd">        if the intervals are strings. Default is None.</span>
+<span class="sd">    :return: Table/MatrixTable filtered by interval(s).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_expr</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">IntervalExpression</span><span class="p">)</span>
+    <span class="n">is_list</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">is_list</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)):</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="n">parse_locus_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">reference_genome</span><span class="p">)</span>
+
+    <span class="n">intervals</span> <span class="o">=</span> <span class="n">pad_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">padding_bp</span><span class="p">)</span> <span class="k">if</span> <span class="n">padding_bp</span> <span class="k">else</span> <span class="n">intervals</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_expr</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_list</span><span class="p">:</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span><span class="n">intervals</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">is_expr</span><span class="p">:</span>
+        <span class="n">_ht</span> <span class="o">=</span> <span class="n">intervals</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">source</span>
+        <span class="n">num_intervals</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+        <span class="c1"># Only collect intervals if there are less than or equal to</span>
+        <span class="c1"># `max_collect_intervals` to avoid memory issues.</span>
+        <span class="k">if</span> <span class="n">num_intervals</span> <span class="o">&lt;=</span> <span class="n">max_collect_intervals</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Since </span><span class="si">%d</span><span class="s2"> is less than or equal to &#39;max_collect_intervals&#39;, &quot;</span>
+                <span class="s2">&quot;collecting all intervals...&quot;</span><span class="p">,</span>
+                <span class="n">num_intervals</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">intervals</span> <span class="o">=</span> <span class="n">intervals</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">padding_bp</span><span class="p">:</span>
+                <span class="n">_ht</span> <span class="o">=</span> <span class="n">_ht</span><span class="o">.</span><span class="n">key_by</span><span class="p">(</span><span class="n">padded_interval</span><span class="o">=</span><span class="n">intervals</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">_ht</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">is_defined</span><span class="p">(</span><span class="n">_ht</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">]))</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">intervals</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_by_gencode_intervals"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_by_gencode_intervals">[docs]</a><span class="k">def</span> <span class="nf">filter_by_gencode_intervals</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">gencode_ht</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">protein_coding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">by_gene_symbol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">padding_bp</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_collect_intervals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a Table/MatrixTable based on Gencode Table annotations.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If no Gencode Table is provided, the default version of the Gencode Table</span>
+<span class="sd">        resource for the genome build of the input Table/MatrixTable will be used.</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable to filter.</span>
+<span class="sd">    :param gencode_ht: Gencode Table to use for filtering the input Table/MatrixTable.</span>
+<span class="sd">        Default is None, which will use the default version of the Gencode Table</span>
+<span class="sd">        resource.</span>
+<span class="sd">    :param protein_coding: Whether to filter to only intervals where &quot;transcript_type&quot;</span>
+<span class="sd">        is &quot;protein_coding&quot;. Default is False.</span>
+<span class="sd">    :param feature: Optional feature(s) to filter to. Can be a single feature string or</span>
+<span class="sd">        list of features. Default is None.</span>
+<span class="sd">    :param genes: Optional gene(s) to filter to. Can be a single gene string or list of</span>
+<span class="sd">        genes. Default is None.</span>
+<span class="sd">    :param by_gene_symbol: Whether to filter by gene symbol. Default is True. If False,</span>
+<span class="sd">        will filter by gene ID.</span>
+<span class="sd">    :param padding_bp: Number of bases to pad the CDS intervals by. Default is 0.</span>
+<span class="sd">    :param max_collect_intervals: Maximum number of intervals for the use of</span>
+<span class="sd">         `hl.filter_intervals` for filtering. When the number of intervals to filter is</span>
+<span class="sd">         greater than this number, `filter`/`filter_rows` will be used instead. The</span>
+<span class="sd">         reason for this is that `hl.filter_intervals` is faster, but when the</span>
+<span class="sd">         number of intervals is too large, this can cause memory errors. Default is</span>
+<span class="sd">         3000.</span>
+<span class="sd">    :return: Table/MatrixTable filtered to loci in requested Gencode intervals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">filter_by_intervals</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">,</span>
+        <span class="n">filter_gencode_ht</span><span class="p">(</span>
+            <span class="n">gencode_ht</span><span class="o">=</span><span class="n">gencode_ht</span><span class="p">,</span>
+            <span class="n">reference_genome</span><span class="o">=</span><span class="n">get_reference_genome</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">protein_coding</span><span class="o">=</span><span class="n">protein_coding</span><span class="p">,</span>
+            <span class="n">feature</span><span class="o">=</span><span class="n">feature</span><span class="p">,</span>
+            <span class="n">genes</span><span class="o">=</span><span class="n">genes</span><span class="p">,</span>
+            <span class="n">by_gene_symbol</span><span class="o">=</span><span class="n">by_gene_symbol</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span>
+        <span class="n">padding_bp</span><span class="o">=</span><span class="n">padding_bp</span><span class="p">,</span>
+        <span class="n">max_collect_intervals</span><span class="o">=</span><span class="n">max_collect_intervals</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_to_gencode_cds"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_to_gencode_cds">[docs]</a><span class="k">def</span> <span class="nf">filter_to_gencode_cds</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a Table/MatrixTable to only Gencode CDS regions in protein coding transcripts.</span>
+
+<span class="sd">    Example use:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from gnomad.resources.grch37.reference_data import gencode</span>
+<span class="sd">        gencode_ht = gencode.ht()</span>
+<span class="sd">        gencode_ht = filter_gencode_to_cds(gencode_ht)</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        If no Gencode Table is provided, the default version of the Gencode Table</span>
+<span class="sd">        resource for the genome build of the input Table/MatrixTable will be used.</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">        This Gencode CDS interval filter does not take into account the</span>
+<span class="sd">        transcript_id, it filters to any locus that is found in a CDS interval for</span>
+<span class="sd">        any protein coding transcript. Therefore, if downstream analyses require</span>
+<span class="sd">        filtering to CDS intervals by transcript, an additional step must be taken.</span>
+<span class="sd">        For example, when filtering VEP transcript consequences, there may be cases</span>
+<span class="sd">        where a variant is retained with this filter, but is considered outside the</span>
+<span class="sd">        CDS intervals of the transcript per the VEP predicted consequence of the</span>
+<span class="sd">        variant.</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable to filter.</span>
+<span class="sd">    :param kwargs: Additional Keyword arguments to pass to `filter_gencode_ht`.</span>
+<span class="sd">    :return: Table/MatrixTable filtered to loci in Gencode CDS intervals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+        <span class="s2">&quot;This Gencode CDS interval filter does not filter by transcript! Please see the&quot;</span>
+        <span class="s2">&quot; documentation for more details to confirm it&#39;s being used as intended.&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">filter_by_gencode_intervals</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">protein_coding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">feature</span><span class="o">=</span><span class="s2">&quot;CDS&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="remove_fields_from_constant"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.remove_fields_from_constant">[docs]</a><span class="k">def</span> <span class="nf">remove_fields_from_constant</span><span class="p">(</span>
+    <span class="n">constant</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fields_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove fields from a list and display any field(s) missing from the original list.</span>
+
+<span class="sd">    :param constant: List of fields</span>
+<span class="sd">    :param fields_to_remove: List of fields to remove from `constant`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields_to_remove</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">constant</span><span class="p">:</span>
+            <span class="n">constant</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> missing from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">constant</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">constant</span></div>
+
+
+<div class="viewcode-block" id="filter_x_nonpar"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_x_nonpar">[docs]</a><span class="k">def</span> <span class="nf">filter_x_nonpar</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter to loci that are in non-PAR regions on chromosome X.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :return: Filtered Table or MatrixTable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rg</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">reference_genome</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">,</span>
+        <span class="p">[</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">rg</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">rg</span><span class="o">.</span><span class="n">x_contigs</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">non_par_expr</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">in_x_nonpar</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">non_par_expr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">non_par_expr</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_y_nonpar"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_y_nonpar">[docs]</a><span class="k">def</span> <span class="nf">filter_y_nonpar</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter to loci that are in non-PAR regions on chromosome Y.</span>
+
+<span class="sd">    :param t: Input Table or MatrixTable.</span>
+<span class="sd">    :return: Filtered Table or MatrixTable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rg</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">reference_genome</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">filter_intervals</span><span class="p">(</span>
+        <span class="n">t</span><span class="p">,</span>
+        <span class="p">[</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">parse_locus_interval</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">reference_genome</span><span class="o">=</span><span class="n">rg</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">rg</span><span class="o">.</span><span class="n">y_contigs</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">non_par_expr</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">in_y_nonpar</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">non_par_expr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">non_par_expr</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_by_numeric_expr_range"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_by_numeric_expr_range">[docs]</a><span class="k">def</span> <span class="nf">filter_by_numeric_expr_range</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">],</span>
+    <span class="n">filter_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">NumericExpression</span><span class="p">,</span>
+    <span class="n">filter_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+    <span class="n">keep_between</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">inclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter rows in the Table/MatrixTable based on the range of a numeric expression.</span>
+
+<span class="sd">    :param t: Input Table/MatrixTable.</span>
+<span class="sd">    :param filter_expr: NumericExpression to apply `filter_range` to.</span>
+<span class="sd">    :param filter_range: Range of values to apply to `filter_expr`.</span>
+<span class="sd">    :param keep_between: Whether to keep the values between `filter_range` instead of keeping values outside `filter_range`. Default is True.</span>
+<span class="sd">    :param inclusive: Whether or not to include the `filter_range` values themselves. Default is True.</span>
+<span class="sd">    :return: Table/MatrixTable filtered to rows with specified criteria.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">inclusive</span> <span class="ow">and</span> <span class="n">keep_between</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">inclusive</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">keep_between</span><span class="p">:</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="p">(</span><span class="n">filter_expr</span> <span class="o">&gt;=</span> <span class="n">filter_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">filter_expr</span> <span class="o">&lt;=</span> <span class="n">filter_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="p">(</span><span class="n">filter_expr</span> <span class="o">&gt;</span> <span class="n">filter_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">filter_expr</span> <span class="o">&lt;</span> <span class="n">filter_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">MatrixTable</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">filter_rows</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep_between</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep_between</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="filter_for_mu"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_for_mu">[docs]</a><span class="k">def</span> <span class="nf">filter_for_mu</span><span class="p">(</span>
+    <span class="n">ht</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">,</span> <span class="n">gerp_lower_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.9885</span><span class="p">,</span> <span class="n">gerp_upper_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.6607</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hl</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter to non-coding annotations and remove GERP outliers.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Values for `gerp_lower_cutoff` and `gerp_upper_cutoff` default to -3.9885 and</span>
+<span class="sd">        2.6607, respectively. These values were precalculated on the GRCh37 context</span>
+<span class="sd">        table and define the 5th and 95th percentiles.</span>
+
+<span class="sd">    :param ht: Input Table.</span>
+<span class="sd">    :param gerp_lower_cutoff: Minimum GERP score for variant to be included. Default is -3.9885.</span>
+<span class="sd">    :param gerp_upper_cutoff: Maximum GERP score for variant to be included. Default is 2.6607.</span>
+<span class="sd">    :return: Table filtered to intron or intergenic variants with GERP outliers removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">filter_by_numeric_expr_range</span><span class="p">(</span>
+        <span class="n">ht</span><span class="p">,</span>
+        <span class="n">filter_expr</span><span class="o">=</span><span class="n">ht</span><span class="o">.</span><span class="n">gerp</span><span class="p">,</span>
+        <span class="n">filter_range</span><span class="o">=</span><span class="p">(</span><span class="n">gerp_lower_cutoff</span><span class="p">,</span> <span class="n">gerp_upper_cutoff</span><span class="p">),</span>
+        <span class="n">keep_between</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">inclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ht</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">most_severe_consequence</span> <span class="o">==</span> <span class="s2">&quot;intron_variant&quot;</span><span class="p">)</span>
+        <span class="o">|</span> <span class="p">(</span><span class="n">ht</span><span class="o">.</span><span class="n">vep</span><span class="o">.</span><span class="n">most_severe_consequence</span> <span class="o">==</span> <span class="s2">&quot;intergenic_variant&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ht</span></div>
+
+
+<div class="viewcode-block" id="split_vds_by_strata"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.split_vds_by_strata">[docs]</a><span class="k">def</span> <span class="nf">split_vds_by_strata</span><span class="p">(</span>
+    <span class="n">vds</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">,</span> <span class="n">strata_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">Expression</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">VariantDataset</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split a VDS into multiple VDSs based on `strata_expr`.</span>
+
+<span class="sd">    :param vds: Input VDS.</span>
+<span class="sd">    :param strata_expr: Expression on VDS variant_data MT to split on.</span>
+<span class="sd">    :return: Dictionary where strata value is key and VDS is value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vmt</span> <span class="o">=</span> <span class="n">vds</span><span class="o">.</span><span class="n">variant_data</span>
+    <span class="n">s_by_strata</span> <span class="o">=</span> <span class="n">vmt</span><span class="o">.</span><span class="n">aggregate_cols</span><span class="p">(</span>
+        <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">strata_expr</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">agg</span><span class="o">.</span><span class="n">collect_as_set</span><span class="p">(</span><span class="n">vmt</span><span class="o">.</span><span class="n">s</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">strata</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">vds</span><span class="o">.</span><span class="n">filter_samples</span><span class="p">(</span><span class="n">vds</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">strata</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">s_by_strata</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="filter_arrays_by_meta"><a class="viewcode-back" href="../../../api_reference/utils/filtering.html#gnomad.utils.filtering.filter_arrays_by_meta">[docs]</a><span class="k">def</span> <span class="nf">filter_arrays_by_meta</span><span class="p">(</span>
+    <span class="n">meta_expr</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="n">meta_indexed_exprs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span>
+    <span class="p">],</span>
+    <span class="n">items_to_filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">keep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">combine_operator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;and&quot;</span><span class="p">,</span>
+    <span class="n">exact_match</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">],</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter both metadata array expression and meta data indexed expression by `items_to_filter`.</span>
+
+<span class="sd">    The `items_to_filter` can be used to filter in the following ways based on</span>
+<span class="sd">    `meta_expr` items:</span>
+<span class="sd">    - By a list of keys, e.g. [&quot;sex&quot;, &quot;downsampling&quot;].</span>
+<span class="sd">    - By specific key: value pairs, e.g. to filter where &#39;pop&#39; is &#39;han&#39; or &#39;papuan&#39;</span>
+<span class="sd">    {&quot;pop&quot;: [&quot;han&quot;, &quot;papuan&quot;]}, or where &#39;pop&#39; is &#39;afr&#39; and/or &#39;sex&#39; is &#39;XX&#39;</span>
+<span class="sd">    {&quot;pop&quot;: [&quot;afr&quot;], &quot;sex&quot;: [&quot;XX&quot;]}.</span>
+
+<span class="sd">    The items can be kept or removed from `meta_indexed_expr` and `meta_expr` based on</span>
+<span class="sd">    the value of `keep`. For example if `meta_indexed_exprs` is {&#39;freq&#39;: ht.freq,</span>
+<span class="sd">    &#39;freq_meta_sample_count&#39;: ht.index_globals().freq_meta_sample_count} and `meta_expr`</span>
+<span class="sd">    is ht.freq_meta then if `keep` is True, the items specified by `items_to_filter`</span>
+<span class="sd">    such as  &#39;pop&#39; = &#39;han&#39; will be kept and all other items will be removed from the</span>
+<span class="sd">    ht.freq, ht.freq_meta_sample_count, and ht.freq_meta. `meta_indexed_exprs` can also</span>
+<span class="sd">    be a single array expression such as ht.freq.</span>
+
+<span class="sd">    The filtering can also be applied such that all criteria must be met</span>
+<span class="sd">    (`combine_operator` = &quot;and&quot;) by the `meta_expr` item in order to be filtered,</span>
+<span class="sd">    or at least one of the specified criteria must be met (`combine_operator` = &quot;or&quot;)</span>
+<span class="sd">    by the `meta_expr` item in order to be filtered.</span>
+
+<span class="sd">    The `exact_match` parameter can be used to apply the `keep` parameter to only items</span>
+<span class="sd">    specified in the `items_to_filter` parameter. For example, by default, if `keep` is</span>
+<span class="sd">    True, `combine_operator` is &quot;and&quot;, and `items_to_filter` is [&quot;sex&quot;, &quot;downsampling&quot;],</span>
+<span class="sd">    then all items in `meta_expr` with both &quot;sex&quot; and &quot;downsampling&quot; as keys will be</span>
+<span class="sd">    kept. However, if `exact_match` is True, then the items</span>
+<span class="sd">    in `meta_expr` will only be kept if &quot;sex&quot; and &quot;downsampling&quot; are the only keys in</span>
+<span class="sd">    the meta dict.</span>
+
+<span class="sd">    :param meta_expr: Metadata expression that contains the values of the elements in</span>
+<span class="sd">        `meta_indexed_expr`. The most often used expression is `freq_meta` to index into</span>
+<span class="sd">        a &#39;freq&#39; array.</span>
+<span class="sd">    :param meta_indexed_exprs: Either a Dictionary where the keys are the expression name</span>
+<span class="sd">        and the values are the expressions indexed by the `meta_expr` such as a &#39;freq&#39;</span>
+<span class="sd">        array or just a single expression indexed by the `meta_expr`.</span>
+<span class="sd">    :param items_to_filter: Items to filter by, either a list or a dictionary.</span>
+<span class="sd">    :param keep: Whether to keep or remove the items specified by `items_to_filter`.</span>
+<span class="sd">    :param combine_operator: Whether to use &quot;and&quot; or &quot;or&quot; to combine the items</span>
+<span class="sd">        specified by `items_to_filter`.</span>
+<span class="sd">    :param exact_match: Whether to apply the `keep` parameter to only the items</span>
+<span class="sd">        specified in the `items_to_filter` parameter or to all items in `meta_expr`.</span>
+<span class="sd">        See the example above for more details. Default is False.</span>
+<span class="sd">    :return: A Tuple of the filtered metadata expression and a dictionary of metadata</span>
+<span class="sd">        indexed expressions when meta_indexed_expr is a Dictionary or a single filtered</span>
+<span class="sd">        array expression when meta_indexed_expr is a single array expression.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">meta_expr</span> <span class="o">=</span> <span class="n">meta_expr</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">_localize</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meta_indexed_exprs</span><span class="p">,</span> <span class="n">hl</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">ArrayExpression</span><span class="p">):</span>
+        <span class="n">meta_indexed_exprs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_tmp&quot;</span><span class="p">:</span> <span class="n">meta_indexed_exprs</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">combine_operator</span> <span class="o">==</span> <span class="s2">&quot;and&quot;</span><span class="p">:</span>
+        <span class="n">operator_func</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">all</span>
+    <span class="k">elif</span> <span class="n">combine_operator</span> <span class="o">==</span> <span class="s2">&quot;or&quot;</span><span class="p">:</span>
+        <span class="n">operator_func</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">any</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;combine_operator must be one of &#39;and&#39; or &#39;or&#39;, but found&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">combine_operator</span><span class="si">}</span><span class="s2">!&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items_to_filter</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">items_to_filter_set</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">items_to_filter</span><span class="p">)</span>
+        <span class="n">items_to_filter</span> <span class="o">=</span> <span class="p">[[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">items_to_filter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">exact_match</span><span class="p">:</span>
+            <span class="n">filter_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">items_to_filter_set</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">)</span> <span class="o">&amp;</span> <span class="n">m</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filter_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items_to_filter</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">items_to_filter</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">items_to_filter</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">items_to_filter_set</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">items_to_filter</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">exact_match</span><span class="p">:</span>
+            <span class="n">filter_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">len</span><span class="p">(</span><span class="n">hl</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">items</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">items_to_filter_set</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filter_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;items_to_filter must be a list or a dictionary!&quot;</span><span class="p">)</span>
+
+    <span class="n">meta_expr</span> <span class="o">=</span> <span class="n">hl</span><span class="o">.</span><span class="n">enumerate</span><span class="p">(</span><span class="n">meta_expr</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">hl</span><span class="o">.</span><span class="n">if_else</span><span class="p">(</span><span class="n">keep</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">~</span><span class="n">x</span><span class="p">),</span>
+            <span class="n">operator_func</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">hl</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">filter_func</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">items_to_filter</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">meta_indexed_exprs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">meta_expr</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">meta_indexed_exprs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="n">meta_expr</span> <span class="o">=</span> <span class="n">meta_expr</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="s2">&quot;_tmp&quot;</span> <span class="ow">in</span> <span class="n">meta_indexed_exprs</span><span class="p">:</span>
+        <span class="n">meta_indexed_exprs</span> <span class="o">=</span> <span class="n">meta_indexed_exprs</span><span class="p">[</span><span class="s2">&quot;_tmp&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">meta_expr</span><span class="p">,</span> <span class="n">meta_indexed_exprs</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

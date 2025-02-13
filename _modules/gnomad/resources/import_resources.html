@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.resources.import_resources &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">gnomad.resources.import_resources</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gnomad.resources.import_resources</h1><div class="highlight"><pre>
+<span></span><span class="c1"># noqa: D100</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getmembers</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">gnomad.resources.grch37</span> <span class="k">as</span> <span class="nn">grch37</span>
+<span class="kn">import</span> <span class="nn">gnomad.resources.grch38</span> <span class="k">as</span> <span class="nn">grch38</span>
+<span class="kn">from</span> <span class="nn">gnomad.resources.config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GnomadPublicResourceSource</span><span class="p">,</span>
+    <span class="n">gnomad_public_resource_configuration</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gnomad.resources.resource_utils</span> <span class="kn">import</span> <span class="n">BaseResource</span><span class="p">,</span> <span class="n">BaseVersionedResource</span>
+
+
+<span class="c1"># Generate a dictionary of resource available for import for a given genome build</span>
+<div class="viewcode-block" id="get_module_importable_resources"><a class="viewcode-back" href="../../../api_reference/resources/import_resources.html#gnomad.resources.import_resources.get_module_importable_resources">[docs]</a><span class="k">def</span> <span class="nf">get_module_importable_resources</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseResource</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Take a module that was imported and generates a list of all resources in this module that can be imported (i.e. with a path and import_func).</span>
+
+<span class="sd">    The dict produced is as follows:</span>
+<span class="sd">        - keys: {prefix}.{resource_name}.{version} (with prefix only present if `prefix` is set, and `version` only present for versioned resources)</span>
+<span class="sd">        - values: ({resource_name}[ version {version}], resource) with resource_name set to the variable name in the module and the version present for versioned resources.</span>
+
+<span class="sd">    The following example will generate a dict with all the resources in gnomad.resources.grch37 that can be imported:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import gnomad.resources.grch37 as grch37</span>
+<span class="sd">        grch37_resources = get_module_importable_resources(grch37, prefix=&#39;grch37&#39;)</span>
+
+<span class="sd">    :param module: Input module</span>
+<span class="sd">    :param prefix:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.&quot;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">resources</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">getmembers</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseResource</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">path</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">import_func</span><span class="p">:</span>
+            <span class="n">resources</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseVersionedResource</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">version_name</span><span class="p">,</span> <span class="n">version_resource</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">version_resource</span><span class="o">.</span><span class="n">path</span> <span class="ow">and</span> <span class="n">version_resource</span><span class="o">.</span><span class="n">import_func</span><span class="p">:</span>
+                    <span class="n">resources</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">version_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">version_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">version_resource</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">resources</span></div>
+
+
+<div class="viewcode-block" id="get_resources_descriptions"><a class="viewcode-back" href="../../../api_reference/resources/import_resources.html#gnomad.resources.import_resources.get_resources_descriptions">[docs]</a><span class="k">def</span> <span class="nf">get_resources_descriptions</span><span class="p">(</span>
+    <span class="n">resources</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseResource</span><span class="p">]],</span> <span class="n">width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a string listing all resources in the input dict along with the path from which they are imported and the path at which they are stored.</span>
+
+<span class="sd">    :param resources: A dict returned from get_module_importable_resources</span>
+<span class="sd">    :param width: Maximum width of lines in the returned string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wrapper</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">TextWrapper</span><span class="p">(</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">initial_indent</span><span class="o">=</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="mi">4</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resource_arg</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">,</span>
+                <span class="n">wrapper</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;import </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;import_args&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;???&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">),</span>
+                <span class="n">wrapper</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;to </span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">resource_arg</span><span class="p">,</span> <span class="p">(</span><span class="n">resource_name</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span> <span class="ow">in</span> <span class="n">resources</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<span class="n">grch37_resources</span> <span class="o">=</span> <span class="n">get_module_importable_resources</span><span class="p">(</span><span class="n">grch37</span><span class="p">,</span> <span class="s2">&quot;grch37&quot;</span><span class="p">)</span>
+<span class="n">grch38_resources</span> <span class="o">=</span> <span class="n">get_module_importable_resources</span><span class="p">(</span><span class="n">grch38</span><span class="p">,</span> <span class="s2">&quot;grch38&quot;</span><span class="p">)</span>
+<span class="n">all_resources</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">grch37_resources</span><span class="p">,</span> <span class="o">**</span><span class="n">grch38_resources</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../api_reference/resources/import_resources.html#gnomad.resources.import_resources.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import selected resources.&quot;&quot;&quot;</span>
+    <span class="n">gnomad_public_resource_configuration</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">GnomadPublicResourceSource</span><span class="o">.</span><span class="n">GNOMAD</span>
+
+    <span class="k">for</span> <span class="n">resource_arg</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+        <span class="n">resource_name</span><span class="p">,</span> <span class="n">resource</span> <span class="o">=</span> <span class="n">all_resources</span><span class="p">[</span><span class="n">resource_arg</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Importing </span><span class="si">{</span><span class="n">resource_name</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+        <span class="n">resource</span><span class="o">.</span><span class="n">import_resource</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawTextHelpFormatter</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;resources&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">all_resources</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;resource&quot;</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Resource to import. Choices are:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="o">+</span> <span class="n">get_resources_descriptions</span><span class="p">(</span><span class="n">all_resources</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--overwrite&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Overwrites existing files&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span>
+    <span class="p">)</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.filtering &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.gen_stats" href="gen_stats.html" />
+    <link rel="prev" title="gnomad.utils.file_utils" href="file_utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_to_adj"><code class="docutils literal notranslate"><span class="pre">filter_to_adj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_by_frequency"><code class="docutils literal notranslate"><span class="pre">filter_by_frequency()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.combine_functions"><code class="docutils literal notranslate"><span class="pre">combine_functions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.low_conf_regions_expr"><code class="docutils literal notranslate"><span class="pre">low_conf_regions_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_low_conf_regions"><code class="docutils literal notranslate"><span class="pre">filter_low_conf_regions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_to_autosomes"><code class="docutils literal notranslate"><span class="pre">filter_to_autosomes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.add_filters_expr"><code class="docutils literal notranslate"><span class="pre">add_filters_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.subset_samples_and_variants"><code class="docutils literal notranslate"><span class="pre">subset_samples_and_variants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_to_clinvar_pathogenic"><code class="docutils literal notranslate"><span class="pre">filter_to_clinvar_pathogenic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_gencode_ht"><code class="docutils literal notranslate"><span class="pre">filter_gencode_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_by_intervals"><code class="docutils literal notranslate"><span class="pre">filter_by_intervals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_by_gencode_intervals"><code class="docutils literal notranslate"><span class="pre">filter_by_gencode_intervals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_to_gencode_cds"><code class="docutils literal notranslate"><span class="pre">filter_to_gencode_cds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.remove_fields_from_constant"><code class="docutils literal notranslate"><span class="pre">remove_fields_from_constant()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_x_nonpar"><code class="docutils literal notranslate"><span class="pre">filter_x_nonpar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_y_nonpar"><code class="docutils literal notranslate"><span class="pre">filter_y_nonpar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_by_numeric_expr_range"><code class="docutils literal notranslate"><span class="pre">filter_by_numeric_expr_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_for_mu"><code class="docutils literal notranslate"><span class="pre">filter_for_mu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.split_vds_by_strata"><code class="docutils literal notranslate"><span class="pre">split_vds_by_strata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.filtering.filter_arrays_by_meta"><code class="docutils literal notranslate"><span class="pre">filter_arrays_by_meta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.filtering</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/filtering.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-filtering">
+<h1>gnomad.utils.filtering<a class="headerlink" href="#gnomad-utils-filtering" title="Permalink to this heading"></a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_to_adj" title="gnomad.utils.filtering.filter_to_adj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_to_adj</span></code></a>(mt)</p></td>
+<td><p>Filter genotypes to adj criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_by_frequency" title="gnomad.utils.filtering.filter_by_frequency"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_by_frequency</span></code></a>(t, ...)</p></td>
+<td><p>Filter MatrixTable or Table with gnomAD-format frequency data (assumed bi-allelic/split).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.combine_functions" title="gnomad.utils.filtering.combine_functions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.combine_functions</span></code></a>(...)</p></td>
+<td><p>Combine a list of boolean functions to an Expression using the specified operator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.low_conf_regions_expr" title="gnomad.utils.filtering.low_conf_regions_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.low_conf_regions_expr</span></code></a>(...)</p></td>
+<td><p>Create an expression to filter low confidence regions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_low_conf_regions" title="gnomad.utils.filtering.filter_low_conf_regions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_low_conf_regions</span></code></a>(t, ...)</p></td>
+<td><p>Filter low-confidence regions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_to_autosomes" title="gnomad.utils.filtering.filter_to_autosomes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_to_autosomes</span></code></a>(t)</p></td>
+<td><p>Filter the Table or MatrixTable to autosomes only.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.add_filters_expr" title="gnomad.utils.filtering.add_filters_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.add_filters_expr</span></code></a>(filters)</p></td>
+<td><p>Create an expression to create or add filters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.subset_samples_and_variants" title="gnomad.utils.filtering.subset_samples_and_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.subset_samples_and_variants</span></code></a>(...)</p></td>
+<td><p>Subset the MatrixTable or VariantDataset to the provided list of samples and their variants.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_to_clinvar_pathogenic" title="gnomad.utils.filtering.filter_to_clinvar_pathogenic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_to_clinvar_pathogenic</span></code></a>(t)</p></td>
+<td><p>Return a MatrixTable or Table that filters the clinvar data to pathogenic and likely pathogenic variants.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_gencode_ht" title="gnomad.utils.filtering.filter_gencode_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_gencode_ht</span></code></a>([...])</p></td>
+<td><p>Filter a Gencode Table to specified criteria.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_by_intervals" title="gnomad.utils.filtering.filter_by_intervals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_by_intervals</span></code></a>(t, ...)</p></td>
+<td><p>Filter Table/MatrixTable by interval(s).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_by_gencode_intervals" title="gnomad.utils.filtering.filter_by_gencode_intervals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_by_gencode_intervals</span></code></a>(t)</p></td>
+<td><p>Filter a Table/MatrixTable based on Gencode Table annotations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_to_gencode_cds" title="gnomad.utils.filtering.filter_to_gencode_cds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_to_gencode_cds</span></code></a>(t, ...)</p></td>
+<td><p>Filter a Table/MatrixTable to only Gencode CDS regions in protein coding transcripts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.remove_fields_from_constant" title="gnomad.utils.filtering.remove_fields_from_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.remove_fields_from_constant</span></code></a>(...)</p></td>
+<td><p>Remove fields from a list and display any field(s) missing from the original list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_x_nonpar" title="gnomad.utils.filtering.filter_x_nonpar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_x_nonpar</span></code></a>(t)</p></td>
+<td><p>Filter to loci that are in non-PAR regions on chromosome X.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_y_nonpar" title="gnomad.utils.filtering.filter_y_nonpar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_y_nonpar</span></code></a>(t)</p></td>
+<td><p>Filter to loci that are in non-PAR regions on chromosome Y.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_by_numeric_expr_range" title="gnomad.utils.filtering.filter_by_numeric_expr_range"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_by_numeric_expr_range</span></code></a>(t, ...)</p></td>
+<td><p>Filter rows in the Table/MatrixTable based on the range of a numeric expression.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_for_mu" title="gnomad.utils.filtering.filter_for_mu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_for_mu</span></code></a>(ht[, ...])</p></td>
+<td><p>Filter to non-coding annotations and remove GERP outliers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.filtering.split_vds_by_strata" title="gnomad.utils.filtering.split_vds_by_strata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.split_vds_by_strata</span></code></a>(...)</p></td>
+<td><p>Split a VDS into multiple VDSs based on <cite>strata_expr</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.filtering.filter_arrays_by_meta" title="gnomad.utils.filtering.filter_arrays_by_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.filtering.filter_arrays_by_meta</span></code></a>(...)</p></td>
+<td><p>Filter both metadata array expression and meta data indexed expression by <cite>items_to_filter</cite>.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.filtering"></span><dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_to_adj">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_to_adj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_to_adj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_to_adj" title="Permalink to this definition"></a></dt>
+<dd><p>Filter genotypes to adj criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_by_frequency">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_by_frequency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allele_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">population</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_by_frequency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_by_frequency" title="Permalink to this definition"></a></dt>
+<dd><p>Filter MatrixTable or Table with gnomAD-format frequency data (assumed bi-allelic/split).</p>
+<p>gnomAD frequency data format expectation is: Array[Struct(Array[AC], Array[AF], AN, homozygote_count, meta)].</p>
+<p>At least one of frequency or allele_count is required.</p>
+<p>Subpop can be specified without a population if desired.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table</p></li>
+<li><p><strong>direction</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – One of “above”, “below”, and “equal” (how to apply the filter)</p></li>
+<li><p><strong>frequency</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Frequency to filter by (one of frequency or allele_count is required)</p></li>
+<li><p><strong>allele_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Allele count to filter by (one of frequency or allele_count is required)</p></li>
+<li><p><strong>population</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Population in which to filter frequency</p></li>
+<li><p><strong>subpop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Sub-population in which to filter frequency</p></li>
+<li><p><strong>downsampling</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Downsampling in which to filter frequency</p></li>
+<li><p><strong>keep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to keep rows passing this frequency (passed to filter_rows)</p></li>
+<li><p><strong>adj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use adj frequency</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Filtered MatrixTable or Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.combine_functions">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">combine_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_func=&lt;built-in</span> <span class="pre">function</span> <span class="pre">iand&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#combine_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.combine_functions" title="Permalink to this definition"></a></dt>
+<dd><p>Combine a list of boolean functions to an Expression using the specified operator.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <cite>operator_func</cite> is applied cumulatively from left to right of the <cite>func_list</cite>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>func_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]) – A list of boolean functions that can be applied to <cite>x</cite>.</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Expression to be passed to each function in <cite>func_list</cite>.</p></li>
+<li><p><strong>operator_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – Operator function to combine the functions in <cite>func_list</cite>. Default is <cite>operator.iand</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A boolean from the combined operations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.low_conf_regions_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">low_conf_regions_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_lcr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_decoy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_segdup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_exome_low_coverage_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_telomeres_and_centromeres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_conf_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#low_conf_regions_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.low_conf_regions_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Create an expression to filter low confidence regions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locus_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.LocusExpression.html#hail.expr.LocusExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocusExpression</span></code></a>) – Locus expression to use for filtering.</p></li>
+<li><p><strong>filter_lcr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter LCR regions</p></li>
+<li><p><strong>filter_decoy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter decoy regions</p></li>
+<li><p><strong>filter_segdup</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter Segdup regions</p></li>
+<li><p><strong>filter_exome_low_coverage_regions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter exome low confidence regions</p></li>
+<li><p><strong>filter_telomeres_and_centromeres</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter telomeres and centromeres</p></li>
+<li><p><strong>high_conf_regions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Paths to set of high confidence regions to restrict to (union of regions)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Bool expression of whether loci are not low confidence (TRUE) or low confidence (FALSE)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_low_conf_regions">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_low_conf_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_low_conf_regions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_low_conf_regions" title="Permalink to this definition"></a></dt>
+<dd><p>Filter low-confidence regions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – MatrixTable or Table to filter.</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to pass to <cite>low_conf_regions_expr</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MatrixTable or Table with low confidence regions removed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_to_autosomes">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_to_autosomes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_to_autosomes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_to_autosomes" title="Permalink to this definition"></a></dt>
+<dd><p>Filter the Table or MatrixTable to autosomes only.</p>
+<p>This assumes that the input contains a field named <cite>locus</cite> of type Locus</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MT/HT</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MT/HT autosomes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.add_filters_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">add_filters_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#add_filters_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.add_filters_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Create an expression to create or add filters.</p>
+<p>For each entry in the <cite>filters</cite> dictionary, if the value evaluates to <cite>True</cite>,
+then the key is added as a filter name.</p>
+<p>Current filters are kept if provided using <cite>current_filters</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – The filters and their expressions</p></li>
+<li><p><strong>current_filters</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.SetExpression.html#hail.expr.SetExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetExpression</span></code></a>) – The set of current filters</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.SetExpression.html#hail.expr.SetExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An expression that can be used to annotate the filters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.subset_samples_and_variants">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">subset_samples_and_variants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mtds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'s'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_dead_alleles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#subset_samples_and_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.subset_samples_and_variants" title="Permalink to this definition"></a></dt>
+<dd><p>Subset the MatrixTable or VariantDataset to the provided list of samples and their variants.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mtds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]) – Input MatrixTable or VariantDataset</p></li>
+<li><p><strong>sample_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Path to a file with list of samples</p></li>
+<li><p><strong>header</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether file with samples has a header. Default is True</p></li>
+<li><p><strong>table_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Key to sample Table. Default is “s”</p></li>
+<li><p><strong>sparse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether the MatrixTable is sparse. Default is False</p></li>
+<li><p><strong>gt_expr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of field in MatrixTable containing genotype expression. Default is “GT”</p></li>
+<li><p><strong>remove_dead_alleles</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Remove alleles observed in no samples. This option is currently only relevant when <cite>mtds</cite> is a VariantDataset. Default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MatrixTable or VariantDataset subsetted to specified samples and their variants</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_to_clinvar_pathogenic">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_to_clinvar_pathogenic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clnrevstat_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CLNREVSTAT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clnsig_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CLNSIG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clnsigconf_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CLNSIGCONF'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_no_assertion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_conflicting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_to_clinvar_pathogenic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_to_clinvar_pathogenic" title="Permalink to this definition"></a></dt>
+<dd><p>Return a MatrixTable or Table that filters the clinvar data to pathogenic and likely pathogenic variants.</p>
+<p>Example use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gnomad.resources.grch38.reference_data</span> <span class="kn">import</span> <span class="n">clinvar</span>
+<span class="n">clinvar_ht</span> <span class="o">=</span> <span class="n">clinvar</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+<span class="n">clinvar_ht</span> <span class="o">=</span> <span class="n">filter_to_clinvar_pathogenic</span><span class="p">(</span><span class="n">clinvar_ht</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>t: Input dataset that contains clinvar data, could either be a MatrixTable or Table.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>clnrevstat_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The field string for the expression that contains the review status of the clinical significance of clinvar variants.</p></li>
+<li><p><strong>clnsig_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The field string for the expression that contains the clinical signifcance of the clinvar variant.</p></li>
+<li><p><strong>clnsigconf_field</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The field string for the expression that contains the conflicting clinical significance values for the variant. For variants with no conflicting significance, this field should be undefined.</p></li>
+<li><p><strong>remove_no_assertion</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Flag for removing entries in which the clnrevstat (clinical significance) has no assertions (zero stars).</p></li>
+<li><p><strong>remove_conflicting</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Flag for removing entries with conflicting clinical interpretations.</p></li>
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – </p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered MatrixTable or Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_gencode_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_gencode_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gencode_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_genome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRCh38'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_coding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by_gene_symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_gencode_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_gencode_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Filter a Gencode Table to specified criteria.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If no Gencode Table is provided, a <cite>reference_genome</cite> Gencode Table resource
+will be used. If <cite>version</cite> is not provided, the default version of the Gencode
+Table resource will be used.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gencode_ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Gencode Table to use for filtering the input Table/MatrixTable
+to CDS regions. Default is None, which will use the default version of the
+Gencode Table resource.</p></li>
+<li><p><strong>reference_genome</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Reference genome build of Gencode Table to use if none is
+provided. Default is “GRCh38”.</p></li>
+<li><p><strong>version</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Version of the Gencode Table to use if none is provided. Default is
+None.</p></li>
+<li><p><strong>protein_coding</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only intervals where “transcript_type”
+is “protein_coding”. Default is False.</p></li>
+<li><p><strong>feature</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional feature(s) to filter to. Can be a single feature string or
+list of features. Default is None.</p></li>
+<li><p><strong>genes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Optional gene(s) to filter to. Can be a single gene string or list of
+genes. Default is None.</p></li>
+<li><p><strong>by_gene_symbol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter by gene symbol. Default is True. If False,
+will filter by gene ID.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Gencode Table filtered to specified criteria.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_by_intervals">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_by_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intervals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_collect_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_genome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_by_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_by_intervals" title="Permalink to this definition"></a></dt>
+<dd><p>Filter Table/MatrixTable by interval(s).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table/MatrixTable to filter.</p></li>
+<li><p><strong>intervals</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.IntervalExpression.html#hail.expr.IntervalExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">IntervalExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/utils/index.html#hail.utils.Interval" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a>]]) – Interval(s) to filter by. Can be a string, list of strings,
+IntervalExpression, Interval, or list of Intervals. If a string or list of
+strings, the interval string format has to be “contig:start-end”,
+e.g.,”1:1000-2000” (GRCh37) or “chr1:1000-2000” (GRCh38).</p></li>
+<li><p><strong>padding_bp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of bases to pad the intervals by. Default is 0.</p></li>
+<li><p><strong>max_collect_intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of intervals for the use of
+<cite>hl.filter_intervals</cite> for filtering. When the number of intervals to filter is
+greater than this number, <cite>filter</cite>/<cite>filter_rows</cite> will be used instead. The
+reason for this is that <cite>hl.filter_intervals</cite> is faster, but when the
+number of intervals is too large, this can cause memory errors. Default is
+3000.</p></li>
+<li><p><strong>reference_genome</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Reference genome build to use for parsing the intervals
+if the intervals are strings. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table/MatrixTable filtered by interval(s).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_by_gencode_intervals">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_by_gencode_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gencode_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_coding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by_gene_symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_collect_intervals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_by_gencode_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_by_gencode_intervals" title="Permalink to this definition"></a></dt>
+<dd><p>Filter a Table/MatrixTable based on Gencode Table annotations.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If no Gencode Table is provided, the default version of the Gencode Table
+resource for the genome build of the input Table/MatrixTable will be used.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table/MatrixTable to filter.</p></li>
+<li><p><strong>gencode_ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Gencode Table to use for filtering the input Table/MatrixTable.
+Default is None, which will use the default version of the Gencode Table
+resource.</p></li>
+<li><p><strong>protein_coding</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only intervals where “transcript_type”
+is “protein_coding”. Default is False.</p></li>
+<li><p><strong>feature</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional feature(s) to filter to. Can be a single feature string or
+list of features. Default is None.</p></li>
+<li><p><strong>genes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Optional gene(s) to filter to. Can be a single gene string or list of
+genes. Default is None.</p></li>
+<li><p><strong>by_gene_symbol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter by gene symbol. Default is True. If False,
+will filter by gene ID.</p></li>
+<li><p><strong>padding_bp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of bases to pad the CDS intervals by. Default is 0.</p></li>
+<li><p><strong>max_collect_intervals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of intervals for the use of
+<cite>hl.filter_intervals</cite> for filtering. When the number of intervals to filter is
+greater than this number, <cite>filter</cite>/<cite>filter_rows</cite> will be used instead. The
+reason for this is that <cite>hl.filter_intervals</cite> is faster, but when the
+number of intervals is too large, this can cause memory errors. Default is
+3000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table/MatrixTable filtered to loci in requested Gencode intervals.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_to_gencode_cds">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_to_gencode_cds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_to_gencode_cds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_to_gencode_cds" title="Permalink to this definition"></a></dt>
+<dd><p>Filter a Table/MatrixTable to only Gencode CDS regions in protein coding transcripts.</p>
+<p>Example use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gnomad.resources.grch37.reference_data</span> <span class="kn">import</span> <span class="n">gencode</span>
+<span class="n">gencode_ht</span> <span class="o">=</span> <span class="n">gencode</span><span class="o">.</span><span class="n">ht</span><span class="p">()</span>
+<span class="n">gencode_ht</span> <span class="o">=</span> <span class="n">filter_gencode_to_cds</span><span class="p">(</span><span class="n">gencode_ht</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If no Gencode Table is provided, the default version of the Gencode Table
+resource for the genome build of the input Table/MatrixTable will be used.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This Gencode CDS interval filter does not take into account the
+transcript_id, it filters to any locus that is found in a CDS interval for
+any protein coding transcript. Therefore, if downstream analyses require
+filtering to CDS intervals by transcript, an additional step must be taken.
+For example, when filtering VEP transcript consequences, there may be cases
+where a variant is retained with this filter, but is considered outside the
+CDS intervals of the transcript per the VEP predicted consequence of the
+variant.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table/MatrixTable to filter.</p></li>
+<li><p><strong>kwargs</strong> – Additional Keyword arguments to pass to <cite>filter_gencode_ht</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table/MatrixTable filtered to loci in Gencode CDS intervals.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.remove_fields_from_constant">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">remove_fields_from_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields_to_remove</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#remove_fields_from_constant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.remove_fields_from_constant" title="Permalink to this definition"></a></dt>
+<dd><p>Remove fields from a list and display any field(s) missing from the original list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constant</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of fields</p></li>
+<li><p><strong>fields_to_remove</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of fields to remove from <cite>constant</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_x_nonpar">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_x_nonpar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_x_nonpar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_x_nonpar" title="Permalink to this definition"></a></dt>
+<dd><p>Filter to loci that are in non-PAR regions on chromosome X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table or MatrixTable.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Filtered Table or MatrixTable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_y_nonpar">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_y_nonpar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_y_nonpar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_y_nonpar" title="Permalink to this definition"></a></dt>
+<dd><p>Filter to loci that are in non-PAR regions on chromosome Y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Input Table or MatrixTable.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Filtered Table or MatrixTable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_by_numeric_expr_range">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_by_numeric_expr_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_between</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_by_numeric_expr_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_by_numeric_expr_range" title="Permalink to this definition"></a></dt>
+<dd><p>Filter rows in the Table/MatrixTable based on the range of a numeric expression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table/MatrixTable.</p></li>
+<li><p><strong>filter_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>) – NumericExpression to apply <cite>filter_range</cite> to.</p></li>
+<li><p><strong>filter_range</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>) – Range of values to apply to <cite>filter_expr</cite>.</p></li>
+<li><p><strong>keep_between</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to keep the values between <cite>filter_range</cite> instead of keeping values outside <cite>filter_range</cite>. Default is True.</p></li>
+<li><p><strong>inclusive</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether or not to include the <cite>filter_range</cite> values themselves. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table/MatrixTable filtered to rows with specified criteria.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_for_mu">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_for_mu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gerp_lower_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-3.9885</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gerp_upper_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.6607</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_for_mu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_for_mu" title="Permalink to this definition"></a></dt>
+<dd><p>Filter to non-coding annotations and remove GERP outliers.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Values for <cite>gerp_lower_cutoff</cite> and <cite>gerp_upper_cutoff</cite> default to -3.9885 and
+2.6607, respectively. These values were precalculated on the GRCh37 context
+table and define the 5th and 95th percentiles.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>gerp_lower_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum GERP score for variant to be included. Default is -3.9885.</p></li>
+<li><p><strong>gerp_upper_cutoff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Maximum GERP score for variant to be included. Default is 2.6607.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table filtered to intron or intergenic variants with GERP outliers removed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.split_vds_by_strata">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">split_vds_by_strata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strata_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#split_vds_by_strata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.split_vds_by_strata" title="Permalink to this definition"></a></dt>
+<dd><p>Split a VDS into multiple VDSs based on <cite>strata_expr</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vds</strong> (<a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>) – Input VDS.</p></li>
+<li><p><strong>strata_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>) – Expression on VDS variant_data MT to split on.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/vds/hail.vds.VariantDataset.html#hail.vds.VariantDataset" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariantDataset</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary where strata value is key and VDS is value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.filtering.filter_arrays_by_meta">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.filtering.</span></span><span class="sig-name descname"><span class="pre">filter_arrays_by_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meta_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_indexed_exprs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items_to_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combine_operator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'and'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exact_match</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/filtering.html#filter_arrays_by_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.filtering.filter_arrays_by_meta" title="Permalink to this definition"></a></dt>
+<dd><p>Filter both metadata array expression and meta data indexed expression by <cite>items_to_filter</cite>.</p>
+<p>The <cite>items_to_filter</cite> can be used to filter in the following ways based on
+<cite>meta_expr</cite> items:
+- By a list of keys, e.g. [“sex”, “downsampling”].
+- By specific key: value pairs, e.g. to filter where ‘pop’ is ‘han’ or ‘papuan’
+{“pop”: [“han”, “papuan”]}, or where ‘pop’ is ‘afr’ and/or ‘sex’ is ‘XX’
+{“pop”: [“afr”], “sex”: [“XX”]}.</p>
+<p>The items can be kept or removed from <cite>meta_indexed_expr</cite> and <cite>meta_expr</cite> based on
+the value of <cite>keep</cite>. For example if <cite>meta_indexed_exprs</cite> is {‘freq’: ht.freq,
+‘freq_meta_sample_count’: ht.index_globals().freq_meta_sample_count} and <cite>meta_expr</cite>
+is ht.freq_meta then if <cite>keep</cite> is True, the items specified by <cite>items_to_filter</cite>
+such as  ‘pop’ = ‘han’ will be kept and all other items will be removed from the
+ht.freq, ht.freq_meta_sample_count, and ht.freq_meta. <cite>meta_indexed_exprs</cite> can also
+be a single array expression such as ht.freq.</p>
+<p>The filtering can also be applied such that all criteria must be met
+(<cite>combine_operator</cite> = “and”) by the <cite>meta_expr</cite> item in order to be filtered,
+or at least one of the specified criteria must be met (<cite>combine_operator</cite> = “or”)
+by the <cite>meta_expr</cite> item in order to be filtered.</p>
+<p>The <cite>exact_match</cite> parameter can be used to apply the <cite>keep</cite> parameter to only items
+specified in the <cite>items_to_filter</cite> parameter. For example, by default, if <cite>keep</cite> is
+True, <cite>combine_operator</cite> is “and”, and <cite>items_to_filter</cite> is [“sex”, “downsampling”],
+then all items in <cite>meta_expr</cite> with both “sex” and “downsampling” as keys will be
+kept. However, if <cite>exact_match</cite> is True, then the items
+in <cite>meta_expr</cite> will only be kept if “sex” and “downsampling” are the only keys in
+the meta dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meta_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – Metadata expression that contains the values of the elements in
+<cite>meta_indexed_expr</cite>. The most often used expression is <cite>freq_meta</cite> to index into
+a ‘freq’ array.</p></li>
+<li><p><strong>meta_indexed_exprs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>], <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – Either a Dictionary where the keys are the expression name
+and the values are the expressions indexed by the <cite>meta_expr</cite> such as a ‘freq’
+array or just a single expression indexed by the <cite>meta_expr</cite>.</p></li>
+<li><p><strong>items_to_filter</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Items to filter by, either a list or a dictionary.</p></li>
+<li><p><strong>keep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to keep or remove the items specified by <cite>items_to_filter</cite>.</p></li>
+<li><p><strong>combine_operator</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Whether to use “and” or “or” to combine the items
+specified by <cite>items_to_filter</cite>.</p></li>
+<li><p><strong>exact_match</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to apply the <cite>keep</cite> parameter to only the items
+specified in the <cite>items_to_filter</cite> parameter or to all items in <cite>meta_expr</cite>.
+See the example above for more details. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>], <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Tuple of the filtered metadata expression and a dictionary of metadata
+indexed expressions when meta_indexed_expr is a Dictionary or a single filtered
+array expression when meta_indexed_expr is a single array expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="file_utils.html" class="btn btn-neutral float-left" title="gnomad.utils.file_utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gen_stats.html" class="btn btn-neutral float-right" title="gnomad.utils.gen_stats" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

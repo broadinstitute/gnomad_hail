@@ -1,0 +1,8 @@
+gnomad.resources.import_resources
+=================================
+
+
+
+.. gnomad_automodulesummary:: gnomad.resources.import_resources
+
+.. automodule:: gnomad.resources.import_resources

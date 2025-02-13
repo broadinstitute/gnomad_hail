@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.transcript_annotation &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.vcf" href="vcf.html" />
+    <link rel="prev" title="gnomad.utils.sparse_mt" href="sparse_mt.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="constraint.html">constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">transcript_annotation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES"><code class="docutils literal notranslate"><span class="pre">REPRODUCTIVE_TISSUES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.CELL_LINES"><code class="docutils literal notranslate"><span class="pre">CELL_LINES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.get_tissues_to_exclude"><code class="docutils literal notranslate"><span class="pre">get_tissues_to_exclude()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.summarize_transcript_expression"><code class="docutils literal notranslate"><span class="pre">summarize_transcript_expression()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.get_expression_proportion"><code class="docutils literal notranslate"><span class="pre">get_expression_proportion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues"><code class="docutils literal notranslate"><span class="pre">filter_expression_ht_by_tissues()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.tissue_expression_ht_to_array"><code class="docutils literal notranslate"><span class="pre">tissue_expression_ht_to_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs"><code class="docutils literal notranslate"><span class="pre">tx_filter_variants_by_csqs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_annotate_variants"><code class="docutils literal notranslate"><span class="pre">tx_annotate_variants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_aggregate_variants"><code class="docutils literal notranslate"><span class="pre">tx_aggregate_variants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline"><code class="docutils literal notranslate"><span class="pre">perform_tx_annotation_pipeline()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.clean_tissue_name_for_browser"><code class="docutils literal notranslate"><span class="pre">clean_tissue_name_for_browser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.transcript_annotation.create_tx_annotation_by_region"><code class="docutils literal notranslate"><span class="pre">create_tx_annotation_by_region()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.transcript_annotation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/transcript_annotation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-transcript-annotation">
+<h1>gnomad.utils.transcript_annotation<a class="headerlink" href="#gnomad-utils-transcript-annotation" title="Permalink to this heading"></a></h1>
+<p>Utils module containing generic functions that are useful for adding transcript expression-aware annotations.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES" title="gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES</span></code></a></p></td>
+<td><p>List of reproductive tissues in GTEx.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.CELL_LINES" title="gnomad.utils.transcript_annotation.CELL_LINES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.CELL_LINES</span></code></a></p></td>
+<td><p>List of cell lines in GTEx.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.get_tissues_to_exclude" title="gnomad.utils.transcript_annotation.get_tissues_to_exclude"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.get_tissues_to_exclude</span></code></a>(t)</p></td>
+<td><p>Get list of tissues to exclude from pext analyses and mean pext across tissues.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.summarize_transcript_expression" title="gnomad.utils.transcript_annotation.summarize_transcript_expression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.summarize_transcript_expression</span></code></a>(mt)</p></td>
+<td><p>Summarize a transcript expression MatrixTable by transcript, gene, and tissue.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.get_expression_proportion" title="gnomad.utils.transcript_annotation.get_expression_proportion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.get_expression_proportion</span></code></a>(ht)</p></td>
+<td><p>Calculate the proportion of expression of transcript to gene per tissue.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues" title="gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues</span></code></a>(ht)</p></td>
+<td><p>Filter a Table with a row annotation for each tissue to only include specified tissues.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.tissue_expression_ht_to_array" title="gnomad.utils.transcript_annotation.tissue_expression_ht_to_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.tissue_expression_ht_to_array</span></code></a>(ht)</p></td>
+<td><p>Convert a Table with a row annotation for each tissue to a Table with tissues as an array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs" title="gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs</span></code></a>(ht)</p></td>
+<td><p>Prepare a Table of variants with VEP transcript consequences for annotation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_annotate_variants" title="gnomad.utils.transcript_annotation.tx_annotate_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.tx_annotate_variants</span></code></a>(ht, ...)</p></td>
+<td><p>Annotate variants with transcript-based expression values or expression proportion from GTEx.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.tx_aggregate_variants" title="gnomad.utils.transcript_annotation.tx_aggregate_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.tx_aggregate_variants</span></code></a>(ht)</p></td>
+<td><p>Aggregate transcript-based expression values or expression proportion from GTEx.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline" title="gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline</span></code></a>(ht, ...)</p></td>
+<td><p>One-stop usage of <cite>tx_filter_variants_by_csqs</cite>, <cite>tx_annotate_variants</cite> and <cite>tx_aggregate_variants</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.clean_tissue_name_for_browser" title="gnomad.utils.transcript_annotation.clean_tissue_name_for_browser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.clean_tissue_name_for_browser</span></code></a>(...)</p></td>
+<td><p>Clean and formats a tissue name for browser compatibility.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.transcript_annotation.create_tx_annotation_by_region" title="gnomad.utils.transcript_annotation.create_tx_annotation_by_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.transcript_annotation.create_tx_annotation_by_region</span></code></a>(ht)</p></td>
+<td><p>Create transcript annotation by region for loading into the gnomAD browser.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.transcript_annotation"></span><p>Utils module containing generic functions that are useful for adding transcript expression-aware annotations.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">REPRODUCTIVE_TISSUES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Cervix_Ectocervix',</span> <span class="pre">'Cervix_Endocervix',</span> <span class="pre">'FallopianTube',</span> <span class="pre">'Ovary',</span> <span class="pre">'Prostate',</span> <span class="pre">'Testis',</span> <span class="pre">'Uterus',</span> <span class="pre">'Vagina']</span></em><a class="headerlink" href="#gnomad.utils.transcript_annotation.REPRODUCTIVE_TISSUES" title="Permalink to this definition"></a></dt>
+<dd><p>List of reproductive tissues in GTEx.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.CELL_LINES">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">CELL_LINES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Cells_EBV_transformedlymphocytes',</span> <span class="pre">'Cells_Transformedfibroblasts',</span> <span class="pre">'Cells_Culturedfibroblasts']</span></em><a class="headerlink" href="#gnomad.utils.transcript_annotation.CELL_LINES" title="Permalink to this definition"></a></dt>
+<dd><p>List of cell lines in GTEx.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.get_tissues_to_exclude">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">get_tissues_to_exclude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproductive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#get_tissues_to_exclude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.get_tissues_to_exclude" title="Permalink to this definition"></a></dt>
+<dd><p>Get list of tissues to exclude from pext analyses and mean pext across tissues.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The default value of 100 for the <cite>min_samples</cite> parameter is used because for
+small sample sizes, the variation in the number of expressed genes is higher.
+For sample sizes over 100, the number of expressed genes reaches saturation,
+leading to more stable estimates. See the following study for more
+details:
+<a class="reference external" href="https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-021-08125-9">https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-021-08125-9</a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – Table/MatrixTable with ‘tissue’ annotation for each sample. If a
+MatrixTable is input, samples are expected as columns.</p></li>
+<li><p><strong>reproductive</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to exclude reproductive tissues. Default is True.</p></li>
+<li><p><strong>cell_lines</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to exclude cell lines. Default is True.</p></li>
+<li><p><strong>min_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Optional minimum number of samples required for a tissue to be
+included. If None, tissues will not be excluded based on sample size. Default
+is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of tissues to exclude from pext analyses and mean pext across tissues.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.summarize_transcript_expression">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">summarize_transcript_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript_expression_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transcript_tpm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissue_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tissue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">summary_agg_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#summarize_transcript_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.summarize_transcript_expression" title="Permalink to this definition"></a></dt>
+<dd><p>Summarize a transcript expression MatrixTable by transcript, gene, and tissue.</p>
+<p>The <cite>summary_agg_func</cite> argument allows the user to specify a Hail aggregation
+function to use to summarize the expression by tissue. By default, the median is
+used.</p>
+<p>The returned Table has a row annotation for each tissue containing a struct with the
+summarized tissue expression value (‘transcript_expression’) and the proportion of
+expression of transcript to gene per tissue (‘expression_proportion’).</p>
+<p>Returned Table Schema example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span> <span class="n">fields</span><span class="p">:</span>
+    <span class="s1">&#39;transcript_id&#39;</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="s1">&#39;gene_id&#39;</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="s1">&#39;tissue_1&#39;</span><span class="p">:</span> <span class="n">struct</span> <span class="p">{</span>
+      <span class="n">transcript_expression</span><span class="p">:</span> <span class="n">float64</span><span class="p">,</span>
+      <span class="n">expression_proportion</span><span class="p">:</span> <span class="n">float64</span>
+    <span class="p">}</span>
+    <span class="s1">&#39;tissue_2&#39;</span><span class="p">:</span> <span class="n">struct</span> <span class="p">{</span>
+      <span class="n">transcript_expression</span><span class="p">:</span> <span class="n">float64</span><span class="p">,</span>
+      <span class="n">expression_proportion</span><span class="p">:</span> <span class="n">float64</span>
+    <span class="p">}</span>
+
+<span class="n">Key</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;transcript_id&#39;</span><span class="p">,</span> <span class="s1">&#39;gene_id&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mt</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>) – MatrixTable of transcript (rows) expression quantifications (entry) by
+sample (columns).</p></li>
+<li><p><strong>transcript_expression_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Entry expression indicating transcript expression
+quantification. Default is ‘transcript_tpm’.</p></li>
+<li><p><strong>tissue_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Column expression indicating tissue type. Default is ‘tissue’.</p></li>
+<li><p><strong>summary_agg_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – Optional aggregation function to use to summarize the
+transcript expression quantification by tissue. Example: <cite>hl.agg.mean</cite>. Default
+is None, which will use a median aggregation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Table of summarized transcript expression by tissue.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.get_expression_proportion">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">get_expression_proportion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#get_expression_proportion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.get_expression_proportion" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the proportion of expression of transcript to gene per tissue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of summarized transcript expression by tissue.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression containing the proportion of expression of transcript to
+gene per tissue.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">filter_expression_ht_by_tissues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#filter_expression_ht_by_tissues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.filter_expression_ht_by_tissues" title="Permalink to this definition"></a></dt>
+<dd><p>Filter a Table with a row annotation for each tissue to only include specified tissues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with a row annotation for each tissue.</p></li>
+<li><p><strong>tissues_to_keep</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to keep in the Table. Default is
+all non-key rows in the Table.</p></li>
+<li><p><strong>tissues_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude from the Table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with only specified tissues.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.tissue_expression_ht_to_array">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">tissue_expression_ht_to_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations_to_extract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('transcript_expression',</span> <span class="pre">'expression_proportion')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#tissue_expression_ht_to_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.tissue_expression_ht_to_array" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a Table with a row annotation for each tissue to a Table with tissues as an array.</p>
+<dl>
+<dt>The output is a Table with one of the two formats:</dt><dd><ul>
+<li><p>An annotation of ‘tissue_expression’ containing an array of structs by
+tissue, where each element of the array is the Table’s row value for a given
+tissue.</p>
+<blockquote>
+<div><p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tissue_expression</span><span class="s1">&#39;: array&lt;struct {</span>
+    <span class="n">transcript_expression</span><span class="p">:</span> <span class="n">float64</span><span class="p">,</span>
+    <span class="n">expression_proportion</span><span class="p">:</span> <span class="n">float64</span>
+<span class="p">}</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>One array annotation for each field defined in the ‘annotations_to_extract’
+argument, where each array is an array of the given field values by tissue.</p>
+<blockquote>
+<div><p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;transcript_expression&#39;</span><span class="p">:</span> <span class="n">array</span><span class="o">&lt;</span><span class="n">float64</span><span class="o">&gt;</span>
+<span class="s1">&#39;expression_proportion&#39;</span><span class="p">:</span> <span class="n">array</span><span class="o">&lt;</span><span class="n">float64</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</dd>
+</dl>
+<p>The order of tissues in the array is indicated by the “tissues” global annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with a row annotation for each tissue.</p></li>
+<li><p><strong>tissues_to_keep</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to keep in the tissue expression
+array. Default is all non-key rows in the Table.</p></li>
+<li><p><strong>tissues_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude from the
+tissue expression array.</p></li>
+<li><p><strong>annotations_to_extract</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Optional list of tissue struct fields to extract
+into top level array annotations. If None, the returned Table will contain a
+single top level annotation ‘tissue_expression’ that contains an array of
+structs by tissue. Default is (‘transcript_expression’, ‘expression_proportion’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with requested tissue struct annotations pulled into arrays of
+tissue values and a ‘tissues’ global annotation indicating the order of tissues
+in the arrays.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">tx_filter_variants_by_csqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_to_cds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gencode_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_to_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_by_gene_symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_to_csqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_splicing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_to_protein_coding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_polyphen_prioritization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#tx_filter_variants_by_csqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.tx_filter_variants_by_csqs" title="Permalink to this definition"></a></dt>
+<dd><p>Prepare a Table of variants with VEP transcript consequences for annotation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When <cite>filter_to_cds</cite> is set to True, the returned Table will be further
+filtered by defined ‘amino_acids’ annotation, which is to filter out certain
+consequences, such as ‘stop_retained_variant’, that are kept by all CDS
+intervals but don’t belong to CDS of the transcript they fall on.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of variants with ‘vep’ annotations.</p></li>
+<li><p><strong>gencode_ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Optional Gencode resource Table containing CDS interval
+information. This is only used when <cite>filter_to_cds</cite> is set to True. Default is
+None, which will use the default version of the Gencode Table resource for
+the reference build of the input Table <cite>ht</cite>.</p></li>
+<li><p><strong>filter_to_cds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to CDS regions. Default is True. And it
+will be further filtered by defined ‘amino_acids’ annotation.</p></li>
+<li><p><strong>filter_to_genes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of genes to filter to. Default is None.</p></li>
+<li><p><strong>match_by_gene_symbol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to match by gene symbol instead of gene ID.
+Default is False.</p></li>
+<li><p><strong>filter_to_csqs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of consequences to filter to. Default is None.</p></li>
+<li><p><strong>ignore_splicing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, ignore splice consequences. Default is True.</p></li>
+<li><p><strong>filter_to_protein_coding</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to protein coding transcripts.
+Default is True.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for root VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>include_polyphen_prioritization</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include PolyPhen prioritization
+when processing VEP consequences. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table of variants with preprocessed/filtered transcript consequences
+prepared for annotation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.tx_annotate_variants">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">tx_annotate_variants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tx_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude_from_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transcript_consequences'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#tx_annotate_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.tx_annotate_variants" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate variants with transcript-based expression values or expression proportion from GTEx.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of variants to annotate, it should contain the nested fields:
+<cite>{vep_root}.{vep_annotation}</cite>.</p></li>
+<li><p><strong>tx_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of transcript expression information.</p></li>
+<li><p><strong>tissues_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude from the output.
+Default is None.</p></li>
+<li><p><strong>tissues_to_exclude_from_mean</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude when
+calculating the mean expression proportion across all tissues. Default is None.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for root VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>vep_annotation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of annotation under vep_root, one of the processed
+consequences: [“transcript_consequences”, “worst_csq_by_gene”,
+“worst_csq_for_variant”, “worst_csq_by_gene_canonical”,
+“worst_csq_for_variant_canonical”]. For example, if you want to annotate
+each variant with the worst consequence in each gene it falls on and the
+transcript expression, you would use “worst_csq_by_gene”. Default is
+“transcript_consequences”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Input Table with transcript expression information annotated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.tx_aggregate_variants">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">tx_aggregate_variants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_group_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('alleles',</span> <span class="pre">'gene_symbol',</span> <span class="pre">'most_severe_consequence',</span> <span class="pre">'lof',</span> <span class="pre">'lof_flags')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#tx_aggregate_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.tx_aggregate_variants" title="Permalink to this definition"></a></dt>
+<dd><p>Aggregate transcript-based expression values or expression proportion from GTEx.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of variants annotated with transcript expression information.</p></li>
+<li><p><strong>additional_group_by</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Optional list of additional fields to group by before
+sum aggregation. If None, the returned Table will be grouped by only “locus”
+and “gene_id” before the sum aggregation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table of variants with transcript expression information aggregated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">perform_tx_annotation_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tx_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissues_to_exclude_from_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transcript_consequences'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_to_csqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['transcript_ablation',</span> <span class="pre">'splice_acceptor_variant',</span> <span class="pre">'splice_donor_variant',</span> <span class="pre">'stop_gained',</span> <span class="pre">'frameshift_variant',</span> <span class="pre">'stop_lost',</span> <span class="pre">'start_lost',</span> <span class="pre">'initiator_codon_variant',</span> <span class="pre">'transcript_amplification',</span> <span class="pre">'inframe_insertion',</span> <span class="pre">'inframe_deletion',</span> <span class="pre">'missense_variant',</span> <span class="pre">'protein_altering_variant',</span> <span class="pre">'splice_donor_5th_base_variant',</span> <span class="pre">'splice_region_variant',</span> <span class="pre">'splice_donor_region_variant',</span> <span class="pre">'splice_polypyrimidine_tract_variant',</span> <span class="pre">'incomplete_terminal_codon_variant',</span> <span class="pre">'start_retained_variant',</span> <span class="pre">'stop_retained_variant',</span> <span class="pre">'synonymous_variant',</span> <span class="pre">'coding_sequence_variant',</span> <span class="pre">'coding_transcript_variant']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_group_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('alleles',</span> <span class="pre">'gene_symbol',</span> <span class="pre">'most_severe_consequence',</span> <span class="pre">'lof',</span> <span class="pre">'lof_flags')</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#perform_tx_annotation_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.perform_tx_annotation_pipeline" title="Permalink to this definition"></a></dt>
+<dd><p>One-stop usage of <cite>tx_filter_variants_by_csqs</cite>, <cite>tx_annotate_variants</cite> and <cite>tx_aggregate_variants</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The default <cite>additional_group_by</cite> is used to create the gnomAD annotation-level
+pext release, and only <cite>additional_group_by=[“gene_symbol”]</cite> is used to create
+the gnomAD base-level pext release.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of variants to annotate, it should contain the nested fields:
+<cite>{vep_root}.{vep_annotation}</cite>.</p></li>
+<li><p><strong>tx_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table of transcript expression information.</p></li>
+<li><p><strong>tissues_to_exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude from the output.
+Default is None.</p></li>
+<li><p><strong>tissues_to_exclude_from_mean</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of tissues to exclude when
+calculating the mean expression proportion across all tissues. Default is None.</p></li>
+<li><p><strong>vep_root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name used for root VEP annotation. Default is ‘vep’.</p></li>
+<li><p><strong>vep_annotation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of annotation under vep_root. Default is
+‘transcript_consequences’.</p></li>
+<li><p><strong>filter_to_csqs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Optional list of consequences to filter to. Default is None.</p></li>
+<li><p><strong>additional_group_by</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Optional list of additional fields to group by before
+sum aggregation. If None, the returned Table will be grouped by only “locus”
+and “gene_id” before the sum aggregation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table of variants with transcript expression information aggregated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.clean_tissue_name_for_browser">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">clean_tissue_name_for_browser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tissue_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#clean_tissue_name_for_browser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.clean_tissue_name_for_browser" title="Permalink to this definition"></a></dt>
+<dd><p>Clean and formats a tissue name for browser compatibility.</p>
+<p>This function converts uppercase letters to lowercase and adds underscores
+between words where necessary. Additionally, it replaces certain combined
+words with their corresponding formatted versions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tissue_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Tissue name to clean and format.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Cleaned and formatted tissue name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.transcript_annotation.create_tx_annotation_by_region">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.transcript_annotation.</span></span><span class="sig-name descname"><span class="pre">create_tx_annotation_by_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/transcript_annotation.html#create_tx_annotation_by_region"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.transcript_annotation.create_tx_annotation_by_region" title="Permalink to this definition"></a></dt>
+<dd><p>Create transcript annotation by region for loading into the gnomAD browser.</p>
+<p>This function processes a Hail Table to create transcript annotations by region.
+It calculates the mean expression proportion, handles missing values, and organizes
+the data by genomic regions. Regions are split based on changes in the following
+fields: ‘gene_id’, ‘exp_prop_mean’, and ‘tissues’.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Input Hail Table</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>locus</p></th>
+<th class="head"><p>gene_id</p></th>
+<th class="head"><p>exp_prop_mean</p></th>
+<th class="head"><p>tissue1</p></th>
+<th class="head"><p>tissue2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>chr1:1</p></td>
+<td><p>gene1</p></td>
+<td><p>0.5</p></td>
+<td><p>0.2</p></td>
+<td><p>0.3</p></td>
+</tr>
+<tr class="row-odd"><td><p>chr1:2</p></td>
+<td><p>gene1</p></td>
+<td><p>0.5</p></td>
+<td><p>0.2</p></td>
+<td><p>0.3</p></td>
+</tr>
+<tr class="row-even"><td><p>chr1:3</p></td>
+<td><p>gene1</p></td>
+<td><p>0.6</p></td>
+<td><p>0.3</p></td>
+<td><p>0.4</p></td>
+</tr>
+<tr class="row-odd"><td><p>chr1:4</p></td>
+<td><p>gene2</p></td>
+<td><p>0.7</p></td>
+<td><p>0.5</p></td>
+<td><p>0.6</p></td>
+</tr>
+<tr class="row-even"><td><p>chr1:5</p></td>
+<td><p>gene2</p></td>
+<td><p>0.7</p></td>
+<td><p>0.5</p></td>
+<td><p>0.6</p></td>
+</tr>
+<tr class="row-odd"><td><p>chr1:6</p></td>
+<td><p>gene2</p></td>
+<td><p>0.8</p></td>
+<td><p>0.6</p></td>
+<td><p>0.7</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Output Hail Table</span><a class="headerlink" href="#id2" title="Permalink to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>gene_id</p></th>
+<th class="head"><p>regions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>gene1</p></td>
+<td><p>[{‘chrom’: ‘chr1’, ‘start’: 1, ‘stop’: 2, ‘mean’: 0.5,
+‘tissues’: {‘tissue1’: 0.2, ‘tissue2’: 0.3}},
+{‘chrom’: ‘chr1’, ‘start’: 3, ‘stop’: 3, ‘mean’: 0.6,
+‘tissues’: {‘tissue1’: 0.3, ‘tissue2’: 0.4}}]</p></td>
+</tr>
+<tr class="row-odd"><td><p>gene2</p></td>
+<td><p>[{‘chrom’: ‘chr1’, ‘start’: 4, ‘stop’: 5, ‘mean’: 0.7,
+‘tissues’: {‘tissue1’: 0.5, ‘tissue2’: 0.6}},
+{‘chrom’: ‘chr1’, ‘start’: 6, ‘stop’: 6, ‘mean’: 0.8,
+‘tissues’: {‘tissue1’: 0.6, ‘tissue2’: 0.7}}</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Hail Table with transcript expression information.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hail Table with transcript annotations by region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sparse_mt.html" class="btn btn-neutral float-left" title="gnomad.utils.sparse_mt" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="vcf.html" class="btn btn-neutral float-right" title="gnomad.utils.vcf" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

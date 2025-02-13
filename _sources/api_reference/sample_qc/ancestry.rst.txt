@@ -1,0 +1,8 @@
+gnomad.sample_qc.ancestry
+=========================
+
+
+
+.. gnomad_automodulesummary:: gnomad.sample_qc.ancestry
+
+.. automodule:: gnomad.sample_qc.ancestry

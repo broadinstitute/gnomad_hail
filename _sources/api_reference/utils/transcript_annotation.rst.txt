@@ -1,0 +1,8 @@
+gnomad.utils.transcript_annotation
+==================================
+
+Utils module containing generic functions that are useful for adding transcript expression-aware annotations.
+
+.. gnomad_automodulesummary:: gnomad.utils.transcript_annotation
+
+.. automodule:: gnomad.utils.transcript_annotation

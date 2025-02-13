@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gnomad.utils.constraint &mdash; gnomad master documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="gnomad.utils.file_utils" href="file_utils.html" />
+    <link rel="prev" title="gnomad.utils.annotations" href="annotations.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            gnomad
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sample_qc/index.html">sample_qc</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="annotations.html">annotations</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">constraint</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.COVERAGE_CUTOFF"><code class="docutils literal notranslate"><span class="pre">COVERAGE_CUTOFF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.get_mu_annotation_expr"><code class="docutils literal notranslate"><span class="pre">get_mu_annotation_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.annotate_with_mu"><code class="docutils literal notranslate"><span class="pre">annotate_with_mu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.count_variants_by_group"><code class="docutils literal notranslate"><span class="pre">count_variants_by_group()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.get_downsampling_freq_indices"><code class="docutils literal notranslate"><span class="pre">get_downsampling_freq_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.downsampling_counts_expr"><code class="docutils literal notranslate"><span class="pre">downsampling_counts_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.explode_downsamplings_oe"><code class="docutils literal notranslate"><span class="pre">explode_downsamplings_oe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.annotate_mutation_type"><code class="docutils literal notranslate"><span class="pre">annotate_mutation_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.trimer_from_heptamer"><code class="docutils literal notranslate"><span class="pre">trimer_from_heptamer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.collapse_strand"><code class="docutils literal notranslate"><span class="pre">collapse_strand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.transform_methylation_level"><code class="docutils literal notranslate"><span class="pre">transform_methylation_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.assemble_constraint_context_ht"><code class="docutils literal notranslate"><span class="pre">assemble_constraint_context_ht()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.build_models"><code class="docutils literal notranslate"><span class="pre">build_models()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.build_plateau_models"><code class="docutils literal notranslate"><span class="pre">build_plateau_models()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.build_coverage_model"><code class="docutils literal notranslate"><span class="pre">build_coverage_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.get_all_pop_lengths"><code class="docutils literal notranslate"><span class="pre">get_all_pop_lengths()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.get_constraint_grouping_expr"><code class="docutils literal notranslate"><span class="pre">get_constraint_grouping_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings"><code class="docutils literal notranslate"><span class="pre">annotate_exploded_vep_for_constraint_groupings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.compute_expected_variants"><code class="docutils literal notranslate"><span class="pre">compute_expected_variants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.oe_aggregation_expr"><code class="docutils literal notranslate"><span class="pre">oe_aggregation_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.compute_pli"><code class="docutils literal notranslate"><span class="pre">compute_pli()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.oe_confidence_interval"><code class="docutils literal notranslate"><span class="pre">oe_confidence_interval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.calculate_raw_z_score"><code class="docutils literal notranslate"><span class="pre">calculate_raw_z_score()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.get_constraint_flags"><code class="docutils literal notranslate"><span class="pre">get_constraint_flags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.calculate_raw_z_score_sd"><code class="docutils literal notranslate"><span class="pre">calculate_raw_z_score_sd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gnomad.utils.constraint.add_gencode_transcript_annotations"><code class="docutils literal notranslate"><span class="pre">add_gencode_transcript_annotations()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="file_utils.html">file_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filtering.html">filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gen_stats.html">gen_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intervals.html">intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="liftover.html">liftover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="parse.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting.html">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference_genome.html">reference_genome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="release.html">release</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slack.html">slack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sparse_mt.html">sparse_mt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transcript_annotation.html">transcript_annotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vcf.html">vcf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vep.html">vep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../assessment/index.html">assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../resources/index.html">resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../variant_qc/index.html">variant_qc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../resource_sources.html">Resource Sources</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/broadinstitute/gnomad_methods/releases">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gnomad</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">gnomad</a></li>
+          <li class="breadcrumb-item"><a href="index.html">gnomad.utils</a></li>
+      <li class="breadcrumb-item active">gnomad.utils.constraint</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_reference/utils/constraint.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gnomad-utils-constraint">
+<h1>gnomad.utils.constraint<a class="headerlink" href="#gnomad-utils-constraint" title="Permalink to this heading"></a></h1>
+<p>Script containing generic constraint functions that may be used in the constraint pipeline.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.COVERAGE_CUTOFF" title="gnomad.utils.constraint.COVERAGE_CUTOFF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.COVERAGE_CUTOFF</span></code></a></p></td>
+<td><p>Minimum median exome coverage differentiating high coverage sites from low coverage sites.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.get_mu_annotation_expr" title="gnomad.utils.constraint.get_mu_annotation_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.get_mu_annotation_expr</span></code></a>(ht, ...)</p></td>
+<td><p>Get mutation rate annotation expression from the mutation rate Table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.annotate_with_mu" title="gnomad.utils.constraint.annotate_with_mu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.annotate_with_mu</span></code></a>(ht, ...)</p></td>
+<td><p>Annotate SNP mutation rate for the input Table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.count_variants_by_group" title="gnomad.utils.constraint.count_variants_by_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.count_variants_by_group</span></code></a>(ht)</p></td>
+<td><p>Count number of observed or possible variants by context, ref, alt, and optionally methylation_level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.get_downsampling_freq_indices" title="gnomad.utils.constraint.get_downsampling_freq_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.get_downsampling_freq_indices</span></code></a>(...)</p></td>
+<td><p>Get indices of dictionaries in meta dictionaries that only have the &quot;downsampling&quot; key with specified <cite>genetic_ancestry_label</cite> and &quot;variant_quality&quot; values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.downsampling_counts_expr" title="gnomad.utils.constraint.downsampling_counts_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.downsampling_counts_expr</span></code></a>(...)</p></td>
+<td><p>Return an aggregation expression to compute an array of counts of all downsamplings found in <cite>freq_expr</cite> where specified criteria is met.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.explode_downsamplings_oe" title="gnomad.utils.constraint.explode_downsamplings_oe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.explode_downsamplings_oe</span></code></a>(ht, ...)</p></td>
+<td><p>Explode observed and expected downsampling counts for each genetic ancestry group and metric.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.annotate_mutation_type" title="gnomad.utils.constraint.annotate_mutation_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.annotate_mutation_type</span></code></a>(t)</p></td>
+<td><p>Annotate mutation types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.trimer_from_heptamer" title="gnomad.utils.constraint.trimer_from_heptamer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.trimer_from_heptamer</span></code></a>(t)</p></td>
+<td><p>Trim heptamer context to create trimer context.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.collapse_strand" title="gnomad.utils.constraint.collapse_strand"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.collapse_strand</span></code></a>(t)</p></td>
+<td><p>Return the deduplicated context by collapsing DNA strands.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.transform_methylation_level" title="gnomad.utils.constraint.transform_methylation_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.transform_methylation_level</span></code></a>([...])</p></td>
+<td><p>Transform methylation level into a 0 to 2 scale.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.assemble_constraint_context_ht" title="gnomad.utils.constraint.assemble_constraint_context_ht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.assemble_constraint_context_ht</span></code></a>(ht)</p></td>
+<td><p>Assemble context Table with necessary annotations for constraint calculations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.build_models" title="gnomad.utils.constraint.build_models"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.build_models</span></code></a>(...[, ...])</p></td>
+<td><p>Build coverage and plateau models.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.build_plateau_models" title="gnomad.utils.constraint.build_plateau_models"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.build_plateau_models</span></code></a>(...)</p></td>
+<td><p>Build plateau models to calibrate mutation rate to compute predicted proportion observed value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.build_coverage_model" title="gnomad.utils.constraint.build_coverage_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.build_coverage_model</span></code></a>(...)</p></td>
+<td><p>Build coverage model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.get_all_pop_lengths" title="gnomad.utils.constraint.get_all_pop_lengths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.get_all_pop_lengths</span></code></a>(ht, ...)</p></td>
+<td><p>Get the minimum length of observed variant counts array for each population downsampling.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.get_constraint_grouping_expr" title="gnomad.utils.constraint.get_constraint_grouping_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.get_constraint_grouping_expr</span></code></a>(...)</p></td>
+<td><p>Collect annotations used for constraint groupings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings" title="gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings</span></code></a>(ht, ...)</p></td>
+<td><p>Annotate Table with annotations used for constraint groupings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.compute_expected_variants" title="gnomad.utils.constraint.compute_expected_variants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.compute_expected_variants</span></code></a>(ht, ...)</p></td>
+<td><p>Apply plateau models for all sites and for a population (if specified) to compute predicted proportion observed ratio and expected variant counts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.oe_aggregation_expr" title="gnomad.utils.constraint.oe_aggregation_expr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.oe_aggregation_expr</span></code></a>(ht, ...)</p></td>
+<td><p>Get aggregation expressions to compute the observed:expected ratio for rows defined by <cite>filter_expr</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.compute_pli" title="gnomad.utils.constraint.compute_pli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.compute_pli</span></code></a>(ht, ...)</p></td>
+<td><p>Compute the pLI score using the observed and expected variant counts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.oe_confidence_interval" title="gnomad.utils.constraint.oe_confidence_interval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.oe_confidence_interval</span></code></a>(...)</p></td>
+<td><p>Determine the confidence interval around the observed:expected ratio.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.calculate_raw_z_score" title="gnomad.utils.constraint.calculate_raw_z_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.calculate_raw_z_score</span></code></a>(...)</p></td>
+<td><p>Compute the signed raw z-score using observed and expected variant counts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.get_constraint_flags" title="gnomad.utils.constraint.get_constraint_flags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.get_constraint_flags</span></code></a>(...)</p></td>
+<td><p>Determine the constraint flags that define why constraint will not be calculated.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gnomad.utils.constraint.calculate_raw_z_score_sd" title="gnomad.utils.constraint.calculate_raw_z_score_sd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.calculate_raw_z_score_sd</span></code></a>(...)</p></td>
+<td><p>Calculate the standard deviation of the raw z-score.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gnomad.utils.constraint.add_gencode_transcript_annotations" title="gnomad.utils.constraint.add_gencode_transcript_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gnomad.utils.constraint.add_gencode_transcript_annotations</span></code></a>(ht, ...)</p></td>
+<td><p>Add GENCODE annotations to Table based on transcript id.</p></td>
+</tr>
+</tbody>
+</table>
+<span class="target" id="module-gnomad.utils.constraint"></span><p>Script containing generic constraint functions that may be used in the constraint pipeline.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.COVERAGE_CUTOFF">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">COVERAGE_CUTOFF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30</span></em><a class="headerlink" href="#gnomad.utils.constraint.COVERAGE_CUTOFF" title="Permalink to this definition"></a></dt>
+<dd><p>Minimum median exome coverage differentiating high coverage sites from low coverage sites.</p>
+<p>Low coverage sites require an extra calibration when computing the proportion of expected variation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.get_mu_annotation_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">get_mu_annotation_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mu_snp'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#get_mu_annotation_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.get_mu_annotation_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Get mutation rate annotation expression from the mutation rate Table.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Function expects that <cite>ht</cite> includes <cite>mutation_ht</cite>’s key fields. Note that these
+annotations don’t need to be the keys of <cite>ht</cite>. The standard keys used are:
+‘context’, ‘ref’, ‘alt’, and ‘methylation_level’.</p>
+</div>
+<p>This function converts the mutation rate Table into a dictionary and uses the
+mutation rate HT key fields in the input Table to get the mutation rate annotation
+expression. The dictionary is used instead of joining the mutation rate Table to
+the input Table to avoid unnecessary shuffling given the small size of the
+mutation rate Table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table that will be annotated with the returned mutation rate
+expression.</p></li>
+<li><p><strong>mutation_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Mutation rate Table.</p></li>
+<li><p><strong>mu_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>]) – Mutation rate expression or annotation name in <cite>mutation_ht</cite>.
+Default is ‘mu_snp’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mutation rate annotation expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.annotate_with_mu">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">annotate_with_mu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mu_snp'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#annotate_with_mu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.annotate_with_mu" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate SNP mutation rate for the input Table.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Function expects that <cite>ht</cite> includes <cite>mutation_ht</cite>’s key fields. Note that these
+annotations don’t need to be the keys of <cite>ht</cite>. The standard keys used are:
+‘context’, ‘ref’, ‘alt’, and ‘methylation_level’.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table to annotate.</p></li>
+<li><p><strong>mutation_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Mutation rate Table.</p></li>
+<li><p><strong>mu_annotation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of mutation rate annotation in <cite>mutation_ht</cite>.
+Default is ‘mu_snp’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with mutational rate annotation added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.count_variants_by_group">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">count_variants_by_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_meta_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_singletons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_downsamplings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsamplings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_grouping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_hint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_methylation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_table_group_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">singleton_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_af</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#count_variants_by_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.count_variants_by_group" title="Permalink to this definition"></a></dt>
+<dd><p>Count number of observed or possible variants by context, ref, alt, and optionally methylation_level.</p>
+<p>Performs variant count aggregations based on specified criteria
+(<cite>count_singletons</cite>, <cite>count_downsamplings</cite>, and <cite>max_af</cite>), and grouped by:
+‘context’, ‘ref’, ‘alt’, ‘methylation_level’ (optional), and all annotations
+provided in <cite>additional_grouping</cite>.</p>
+<p>If variant allele frequency information is required based on other parameter
+selections (described in detail below) and <cite>freq_expr</cite> is not supplied, <cite>freq_expr</cite>
+defaults to <cite>ht.freq</cite> if it exists.</p>
+<p><cite>freq_expr</cite> should be an ArrayExpression of Structs with ‘AC’ and ‘AF’ annotations.
+This is the same format as the <cite>freq</cite> annotation that is created using
+<cite>annotate_freq()</cite>.</p>
+<dl class="simple">
+<dt>Variant allele frequency information is needed when:</dt><dd><ul class="simple">
+<li><p><cite>max_af</cite> is not None - <cite>freq_expr[0].AF</cite> is used to filter to only variants
+with a maximum allele frequency of <cite>max_af</cite> prior to counting variants. In
+the standard <cite>freq</cite> ArrayExpression annotated by <cite>annotate_freq()</cite>, this
+first element corresponds to the allele frequency information for high quality
+genotypes (adj).</p></li>
+<li><p><cite>count_singletons</cite> is True and <cite>singleton_expr</cite> is None - If singleton counts
+are requested and no expression is specified to determine whether a variant
+is a singleton, <cite>singleton_expr</cite> defaults to <cite>freq_expr[0].AC == 1</cite>. In the
+standard <cite>freq</cite> ArrayExpression annotated by <cite>annotate_freq()</cite>, this
+corresponds to allele count of only 1 in the callset after filtering to high
+quality genotypes.</p></li>
+<li><p><cite>count_downsamplings</cite> is not empty - When downsampling counts are requested,
+<cite>freq_expr</cite> needs to contain frequency information for downsamplings within
+each population requested. In addition to needing <cite>freq_expr</cite>, this also
+requires the use of <cite>freq_meta_expr</cite>. If <cite>freq_meta_expr</cite> is None,
+<cite>freq_meta_expr</cite> it defaults to <cite>ht.freq_meta</cite> if it exists. Similar to
+<cite>freq_expr</cite>, <cite>freq_meta_expr</cite> is expected to have the same format as
+the <cite>freq_meta</cite> global annotation that is created using <cite>annotate_freq()</cite>.
+<cite>freq_meta_expr</cite> is used to determine the index of allele frequency
+information within <cite>freq_expr</cite> for each population requested and it’s
+downsamplings.</p></li>
+</ul>
+</dd>
+</dl>
+<p>This function will return a Table with annotations used for grouping (‘context’,
+‘ref’, ‘alt’, ‘methylation_level’ (optional), <cite>additional_grouping</cite>) and
+‘variant_count’ annotation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>The following annotations should be present in <cite>ht</cite>:</dt><dd><ul class="simple">
+<li><p>ref - the reference allele</p></li>
+<li><p>alt - the alternate base</p></li>
+<li><p>context - trinucleotide genomic context</p></li>
+<li><p>methylation_level - methylation level (optional if omit_methylation==True)</p></li>
+<li><p>freq - allele frequency information (AC, AN, AF, homozygote count; not
+required if <cite>freq_expr</cite> is given)</p></li>
+<li><p>freq_meta - an ordered list containing the frequency aggregation group
+for each element of the <cite>freq</cite> array row annotation (not required if
+<cite>freq_meta_expr</cite> is given)</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Hail Table.</p></li>
+<li><p><strong>freq_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – ArrayExpression of Structs with ‘AC’ and ‘AF’ annotations. If
+<cite>freq_expr</cite> is None and any of <cite>count_downsamplings</cite>, <cite>max_af</cite>, and
+<cite>count_singletons</cite> is True, <cite>freq_expr</cite> would be <cite>ht.freq</cite>.</p></li>
+<li><p><strong>freq_meta_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – ArrayExpression of meta dictionaries corresponding to
+<cite>freq_expr</cite>. If <cite>count_downsamplings</cite> and <cite>freq_meta_expr</cite> is None,
+<cite>freq_meta_expr</cite> would be <cite>ht.freq_meta</cite>.</p></li>
+<li><p><strong>count_singletons</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to count singletons (defined by <cite>singleton_expr</cite>).
+Default is False.</p></li>
+<li><p><strong>count_downsamplings</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Tuple of populations to use for downsampling counts.
+Default is ().</p></li>
+<li><p><strong>downsamplings</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Optional List of integers specifying what downsampling
+indices to obtain. Default is None, which will return all downsampling counts.</p></li>
+<li><p><strong>additional_grouping</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Additional features to group by. e.g. ‘exome_coverage’.
+Default is ().</p></li>
+<li><p><strong>partition_hint</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Target number of partitions for aggregation. Default is 100.</p></li>
+<li><p><strong>omit_methylation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to omit ‘methylation_level’ from the grouping when
+counting variants. Default is False.</p></li>
+<li><p><strong>use_table_group_by</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to group <cite>ht</cite> before aggregating the variant
+counts. If <cite>use_table_group_by</cite> is False, function will return a hl.
+StructExpression. Default is False.</p></li>
+<li><p><strong>singleton_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]) – Expression for defining a singleton. When <cite>count_singletons</cite>
+is True and <cite>singleton_expr</cite> is None, <cite>singleton_expression</cite> would be <cite>freq_expr
+[0].AC == 1</cite>. Default is None.</p></li>
+<li><p><strong>max_af</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Maximum variant allele frequency to keep. By default, no cutoff is
+applied.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table including ‘variant_count’ annotation and if requested,
+<cite>singleton_count</cite> and downsampling counts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.get_downsampling_freq_indices">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">get_downsampling_freq_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_meta_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variant_quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'adj'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genetic_ancestry_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsamplings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#get_downsampling_freq_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.get_downsampling_freq_indices" title="Permalink to this definition"></a></dt>
+<dd><p>Get indices of dictionaries in meta dictionaries that only have the “downsampling” key with specified <cite>genetic_ancestry_label</cite> and “variant_quality” values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_meta_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression containing the set of groupings for each
+element of the <cite>freq_expr</cite> array (e.g., [{‘group’: ‘adj’}, {‘group’: ‘adj’,
+‘pop’: ‘nfe’}, {‘downsampling’: ‘5000’, ‘group’: ‘adj’, ‘pop’: ‘global’}]).</p></li>
+<li><p><strong>pop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Population to use for filtering by the <cite>genetic_ancestry_label</cite> key in
+<cite>freq_meta_expr</cite>. Default is ‘global’.</p></li>
+<li><p><strong>variant_quality</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Variant quality to use for filtering by the ‘group’ key in
+<cite>freq_meta_expr</cite>. Default is ‘adj’.</p></li>
+<li><p><strong>genetic_ancestry_label</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Label defining the genetic ancestry groups. If None,
+“gen_anc” or “pop” is used (in that order of preference) if present. Default is
+None.</p></li>
+<li><p><strong>subset</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Subset to use for filtering by the ‘subset’ key in <cite>freq_meta_expr</cite>.
+Default is None, which will return all downsampling indices without a ‘subset’
+key in <cite>freq_meta_expr</cite>.</p></li>
+<li><p><strong>downsamplings</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Optional List of integers specifying what downsampling
+indices to obtain. Default is None, which will return all downsampling indices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ArrayExpression of indices of dictionaries in <cite>freq_meta_expr</cite> that only
+have the “downsampling” key with specified <cite>genetic_ancestry_label</cite> and
+“variant_quality” values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.downsampling_counts_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">downsampling_counts_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_meta_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variant_quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'adj'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">singleton</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_af</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genetic_ancestry_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsamplings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#downsampling_counts_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.downsampling_counts_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Return an aggregation expression to compute an array of counts of all downsamplings found in <cite>freq_expr</cite> where specified criteria is met.</p>
+<p>The frequency metadata (<cite>freq_meta_expr</cite>) should be in a similar format to the
+<cite>freq_meta</cite> annotation added by <cite>annotate_freq()</cite>. Each downsampling should have
+‘group’, <cite>genetic_ancestry_label</cite>, and ‘downsampling’ keys. Included downsamplings
+are those where ‘group’ == <cite>variant_quality</cite> and <cite>genetic_ancestry_label</cite> == <cite>pop</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression of Structs with ‘AC’ and ‘AF’ annotations.</p></li>
+<li><p><strong>freq_meta_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>) – ArrayExpression containing the set of groupings for each
+element of the <cite>freq_expr</cite> array (e.g., [{‘group’: ‘adj’}, {‘group’: ‘adj’,
+‘pop’: ‘nfe’}, {‘downsampling’: ‘5000’, ‘group’: ‘adj’, ‘pop’: ‘global’}]).</p></li>
+<li><p><strong>pop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Population to use for filtering by the <cite>genetic_ancestry_label</cite> key in
+<cite>freq_meta_expr</cite>. Default is ‘global’.</p></li>
+<li><p><strong>variant_quality</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Variant quality to use for filtering by the ‘group’ key in
+<cite>freq_meta_expr</cite>. Default is ‘adj’.</p></li>
+<li><p><strong>singleton</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to filter to only singletons before counting (AC == 1).
+Default is False.</p></li>
+<li><p><strong>max_af</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Maximum variant allele frequency to keep. By default no allele
+frequency cutoff is applied.</p></li>
+<li><p><strong>genetic_ancestry_label</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Label defining the genetic ancestry groups. If None,
+“gen_anc” or “pop” is used (in that order of preference) if present. Default is
+None.</p></li>
+<li><p><strong>subset</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Subset to use for filtering by the ‘subset’ key in <cite>freq_meta_expr</cite>.
+Default is None, which will return all downsampling counts without a ‘subset’
+key in <cite>freq_meta_expr</cite>. If specified, only downsamplings with the specified
+subset will be included.</p></li>
+<li><p><strong>downsamplings</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Optional List of integers specifying what downsampling
+indices to obtain. Default is None, which will return all downsampling counts.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Aggregation Expression for an array of the variant counts in downsamplings
+for specified population.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.explode_downsamplings_oe">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">explode_downsamplings_oe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampling_meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['syn',</span> <span class="pre">'lof',</span> <span class="pre">'mis']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#explode_downsamplings_oe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.explode_downsamplings_oe" title="Permalink to this definition"></a></dt>
+<dd><p>Explode observed and expected downsampling counts for each genetic ancestry group and metric.</p>
+<p>The input <cite>ht</cite> must contain struct of downsampling information for genetic ancestry
+groups under each metric name. For example: ‘lof’: struct {gen_anc_exp: struct
+{global: array&lt;float64&gt;}.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of metrics to explode. Default is ‘[‘syn’, ‘lof’, ‘mis’]’.</p></li>
+<li><p><strong>downsampling_meta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Dictionary containing downsampling metadata. Keys are the
+genetic ancestry group names and values are the list of downsamplings for that
+genetic ancestry group. Example: {‘global’: [‘5000’, ‘10000’], ‘afr’: [‘5000’,
+‘10000’]}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with downsampling counts exploded so that observed and expected
+metric counts for each pair of genetic ancestry groups and downsamplings is a
+separate row.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.annotate_mutation_type">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">annotate_mutation_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_scan_context_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#annotate_mutation_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.annotate_mutation_type" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate mutation types.</p>
+<dl class="simple">
+<dt>The following annotations are added to the output Table:</dt><dd><ul class="simple">
+<li><p>cpg</p></li>
+<li><p>transition</p></li>
+<li><p>mutation_type - one of “CpG”, “non-CpG transition”, or “transversion”</p></li>
+<li><p>mutation_type_model</p></li>
+</ul>
+</dd>
+</dl>
+<p>..note:</p>
+<blockquote>
+<div><p>This function uses the term ‘mutation_type’ because ‘variant_type’ is already
+used in this repo to indicate a variant’s multiallelic and SNP/indel status.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table or MatrixTable.</p></li>
+<li><p><strong>context_length</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Length of the ‘context’ annotation in ‘t’. If this is not
+specified, the value will be determined by examining the first
+<cite>num_scan_context_length</cite> values of the ‘context’ annotation. Default is None.</p></li>
+<li><p><strong>num_scan_context_length</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Number of values in the ‘context’ annotation to use
+for determining <cite>context_length</cite> if it is not specified. If set to None, all
+values in ‘context’ will be used. Default is 100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with mutation type annotations added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.trimer_from_heptamer">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">trimer_from_heptamer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#trimer_from_heptamer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.trimer_from_heptamer" title="Permalink to this definition"></a></dt>
+<dd><p>Trim heptamer context to create trimer context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input MatrixTable or Table with context annotation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MatrixTable or Table with trimer context annotated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.collapse_strand">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">collapse_strand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#collapse_strand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.collapse_strand" title="Permalink to this definition"></a></dt>
+<dd><p>Return the deduplicated context by collapsing DNA strands.</p>
+<p>Function returns the reverse complement for ‘ref, ‘alt’, and ‘context’ if the
+reference allele is either ‘G’ or ‘T’.</p>
+<dl class="simple">
+<dt>The following annotations are added to the output Table:</dt><dd><ul class="simple">
+<li><p>was_flipped - whether the ‘ref, ‘alt’, and ‘context’ were flipped (reverse
+complement taken)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> – Input Table.</p></li>
+<li><p><strong>t</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with deduplicated context annotation (ref, alt, context,
+was_flipped).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.transform_methylation_level">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">transform_methylation_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methylation_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'methylation_level'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methylation_cutoffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#transform_methylation_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.transform_methylation_level" title="Permalink to this definition"></a></dt>
+<dd><p>Transform methylation level into a 0 to 2 scale.</p>
+<p>The methylation level is transformed to a 0-2 scale based on the provided cutoffs.
+The methylation level is assigned a value of 2 if it is greater than the second
+cutoff, 1 if it is greater than the first cutoff (but less than or equal to the
+second), and 0 otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>methylation_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]) – Methylation level expression or annotation name in <cite>ht</cite>. If
+<cite>methylation_expr</cite> is a string, <cite>ht</cite> must be provided.</p></li>
+<li><p><strong>methylation_cutoffs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – Tuple of two integers/floats representing the cutoffs
+for the methylation level transformation. Default is (0, 5).</p></li>
+<li><p><strong>ht</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – Input Table. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.NumericExpression.html#hail.expr.NumericExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with methylation level annotation added or methylation level
+expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.assemble_constraint_context_ht">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">assemble_constraint_context_ht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methylation_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gerp_ht</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_hts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">an_hts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_hts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_hts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformation_funcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#assemble_constraint_context_ht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.assemble_constraint_context_ht" title="Permalink to this definition"></a></dt>
+<dd><p>Assemble context Table with necessary annotations for constraint calculations.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Checks for ‘was_split’ annotation in Table. If not present, splits
+multiallelic sites.</p>
+</div>
+<p>The following annotations are added to the output Table:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>ref: Reference allele.</p></li>
+<li><p>alt: Alternate allele.</p></li>
+<li><p>context: Trimer context.</p></li>
+<li><p>annotations added by <cite>annotate_mutation_type()</cite>, <cite>collapse_strand()</cite>, and
+<cite>add_most_severe_csq_to_tc_within_vep_root()</cite>.</p></li>
+</ul>
+</div></blockquote>
+<p>Depending on the annotations provided, the following annotations may also be added:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘methylation_level’: Methylation level annotation will be added if
+<cite>methylation_ht</cite> is provided.</p></li>
+<li><p>‘gerp’: GERP annotation will be added if <cite>gerp_ht</cite> is provided.</p></li>
+<li><p>‘coverage’: Coverage annotations will be added if <cite>coverage_hts</cite> is provided.</p></li>
+<li><p>‘AN’: Allele number annotations will be added if <cite>an_hts</cite> is provided.</p></li>
+<li><p>‘freq’: Frequency annotations will be added if <cite>freq_hts</cite> is provided.</p></li>
+<li><p>‘filters’: Filter annotations will be added if <cite>filter_hts</cite> is provided.</p></li>
+</ul>
+</div></blockquote>
+<p>The <cite>transformation_funcs</cite> parameter can be used to transform the HTs before adding
+annotations. The keys should be the annotation names (‘coverage’, ‘gerp’, etc.) and
+the values should be functions that take the annotation Table and the ht that is
+being annotated as input and return the transformed and keyed annotation. If not
+provided, the following default transformations are used:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘methylation_level’: Uses the ‘methylation_level’ annotation in the
+Methylation Table after transforming the methylation level to a 0-2 scale
+using <cite>transform_grch37_methylation()</cite> or <cite>transform_grch38_methylation()</cite>.</p></li>
+<li><p>‘gerp’: Uses the ‘S’ annotation in the GERP Table. If ‘S’ is missing, it
+defaults to 0.</p></li>
+<li><p>‘coverage’: If necessary, pulls out the first element of coverage statistics
+(which includes all samples). Relevant to v4, where coverage stats include
+additional elements to stratify by UK Biobank subset and platforms.</p></li>
+<li><p>‘AN’: Uses the ‘AN’ annotation in the allele number Table.</p></li>
+<li><p>‘freq’: Uses the ‘freq’ annotation in the frequency Table.</p></li>
+<li><p>‘filters’: Uses the ‘filters’ annotation in the filter Table.</p></li>
+</ul>
+</div></blockquote>
+<p>The following global annotations may also be added to the output Table:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘an_globals’: Global allele number annotations ‘strata_sample_count’ and
+‘strata_meta’ will be added if <cite>an_hts</cite> is provided.</p></li>
+<li><p>‘freq_globals’: Global frequency annotations ‘freq_meta_sample_count’ and
+‘freq_meta’ will be added if <cite>freq_hts</cite> is provided.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input context Table with VEP annotation.</p></li>
+<li><p><strong>methylation_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Optional Table with methylation annotation. Default is None.</p></li>
+<li><p><strong>gerp_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Optional Table with GERP annotation. Default is None.</p></li>
+<li><p><strong>coverage_hts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – An optional Dictionary with key as one of ‘exomes’ or
+‘genomes’ and values as corresponding coverage Tables. Default is None.</p></li>
+<li><p><strong>an_hts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – A Dictionary with key as one of ‘exomes’ or ‘genomes’ and
+values as corresponding allele number Tables. Default is None.</p></li>
+<li><p><strong>transformation_funcs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]]) – An optional Dictionary to transform the HTs before
+adding annotations. Default is None, which will use some default transformations
+as described above.</p></li>
+<li><p><strong>freq_hts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – </p></li>
+<li><p><strong>filter_hts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>]) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with sites split and necessary annotations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.build_models">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">build_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coverage_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('context',</span> <span class="pre">'ref',</span> <span class="pre">'alt',</span> <span class="pre">'methylation_level',</span> <span class="pre">'mu_snp')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high_cov_definition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_cov_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_coverage_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#build_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.build_models" title="Permalink to this definition"></a></dt>
+<dd><p>Build coverage and plateau models.</p>
+<p>This function builds models (plateau_models) using linear regression to calibrate
+mutation rate estimates against the proportion observed of each substitution,
+context, and methylation level in <cite>coverage_ht</cite>.</p>
+<p>Two plateau models are fit, one for CpG transitions, and one for the remainder of
+sites (transversions and non CpG transitions).</p>
+<p>The plateau models only consider high coverage sites, or sites above a median
+coverage of <cite>high_cov_definition</cite> and median coverage below <cite>upper_cov_cutoff</cite>.</p>
+<p>Plateau model: adjusts proportion of expected variation based on location in the
+genome and CpG status.
+The x and y of the plateau models:
+- x: <cite>mu_snp</cite> - mutation rate
+- y: proportion observed (‘observed_variants’ or ‘observed_{pop}’ / ‘possible_variants’)</p>
+<p>This function also builds models (coverage models) to calibrate the proportion of
+expected variation at low coverage sites (sites below <cite>high_cov_definition</cite>).</p>
+<p>The coverage models are built by creating a scaling factor across all high coverage
+sites, applying this ratio to the low coverage sites, and running a linear
+regression.</p>
+<p>Coverage model: corrects proportion of expected variation at low coverage sites.
+Low coverage sites are defined as sites with median coverage &lt; <cite>high_cov_definition</cite>.</p>
+<p>The x and y of the coverage model:
+- x: log10 groupings of exome coverage at low coverage sites
+- y: sum(‘observed_variants’)/ (<cite>high_coverage_scale_factor</cite> * sum(‘possible_variants’ * ‘mu_snp’) at low coverage sites</p>
+<dl class="simple">
+<dt><cite>high_coverage_scale_factor</cite> = sum(‘observed_variants’) /</dt><dd><p>sum(‘possible_variants’ * ‘mu_snp’) at high coverage sites</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function expects that the input Table(<cite>coverage_ht</cite>) was created using
+<cite>get_proportion_observed_by_coverage</cite>, which means that <cite>coverage_ht</cite> should
+contain only high quality synonymous variants below 0.1% frequency.</p>
+<p>This function also expects that the following fields are present in
+<cite>coverage_ht</cite>:
+- context - trinucleotide genomic context
+- ref - the reference allele
+- alt - the alternate allele
+- methylation_level - methylation level
+- cpg - whether the site is CpG site
+- observed_variants - the number of observed variants in the dataset for each
+variant. Note that the term “variant” here refers to a specific substitution,
+context, methylation level, and coverage combination
+- downsampling_counts_{pop} (optional) - array of observed variant counts per
+population after downsampling. Used only when <cite>pops</cite> is specified.
+- mu_snp - mutation rate
+- possible_variants - the number of possible variants in the dataset for each
+variant</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coverage_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input coverage Table.</p></li>
+<li><p><strong>coverage_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>) – Expression that defines the coverage metric.</p></li>
+<li><p><strong>weighted</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to weight the plateau models (a linear regression
+model) by ‘possible_variants’. Default is False.</p></li>
+<li><p><strong>pops</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of populations used to build plateau models.
+Default is ().</p></li>
+<li><p><strong>keys</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Annotations used to group observed and possible variant counts.
+Default is (“context”, “ref”, “alt”, “methylation_level”, “mu_snp”).</p></li>
+<li><p><strong>high_cov_definition</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Lower median coverage cutoff. Sites with coverage above this cutoff
+are considered well covered. Default is <cite>COVERAGE_CUTOFF</cite>.</p></li>
+<li><p><strong>upper_cov_cutoff</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Upper median coverage cutoff. Sites with coverage above this cutoff
+are excluded from the high coverage Table. Default is None.</p></li>
+<li><p><strong>skip_coverage_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to skip generating the coverage model. If set to True,
+None is returned instead of the coverage model. Default is False.</p></li>
+<li><p><strong>log10_coverage</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to convert coverage sites with log10 when building
+the coverage model. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]], <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Coverage model and plateau models.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.build_plateau_models">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">build_plateau_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpg_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_snp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed_variants_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">possible_variants_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_observed_variants_array_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#build_plateau_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.build_plateau_models" title="Permalink to this definition"></a></dt>
+<dd><p>Build plateau models to calibrate mutation rate to compute predicted proportion observed value.</p>
+<p>The x and y of the plateau models:
+- x: <cite>mu_snp_expr</cite>
+- y: <cite>observed_variants_expr</cite> / <cite>possible_variants_expr</cite>
+or <cite>pops_observed_variants_array_expr`[index] / `possible_variants_expr</cite>
+if <cite>pops</cite> is specified</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpg_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – BooleanExpression noting whether a site is a CPG site.</p></li>
+<li><p><strong>mu_snp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Float64Expression of the mutation rate.</p></li>
+<li><p><strong>observed_variants_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression of the observed variant counts.</p></li>
+<li><p><strong>possible_variants_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression of the possible variant counts.</p></li>
+<li><p><strong>pops_observed_variants_array_expr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]) – Nested ArrayExpression with all observed
+variant counts ArrayNumericExpressions for specified populations. e.g., <cite>[[1,1,
+1],[1,1,1]]</cite>. Default is None.</p></li>
+<li><p><strong>weighted</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to generalize the model to weighted least squares using
+‘possible_variants’. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>], <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.ArrayExpression.html#hail.expr.ArrayExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayExpression</span></code></a>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary of intercepts and slopes of plateau models. The keys are
+‘total’ (for all sites) and ‘pop’ (optional; for populations). The values for
+‘total’ is a dictionary (e.g., &lt;DictExpression of type dict&lt;bool,
+array&lt;float64&gt;&gt;&gt;), and the value for ‘pop’ is a nested list of dictionaries (e.
+g., &lt;ArrayExpression of type array&lt;array&lt;dict&lt;bool, array&lt;float64&gt;&gt;&gt;&gt;&gt;). The
+key of the dictionary in the nested list is CpG status (BooleanExpression), and
+the value is an ArrayExpression containing intercept and slope values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.build_coverage_model">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">build_coverage_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low_coverage_oe_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#build_coverage_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.build_coverage_model" title="Permalink to this definition"></a></dt>
+<dd><p>Build coverage model.</p>
+<p>This function uses linear regression to build a model of coverage to correct
+proportion of expected variation at low coverage sites.</p>
+<p>The x and y of the coverage model:
+- x: <cite>coverage_expr</cite>
+- y: <cite>low_coverage_oe_expr</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>low_coverage_oe_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – The Float64Expression of observed:expected ratio
+for a given coverage level.</p></li>
+<li><p><strong>coverage_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – The Float64Expression of the coverage expression.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression with intercept and slope of the model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.get_all_pop_lengths">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">get_all_pop_lengths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#get_all_pop_lengths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.get_all_pop_lengths" title="Permalink to this definition"></a></dt>
+<dd><p>Get the minimum length of observed variant counts array for each population downsampling.</p>
+<p>The observed variant counts for each population in <cite>pops</cite> are specified by
+annotations on the <cite>obs_expr</cite> expression.</p>
+<p>The function also performs a check that arrays of variant counts within population
+downsamplings all have the same lengths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table containing <cite>obs_expr</cite>.</p></li>
+<li><p><strong>pops</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Populations used to categorize observed variant counts in downsamplings.</p></li>
+<li><p><strong>obs_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Expression for the population observed variant counts. Should be a
+struct containing an array for each pop in <cite>pops</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Dictionary with the minimum array length for each population.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.get_constraint_grouping_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">get_constraint_grouping_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vep_annotation_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_transcript_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_canonical_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_mane_select_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#get_constraint_grouping_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.get_constraint_grouping_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Collect annotations used for constraint groupings.</p>
+<dl class="simple">
+<dt>Function collects the following annotations:</dt><dd><ul class="simple">
+<li><p>annotation - ‘most_severe_consequence’ annotation in <cite>vep_annotation_expr</cite></p></li>
+<li><dl class="simple">
+<dt>modifier - classic lof annotation from ‘lof’ annotation in</dt><dd><p><cite>vep_annotation_expr</cite>, LOFTEE annotation from ‘lof’ annotation in
+<cite>vep_annotation_expr</cite>, PolyPhen annotation from ‘polyphen_prediction’ in
+<cite>vep_annotation_expr</cite>, or “None” if neither is defined</p>
+</dd>
+</dl>
+</li>
+<li><p>gene - ‘gene_symbol’ annotation inside <cite>vep_annotation_expr</cite></p></li>
+<li><p>coverage - exome coverage if <cite>coverage_expr</cite> is specified</p></li>
+<li><dl class="simple">
+<dt>transcript - id from ‘transcript_id’ in <cite>vep_annotation_expr</cite> (added when</dt><dd><p><cite>include_transcript_group</cite> is True)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>canonical from <cite>vep_annotation_expr</cite> (added when <cite>include_canonical_group</cite> is</dt><dd><p>True)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>mane_select from <cite>vep_annotation_expr</cite> (added when <cite>include_mane_select_group</cite> is</dt><dd><p>True)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function expects that the following fields are present in
+<cite>vep_annotation_expr</cite>:
+- lof
+- polyphen_prediction
+- most_severe_consequence
+- gene_symbol
+- transcript_id (if <cite>include_transcript_group</cite> is True)
+- canonical (if <cite>include_canonical_group</cite> is True)
+- mane_select (if <cite>include_mane_select_group</cite> is True)</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vep_annotation_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – StructExpression of VEP annotation.</p></li>
+<li><p><strong>coverage_expr</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>]) – Optional Int32Expression of exome coverage. Default is None.</p></li>
+<li><p><strong>include_transcript_group</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include the transcript annotation in the
+groupings. Default is True.</p></li>
+<li><p><strong>include_canonical_group</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include canonical annotation in the
+groupings. Default is True.</p></li>
+<li><p><strong>include_mane_select_group</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include mane_select annotation in the
+groupings. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary with keys as annotation names and values as actual
+annotations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">annotate_exploded_vep_for_constraint_groupings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vep_annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transcript_consequences'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_canonical_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_mane_select_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#annotate_exploded_vep_for_constraint_groupings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.annotate_exploded_vep_for_constraint_groupings" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate Table with annotations used for constraint groupings.</p>
+<dl class="simple">
+<dt>Function explodes the specified VEP annotation (<cite>vep_annotation</cite>) and adds the following annotations:</dt><dd><ul class="simple">
+<li><p>annotation -‘most_severe_consequence’ annotation in <cite>vep_annotation</cite></p></li>
+<li><dl class="simple">
+<dt>modifier - classic lof annotation from ‘lof’ annotation in</dt><dd><p><cite>vep_annotation</cite>, LOFTEE annotation from ‘lof’ annotation in
+<cite>vep_annotation</cite>, PolyPhen annotation from ‘polyphen_prediction’ in
+<cite>vep_annotation</cite>, or “None” if neither is defined</p>
+</dd>
+</dl>
+</li>
+<li><p>gene - ‘gene_symbol’ annotation inside <cite>vep_annotation</cite></p></li>
+<li><dl class="simple">
+<dt>transcript - id from ‘transcript_id’ in <cite>vep_annotation</cite> (added when</dt><dd><p><cite>include_transcript_group</cite> is True)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>canonical from <cite>vep_annotation</cite> (added when <cite>include_canonical_group</cite> is</dt><dd><p>True)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>mane_select from <cite>vep_annotation</cite> (added when <cite>include_mane_select_group</cite> is</dt><dd><p>True)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function expects that the following annotations are present in <cite>ht</cite>:
+- vep
+- exome_coverage</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table or MatrixTable.</p></li>
+<li><p><strong>coverage_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int32Expression.html#hail.expr.Int32Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int32Expression</span></code></a>) – Expression that defines the coverage metric.</p></li>
+<li><p><strong>vep_annotation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of annotation in ‘vep’ annotation (one of
+“transcript_consequences” and “worst_csq_by_gene”) that will be used for
+obtaining constraint annotations. Default is “transcript_consequences”.</p></li>
+<li><p><strong>include_canonical_group</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include ‘canonical’ annotation in the
+groupings. Default is True. Ignored unless <cite>vep_annotation</cite> is  “transcript_consequences”.</p></li>
+<li><p><strong>include_mane_select_group</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to include ‘mane_select’ annotation in the
+groupings. Default is False. Ignored unless <cite>vep_annotation</cite> is  “transcript_consequences”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.MatrixTable.html#hail.MatrixTable" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MatrixTable</span></code></a>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of input Table or MatrixTable with grouping annotations added and
+the names of added annotations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.compute_expected_variants">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">compute_expected_variants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plateau_models_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_corr_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">possible_variants_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpg_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#compute_expected_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.compute_expected_variants" title="Permalink to this definition"></a></dt>
+<dd><p>Apply plateau models for all sites and for a population (if specified) to compute predicted proportion observed ratio and expected variant counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>plateau_models_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a>) – Linear models (output of <cite>build_models()</cite>, with the values
+of the dictionary formatted as a StructExpression of intercept and slope, that
+calibrates mutation rate to proportion observed for high coverage exomes. It
+includes models for CpG, non-CpG sites, and each population if specified.</p></li>
+<li><p><strong>mu_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Float64Expression of mutation rate.</p></li>
+<li><p><strong>possible_variants_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Int64Expression of possible variant counts.</p></li>
+<li><p><strong>cov_corr_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Float64Expression of corrected coverage expression.</p></li>
+<li><p><strong>cpg_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – BooleanExpression noting whether a site is a CPG site.</p></li>
+<li><p><strong>pop</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Optional population to use when applying plateau model. Default is
+None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>]]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary with predicted proportion observed ratio and expected variant
+counts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.oe_aggregation_expr">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">oe_aggregation_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mu_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#oe_aggregation_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.oe_aggregation_expr" title="Permalink to this definition"></a></dt>
+<dd><p>Get aggregation expressions to compute the observed:expected ratio for rows defined by <cite>filter_expr</cite>.</p>
+<p>Return a Struct containing aggregation expressions to sum the number of observed
+variants, possible variants, expected variants, and mutation rate (if
+<cite>exclude_mu_sum</cite> is not True) for rows defined by <cite>filter_expr</cite>. The Struct also
+includes an aggregation expression for the observed:expected ratio.</p>
+<dl>
+<dt>The following annotations are in the returned StructExpression:</dt><dd><ul class="simple">
+<li><p>obs - the sum of observed variants filtered to <cite>filter_expr</cite>.</p></li>
+<li><p>mu - the sum of mutation rate of variants filtered to <cite>filter_expr</cite>.</p></li>
+<li><p>possible - possible number of variants filtered to <cite>filter_expr</cite>.</p></li>
+<li><p>exp - expected number of variants filtered to <cite>filter_expr</cite>.</p></li>
+<li><p>oe - observed:expected ratio of variants filtered to <cite>filter_expr</cite>.</p></li>
+</ul>
+<dl class="simple">
+<dt>If <cite>pops</cite> is specified:</dt><dd><ul class="simple">
+<li><p>gen_anc_exp - Struct with the expected number of variants per population (for
+all pop in <cite>pops</cite>) filtered to <cite>filter_expr</cite>.</p></li>
+<li><p>gen_anc_obs - Struct with the observed number of variants per population (for
+all pop in <cite>pops</cite>) filtered to <cite>filter_expr</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>The following annotations should be present in <cite>ht</cite>:</dt><dd><ul class="simple">
+<li><p>observed_variants</p></li>
+<li><p>mu</p></li>
+<li><p>possible_variants</p></li>
+<li><p>expected_variants</p></li>
+</ul>
+</dd>
+<dt>If <cite>pops</cite> is specified, the following annotations should also be present:</dt><dd><ul class="simple">
+<li><p>expected_variants_{pop} for all pop in <cite>pops</cite></p></li>
+<li><p>downsampling_counts_{pop} for all pop in <cite>pops</cite></p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table to create observed:expected ratio aggregation expressions for.</p></li>
+<li><p><strong>filter_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.BooleanExpression.html#hail.expr.BooleanExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BooleanExpression</span></code></a>) – Boolean expression used to filter <cite>ht</cite> before aggregation.</p></li>
+<li><p><strong>pops</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of populations to compute constraint metrics for. Default is ().</p></li>
+<li><p><strong>exclude_mu_sum</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to exclude mu sum aggregation expression from
+returned struct. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression with observed:expected ratio aggregation expressions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.compute_pli">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">compute_pli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_diff_convergence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#compute_pli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.compute_pli" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the pLI score using the observed and expected variant counts.</p>
+<p>Full details on pLI can be found in the ExAC paper: Lek, M., Karczewski, K.,
+Minikel, E. et al. Analysis of protein-coding genetic variation in 60,706 humans.
+Nature 536, 285–291 (2016).</p>
+<p>pLI is the probability of being loss-of-function intolerant, and this function
+computes that probability using the expectation-maximization (EM) algorithm.</p>
+<p>We assume a 3 state model, where each gene fits into one of three categories
+with respect loss-of-function variation sensitivity:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Null: where protein truncating variation is completely tolerated by natural
+selection.</p></li>
+<li><p>Recessive (Rec): where heterozygous pLoFs are tolerated but homozygous pLoFs
+are not.</p></li>
+<li><p>Haploinsufficient (LI): where heterozygous pLoFs are not tolerated.</p></li>
+</ul>
+</div></blockquote>
+<p>The function requires the expected amount of loss-of-function depletion for each of
+these states. The default provided is based on the observed depletion of
+protein-truncating variation in the Blekhman autosomal recessive and ClinGen
+dosage sensitivity gene sets (Supplementary Information Table 12 of the above
+reference):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Null: 1.0, assume tolerant genes have the expected amount of truncating
+variation.</p></li>
+<li><p>Rec: 0.463, derived from the empirical mean observed/expected rate of
+truncating variation for recessive disease genes (0.463).</p></li>
+<li><p>LI: 0.089, derived from the empirical mean observed/expected rate of
+truncating variation for severe haploinsufficient genes.</p></li>
+</ul>
+</div></blockquote>
+<p>The output StructExpression will include the following annotations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>pLI: Probability of loss-of-function intolerance; probability that transcript
+falls into distribution of haploinsufficient genes.</p></li>
+<li><p>pNull: Probability that transcript falls into distribution of unconstrained
+genes.</p></li>
+<li><p>pRec: Probability that transcript falls into distribution of recessive genes.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table containing <cite>obs_expr</cite> and <cite>exp_expr</cite>.</p></li>
+<li><p><strong>obs_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Expression for the number of observed variants on each gene or
+transcript in <cite>ht</cite>.</p></li>
+<li><p><strong>exp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expression for the number of expected variants on each gene or
+transcript in <cite>ht</cite>.</p></li>
+<li><p><strong>expected_values</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – Dictionary containing the expected values for ‘Null’,
+‘Rec’, and ‘LI’ to use as starting values.</p></li>
+<li><p><strong>min_diff_convergence</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Minimum iteration change in LI to consider the EM
+model convergence criteria as met. Default is 0.001.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression for pLI scores.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.oe_confidence_interval">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">oe_confidence_interval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#oe_confidence_interval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.oe_confidence_interval" title="Permalink to this definition"></a></dt>
+<dd><p>Determine the confidence interval around the observed:expected ratio.</p>
+<p>For a given pair of observed (<cite>obs_expr</cite>) and expected (<cite>exp_expr</cite>) values, the
+function computes the density of the Poisson distribution (performed using Hail’s
+<cite>dpois</cite> module) with fixed k (<cite>x</cite> in <cite>dpois</cite> is set to the observed number of
+variants) over a range of lambda (<cite>lamb</cite> in <cite>dpois</cite>) values, which are given by the
+expected number of variants times a varying parameter ranging between 0 and 2 (the
+observed:expected ratio is typically between 0 and 1, so we want to extend the
+upper bound of the confidence interval to capture this). The cumulative density
+function of the Poisson distribution density is computed and the value of the
+varying parameter is extracted at points corresponding to <cite>alpha</cite> (defaults to 5%)
+and 1-<cite>alpha</cite> (defaults to 95%) to indicate the lower and upper bounds of the
+confidence interval.</p>
+<dl class="simple">
+<dt>The following annotations are in the output StructExpression:</dt><dd><ul class="simple">
+<li><p>lower - the lower bound of confidence interval</p></li>
+<li><p>upper - the upper bound of confidence interval</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obs_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Expression for the observed variant counts of pLoF, missense, or
+synonymous variants in <cite>ht</cite>.</p></li>
+<li><p><strong>exp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expression for the expected variant counts of pLoF, missense, or
+synonymous variants in <cite>ht</cite>.</p></li>
+<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The significance level used to compute the confidence interval.
+Default is 0.05.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression for the confidence interval lower and upper bounds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.calculate_raw_z_score">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">calculate_raw_z_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#calculate_raw_z_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.calculate_raw_z_score" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the signed raw z-score using observed and expected variant counts.</p>
+<p>The raw z-scores are positive when the transcript had fewer variants than expected,
+and are negative when transcripts had more variants than expected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obs_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Int64Expression.html#hail.expr.Int64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int64Expression</span></code></a>) – Observed variant count expression.</p></li>
+<li><p><strong>exp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expected variant count expression.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StructExpression.html#hail.expr.StructExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructExpression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression for the raw z-score.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.get_constraint_flags">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">get_constraint_flags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exp_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_z_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_z_lower_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_z_upper_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag_postfix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#get_constraint_flags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.get_constraint_flags" title="Permalink to this definition"></a></dt>
+<dd><p>Determine the constraint flags that define why constraint will not be calculated.</p>
+<dl class="simple">
+<dt>Flags which are added:</dt><dd><ul class="simple">
+<li><p>“no_exp_{flag_postfix}” - for genes that have missing or zero expected variants.</p></li>
+<li><p>“outlier_{flag_postfix}” - for genes that are raw z-score outliers:
+(<cite>raw_z_expr</cite> &lt; <cite>raw_z_lower_threshold</cite>) or (<cite>raw_z_expr</cite> &gt;
+<cite>raw_z_upper_threshold</cite>).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exp_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expression for the expected variant counts of pLoF, missense, or
+synonymous variants.</p></li>
+<li><p><strong>raw_z_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expression for the signed raw z-score of pLoF, missense, or
+synonymous variants.</p></li>
+<li><p><strong>raw_z_lower_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Lower threshold for the raw z-score. When <cite>raw_z_expr</cite>
+is less than this threshold it is considered an ‘outlier’. Default is -5.0.</p></li>
+<li><p><strong>raw_z_upper_threshold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Upper threshold for the raw z-score. When <cite>raw_z_expr</cite>
+is greater than this threshold it is considered an ‘outlier’. Default is 5.0.</p></li>
+<li><p><strong>flag_postfix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Postfix to add to the end of the constraint flag names.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing expressions for constraint flags.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.calculate_raw_z_score_sd">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">calculate_raw_z_score_sd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_z_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mirror_neg_raw_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#calculate_raw_z_score_sd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.calculate_raw_z_score_sd" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the standard deviation of the raw z-score.</p>
+<p>When using <cite>mirror_neg_raw_z</cite> is True, all the negative raw z-scores (defined by
+<cite>raw_z_expr</cite>) are combined with those same z-scores multiplied by -1 (to create a
+mirrored distribution).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_z_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Float64Expression.html#hail.expr.Float64Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float64Expression</span></code></a>) – Expression for the raw z-score.</p></li>
+<li><p><strong>flag_expr</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.expr.StringExpression.html#hail.expr.StringExpression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringExpression</span></code></a>) – Expression for the constraint flags. z-score will not be
+calculated if flags are present.</p></li>
+<li><p><strong>mirror_neg_raw_z</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether the standard deviation should be computed using a
+mirrored distribution of negative <cite>raw_z_expr</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.expr.Expression.html#hail.expr.Expression" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>StructExpression containing standard deviation of the raw z-score and
+the z-score.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gnomad.utils.constraint.add_gencode_transcript_annotations">
+<span class="sig-prename descclassname"><span class="pre">gnomad.utils.constraint.</span></span><span class="sig-name descname"><span class="pre">add_gencode_transcript_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gencode_ht</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['level',</span> <span class="pre">'transcript_type']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/gnomad/utils/constraint.html#add_gencode_transcript_annotations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gnomad.utils.constraint.add_gencode_transcript_annotations" title="Permalink to this definition"></a></dt>
+<dd><p>Add GENCODE annotations to Table based on transcript id.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Added annotations by default are:
+- level
+- transcript_type</p>
+<p>Computed annotations are:
+- chromosome
+- cds_length
+- num_coding_exons</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Input Table.</p></li>
+<li><p><strong>gencode_ht</strong> (<a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) – Table with GENCODE annotations.</p></li>
+<li><p><strong>annotations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – List of GENCODE annotations to add. Default is [“level”, “transcript_type”].
+Added annotations also become keys for the group by when computing “cds_length” and “num_coding_exons”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://hail.is/docs/0.2/hail.Table.html#hail.Table" title="(in Hail v0.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table with transcript annotations from GENCODE added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="annotations.html" class="btn btn-neutral float-left" title="gnomad.utils.annotations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="file_utils.html" class="btn btn-neutral float-right" title="gnomad.utils.file_utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

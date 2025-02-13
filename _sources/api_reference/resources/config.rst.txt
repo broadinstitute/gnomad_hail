@@ -1,0 +1,8 @@
+gnomad.resources.config
+=======================
+
+Configuration for loading resources.
+
+.. gnomad_automodulesummary:: gnomad.resources.config
+
+.. automodule:: gnomad.resources.config
