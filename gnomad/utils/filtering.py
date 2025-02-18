@@ -793,13 +793,115 @@ def split_vds_by_strata(
     }
 
 
+def filter_meta_array(
+    meta_expr: hl.expr.ArrayExpression,
+    keys_to_keep: List[str] = None,
+    keys_to_exclude: List[str] = None,
+    key_value_pairs_to_keep: Dict[str, List[str]] = None,
+    key_value_pairs_to_exclude: Dict[str, List[str]] = None,
+    keep_combine_operator: str = "and",
+    exclude_combine_operator: str = "and",
+    combine_operator: str = "and",
+    exact_match: bool = False,
+) -> hl.expr.ArrayExpression:
+    """
+    Filter a metadata array expression based on keys and key-value pairs to keep/exclude.
+
+    If `exact_match` is True, the filtering will only be applied to items with exactly
+    the specified keys in `keys_to_keep` (and the keys in `key_value_pairs_to_keep`
+    if provided). When `key_value_pairs_to_keep` is also provided, the keys in
+    `key_value_pairs_to_keep` must also be present in the metadata item. This
+    parameter is only relevant when `keys_to_keep` is provided, `combine_operator`
+    is "and", and `exact_match` is True.
+
+    :param meta_expr: Metadata array expression to filter.
+    :param keys_to_keep: List of keys to keep.
+    :param keys_to_exclude: List of keys to exclude.
+    :param key_value_pairs_to_keep: Dictionary of key-value pairs to keep.
+    :param key_value_pairs_to_exclude: Dictionary of key-value pairs to exclude.
+    :param keep_combine_operator: Whether to use "and" or "or" to combine the filtering
+        criteria for keys/key-value pairs to keep.
+    :param exclude_combine_operator: Whether to use "and" or "or" to combine the
+        filtering criteria for keys/key-value pairs to exclude.
+    :param combine_operator: Whether to use "and" or "or" to combine the keep and
+        exclude filtering criteria.
+    :param exact_match: Whether to apply the filtering only to items with exactly the
+        specified keys.
+    :return: The filtered metadata array expression.
+    """
+    keys_to_keep = keys_to_keep or {}
+    key_value_pairs_to_keep = key_value_pairs_to_keep or {}
+    keys_to_exclude = keys_to_exclude or {}
+    key_value_pairs_to_exclude = key_value_pairs_to_exclude or {}
+
+    combine_operator_map = {"and": hl.all, "or": hl.any}
+    for o in [keep_combine_operator, exclude_combine_operator, combine_operator]:
+        if o not in combine_operator_map:
+            raise ValueError(
+                "The combine operators must be one of 'and' or 'or', but found" f" {o}!"
+            )
+
+    # Assign operators to their respective values in the combine_operator_map dict.
+    keep_combine_operator = combine_operator_map[keep_combine_operator]
+    exclude_combine_operator = combine_operator_map[exclude_combine_operator]
+    combine_operator = combine_operator_map[combine_operator]
+
+    def _get_filter(m: hl.DictExpression) -> hl.expr.BooleanExpression:
+        """
+        Get the filter to apply to the metadata item.
+
+        :param m: Metadata item.
+        :return: Filter to apply to the metadata item.
+        """
+        # If keys_to_keep is provided, filter to only metadata items with the specified
+        # keys. If exact_match is True, filter to only metadata items with the exact
+        # keys specified in keys_to_keep, where any keys in key_value_pairs_to_keep
+        # are also present.
+        if exact_match:
+            keep_filter = [
+                hl.set(set(keys_to_keep) | set(key_value_pairs_to_keep.keys()))
+                == hl.set(m.keys())
+            ]
+        else:
+            keep_filter = [m.contains(k) for k in keys_to_keep]
+
+        # If key_value_pairs_to_keep is provided, filter to only metadata items with the
+        # specified key-value pairs.
+        keep_filter += [
+            hl.literal(v if isinstance(v, list) else [v]).contains(m.get(k, ""))
+            for k, v in key_value_pairs_to_keep.items()
+        ]
+
+        # If keys_to_exclude is provided, filter to only metadata items without the
+        # specified keys and if key_value_pairs_to_exclude is provided, filter to only
+        # metadata items without the specified key-value pairs.
+        exclude_filter = [~m.contains(k) for k in keys_to_exclude] + [
+            ~hl.literal(v if isinstance(v, list) else [v]).contains(m.get(k, ""))
+            for k, v in key_value_pairs_to_exclude.items()
+        ]
+
+        filters = []
+        if keep_filter:
+            filters.append(keep_combine_operator(keep_filter))
+        if exclude_filter:
+            filters.append(exclude_combine_operator(exclude_filter))
+
+        return combine_operator(filters)
+
+    return meta_expr.filter(lambda m: _get_filter(m))
+
+
 def filter_arrays_by_meta(
     meta_expr: hl.expr.ArrayExpression,
     meta_indexed_exprs: Union[
         Dict[str, hl.expr.ArrayExpression], hl.expr.ArrayExpression
     ],
-    items_to_filter: Union[Dict[str, List[str]], List[str]],
+    items_to_filter: Union[
+        List[str], Dict[str, Union[List[str], Dict[str, Union[List[str], bool]]]]
+    ],
     keep: bool = True,
+    keep_combine_operator: str = "and",
+    exclude_combine_operator: str = "and",
     combine_operator: str = "and",
     exact_match: bool = False,
 ) -> Tuple[
@@ -807,14 +909,24 @@ def filter_arrays_by_meta(
     Union[Dict[str, hl.expr.ArrayExpression], hl.expr.ArrayExpression],
 ]:
     """
-    Filter both metadata array expression and meta data indexed expression by `items_to_filter`.
+    Filter both metadata array expression and metadata indexed expression by `items_to_filter`.
 
     The `items_to_filter` can be used to filter in the following ways based on
     `meta_expr` items:
-    - By a list of keys, e.g. ["sex", "downsampling"].
-    - By specific key: value pairs, e.g. to filter where 'pop' is 'han' or 'papuan'
-    {"pop": ["han", "papuan"]}, or where 'pop' is 'afr' and/or 'sex' is 'XX'
-    {"pop": ["afr"], "sex": ["XX"]}.
+
+        - By a list of keys, e.g. ``["sex", "downsampling"]``.
+        - By specific key: value pairs, e.g. to filter where 'pop' is 'han' or 'papuan'
+          ``{"pop": ["han", "papuan"]}``, or where 'pop' is 'afr' and/or 'sex' is 'XX'
+          ``{"pop": ["afr"], "sex": ["XX"]}``.
+        - By specific key: value pairs with differing keep values, e.g.:
+
+            .. code-block:: python
+
+                {
+                    "gen_anc": {"values": ["global", "afr"], "keep": True},
+                    "downsampling": {"keep": True},
+                    "subset": {"keep": False},
+                }
 
     The items can be kept or removed from `meta_indexed_expr` and `meta_expr` based on
     the value of `keep`. For example if `meta_indexed_exprs` is {'freq': ht.freq,
@@ -833,9 +945,8 @@ def filter_arrays_by_meta(
     specified in the `items_to_filter` parameter. For example, by default, if `keep` is
     True, `combine_operator` is "and", and `items_to_filter` is ["sex", "downsampling"],
     then all items in `meta_expr` with both "sex" and "downsampling" as keys will be
-    kept. However, if `exact_match` is True, then the items
-    in `meta_expr` will only be kept if "sex" and "downsampling" are the only keys in
-    the meta dict.
+    kept. However, if `exact_match` is True, then the items in `meta_expr` will only be
+    kept if "sex" and "downsampling" are the only keys in the meta dict.
 
     :param meta_expr: Metadata expression that contains the values of the elements in
         `meta_indexed_expr`. The most often used expression is `freq_meta` to index into
@@ -845,8 +956,12 @@ def filter_arrays_by_meta(
         array or just a single expression indexed by the `meta_expr`.
     :param items_to_filter: Items to filter by, either a list or a dictionary.
     :param keep: Whether to keep or remove the items specified by `items_to_filter`.
-    :param combine_operator: Whether to use "and" or "or" to combine the items
-        specified by `items_to_filter`.
+    :param keep_combine_operator: Whether to use "and" or "or" to combine the filtering
+        criteria for keys/key-value pairs to keep.
+    :param exclude_combine_operator: Whether to use "and" or "or" to combine the
+        filtering criteria for keys/key-value pairs to exclude.
+    :param combine_operator: Whether to use "and" or "or" to combine the keep and
+        exclude filtering criteria.
     :param exact_match: Whether to apply the `keep` parameter to only the items
         specified in the `items_to_filter` parameter or to all items in `meta_expr`.
         See the example above for more details. Default is False.
@@ -856,58 +971,84 @@ def filter_arrays_by_meta(
     """
     meta_expr = meta_expr.collect(_localize=False)[0]
 
+    # If only a single array expression needs to be filtered, make meta_indexed_exprs
+    # a dictionary with a single key "_tmp" so it can be filtered in the same way as
+    # a dictionary of array expressions.
     if isinstance(meta_indexed_exprs, hl.expr.ArrayExpression):
         meta_indexed_exprs = {"_tmp": meta_indexed_exprs}
 
-    if combine_operator == "and":
-        operator_func = hl.all
-    elif combine_operator == "or":
-        operator_func = hl.any
-    else:
-        raise ValueError(
-            "combine_operator must be one of 'and' or 'or', but found"
-            f" {combine_operator}!"
-        )
-
+    # If items_to_filter is a list, convert it to a dictionary with the key being the
+    # item to filter and the value being None, so it can be filtered in the same way as
+    # a dictionary of items to filter.
     if isinstance(items_to_filter, list):
-        items_to_filter_set = hl.set(items_to_filter)
-        items_to_filter = [[k] for k in items_to_filter]
-        if exact_match:
-            filter_func = lambda m, k: (
-                hl.len(hl.set(m.keys()).difference(items_to_filter_set)) == 0
-            ) & m.contains(k)
-        else:
-            filter_func = lambda m, k: m.contains(k)
+        items_to_filter = {k: None for k in items_to_filter}
     elif isinstance(items_to_filter, dict):
-        items_to_filter = [
-            [(k, v) for v in values] for k, values in items_to_filter.items()
-        ]
-        items_to_filter_set = hl.set(hl.flatten(items_to_filter))
-        if exact_match:
-            filter_func = lambda m, k: (
-                (hl.len(hl.set(m.items()).difference(items_to_filter_set)) == 0)
-                & (m.get(k[0], "") == k[1])
+        # If items_to_filter is a dictionary with lists as values, convert the lists
+        # to dictionaries with the key "values" and the value being the list of values
+        # to filter by.
+        items_to_filter = {
+            k: (
+                v
+                if v is None or isinstance(v, dict)
+                else {"values": v if isinstance(v, list) else [v]}
             )
-        else:
-            filter_func = lambda m, k: (m.get(k[0], "") == k[1])
+            for k, v in items_to_filter.items()
+        }
     else:
         raise TypeError("items_to_filter must be a list or a dictionary!")
 
-    meta_expr = hl.enumerate(meta_expr).filter(
-        lambda m: hl.bind(
-            lambda x: hl.if_else(keep, x, ~x),
-            operator_func(
-                [hl.any([filter_func(m[1], v) for v in k]) for k in items_to_filter]
-            ),
-        ),
+    # Use filter_meta_array to filter the meta_expr to keep only the items specified
+    # by items_to_filter.
+    keys_to_keep = []
+    keys_to_exclude = []
+    key_value_pairs_to_keep = {}
+    key_value_pairs_to_exclude = {}
+
+    for k, v in items_to_filter.items():
+        # Set item_keep to 'keep' parameter if value is None or if 'keep' value is not
+        # defined in that items' dictionary. Otherwise, (if already defined in the
+        # item's dictionary), use the 'keep' value defined in the dictionary.
+        item_keep = keep if v is None or "keep" not in v else v["keep"]
+
+        if item_keep:
+            if v is not None and "values" in v:
+                key_value_pairs_to_keep[k] = v["values"]
+            else:
+                keys_to_keep.append(k)
+        else:
+            if v is not None and "values" in v:
+                key_value_pairs_to_exclude[k] = v["values"]
+            else:
+                keys_to_exclude.append(k)
+
+    filtered_meta_expr = filter_meta_array(
+        meta_expr,
+        keys_to_keep=keys_to_keep,
+        keys_to_exclude=keys_to_exclude,
+        key_value_pairs_to_keep=key_value_pairs_to_keep,
+        key_value_pairs_to_exclude=key_value_pairs_to_exclude,
+        keep_combine_operator=keep_combine_operator,
+        exclude_combine_operator=exclude_combine_operator,
+        combine_operator=combine_operator,
+        exact_match=exact_match,
     )
 
-    meta_indexed_exprs = {
-        k: meta_expr.map(lambda x: v[x[0]]) for k, v in meta_indexed_exprs.items()
-    }
-    meta_expr = meta_expr.map(lambda x: x[1])
+    # Filter the enumerated meta_exprs to only keep the items that match the metadata
+    # dictionaries in the filtered meta expression.
+    filtered_meta_idx_expr = hl.enumerate(meta_expr).filter(
+        lambda x: filtered_meta_expr.contains(x[1])
+    )
 
+    # Filter each of the array expressions in meta_indexed_exprs to only keep the items
+    # that match the metadata dictionaries in the filtered meta expression.
+    meta_indexed_exprs = {
+        k: filtered_meta_idx_expr.map(lambda x: v[x[0]])
+        for k, v in meta_indexed_exprs.items()
+    }
+
+    # If the original meta_indexed_exprs was a single array expression, return the
+    # filtered meta_indexed_exprs as a single array expression.
     if "_tmp" in meta_indexed_exprs:
         meta_indexed_exprs = meta_indexed_exprs["_tmp"]
 
-    return meta_expr, meta_indexed_exprs
+    return filtered_meta_expr, meta_indexed_exprs
