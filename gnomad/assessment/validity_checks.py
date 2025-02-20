@@ -1,6 +1,8 @@
 # noqa: D100
 
+import io
 import logging
+from contextlib import contextmanager, redirect_stdout
 from pprint import pprint
 from typing import Any, Dict, List, Optional, Union
 
@@ -10,7 +12,38 @@ from hail.utils.misc import new_temp_file
 from gnomad.resources.grch38.gnomad import CURRENT_MAJOR_RELEASE, POPS, SEXES
 from gnomad.utils.vcf import HISTS, SORT_ORDER, make_label_combos
 
-logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+# Save original LogRecord factory.
+old_factory = logging.getLogRecordFactory()
+
+
+# Define custom factory that appends function names to logger.
+def custom_record_factory(suffix):
+    """Return a custom LogRecord factory that appends a given suffix to function names."""
+
+    def factory(*args, **kwargs):
+        # Create original log record.
+        record = old_factory(*args, **kwargs)
+        # Append suffix tooriginal log record.
+        record.funcName = f"{record.funcName}.{suffix}"
+        return record
+
+    return factory
+
+
+# Define context manager to temporarily enable the custom factory.
+@contextmanager
+def temp_logger(function_name):
+    """Temporarily modify logging factory to append `function_name` to function names."""
+    logging.setLogRecordFactory(custom_record_factory(function_name))
+    yield
+    # Restore original factory.
+    logging.setLogRecordFactory(old_factory)
+
+
+logging.basicConfig(
+    format="%(levelname)s (%(name)s %(module)s.%(funcName)s %(lineno)d): %(message)s"
+)
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -24,6 +57,7 @@ def generic_field_check(
     show_percent_sites: bool = False,
     n_fail: Optional[int] = None,
     ht_count: Optional[int] = None,
+    function_name: Optional[str] = None,
 ) -> None:
     """
     Check generic logical condition `cond_expr` involving annotations in a Hail Table when `n_fail` is absent and print the results to stdout.
@@ -46,30 +80,127 @@ def generic_field_check(
     :param show_percent_sites: Show percentage of sites that fail checks. Default is False.
     :param n_fail: Optional number of sites that fail the conditional checks (previously computed). If not supplied, `cond_expr` is used to filter the Table and obtain the count of sites that fail the checks.
     :param ht_count: Optional number of sites within hail Table (previously computed). If not supplied, a count of sites in the Table is performed.
+    :param function_name: Name of the function that initiated this check. The name will be appended to the logger output.
     :return: None
     """
-    if n_fail is None and cond_expr is None:
-        raise ValueError("At least one of n_fail or cond_expr must be defined!")
+    with temp_logger(function_name):
+        if n_fail is None and cond_expr is None:
+            raise ValueError("At least one of n_fail or cond_expr must be defined!")
 
-    if n_fail is None and cond_expr is not None:
-        n_fail = ht.filter(cond_expr).count()
+        if n_fail is None and cond_expr is not None:
+            n_fail = ht.filter(cond_expr).count()
 
-    if show_percent_sites and (ht_count is None):
-        ht_count = ht.count()
+        if show_percent_sites and (ht_count is None):
+            ht_count = ht.count()
 
-    if n_fail > 0:
-        logger.info("Found %d sites that fail %s check:", n_fail, check_description)
-        if show_percent_sites:
+        if n_fail > 0:
+            table_output = None
+
+            if cond_expr is not None:
+                ht_filtered = ht.select(_fail=cond_expr, **display_fields)
+                ht_filtered = ht_filtered.filter(ht_filtered._fail).drop("_fail")
+                log_stream = io.StringIO()
+                with redirect_stdout(log_stream):
+                    ht_filtered.show(width=200)
+                    table_output = log_stream.getvalue().strip()
             logger.info(
-                "Percentage of sites that fail: %.2f %%", 100 * (n_fail / ht_count)
+                "Found %d sites that fail %s check: %s",
+                n_fail,
+                check_description,
+                table_output,
             )
-        if cond_expr is not None:
-            ht = ht.select(_fail=cond_expr, **display_fields)
-            ht.filter(ht._fail).drop("_fail").show()
-    else:
-        logger.info("PASSED %s check", check_description)
-        if verbose:
-            ht.select(**display_fields).show()
+            if show_percent_sites:
+                logger.info(
+                    "Percentage of sites that fail: %.2f %%", 100 * (n_fail / ht_count)
+                )
+        else:
+            table_output = None
+            if verbose:
+                log_stream = io.StringIO()
+                with redirect_stdout(log_stream):
+                    ht.select(**display_fields).show(width=200)
+                    table_output = log_stream.getvalue().strip()
+
+            logger.info(
+                "PASSED %s check%s",
+                check_description,
+                f":\n{table_output}" if table_output else "",
+            )
+
+
+def generic_field_check_loop(
+    ht: hl.Table,
+    field_check_expr: Dict[str, Dict[str, Any]],
+    verbose: bool,
+    show_percent_sites: bool = False,
+    ht_count: int = None,
+    function_name: Optional[str] = None,
+) -> None:
+    """
+    Loop through all conditional checks for a given hail Table.
+
+    This loop allows aggregation across the hail Table once, as opposed to aggregating during every conditional check.
+
+    :param ht: Table containing annotations to be checked.
+    :param field_check_expr: Dictionary whose keys are conditions being checked and values are the expressions for filtering to condition.
+    :param verbose: If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.
+    :param show_percent_sites: Show percentage of sites that fail checks. Default is False.
+    :param ht_count: Previously computed sum of sites within hail Table. Default is None.
+    :param function_name: Name of the function that initiated this check. The name will be appended to the logger output.
+    :return: None
+    """
+    ht_field_check_counts = ht.aggregate(
+        hl.struct(**{k: v["agg_func"](v["expr"]) for k, v in field_check_expr.items()})
+    )
+    for check_description, n_fail in ht_field_check_counts.items():
+        generic_field_check(
+            ht,
+            check_description=check_description,
+            n_fail=n_fail,
+            display_fields=field_check_expr[check_description]["display_fields"],
+            cond_expr=field_check_expr[check_description]["expr"],
+            verbose=verbose,
+            show_percent_sites=show_percent_sites,
+            ht_count=ht_count,
+            function_name=function_name,
+        )
+
+
+def generate_field_check_expr(
+    left_expr: Union[hl.expr.NumericExpression, hl.expr.StringExpression],
+    right_expr: Union[hl.expr.NumericExpression, hl.expr.StringExpression],
+    operator: str,
+) -> hl.expr.BooleanExpression:
+    """Generate a Hail expression to check field comparisons while handling missing values.
+
+    If both fields are missing, the retured expression will be False. If only one field is missing, the expression will be True. If both fields are defined and not equal, the expression will be True.
+
+    :param left_expr: Left expression field for comparison.
+    :param right_expr: Right expression field for comparison.
+    :param operator: Comparison operator as a string ("==", "!=", "<", "<=", ">", ">=").
+    :return: Hail conditional expression for field validation.
+    """
+    operators_exprs = {
+        "==": left_expr == right_expr,
+        "!=": left_expr != right_expr,
+        "<": left_expr < right_expr,
+        "<=": left_expr <= right_expr,
+        ">": left_expr > right_expr,
+        ">=": left_expr >= right_expr,
+    }
+
+    if operator not in operators_exprs:
+        raise ValueError(
+            f"Unsupported operator '{operator}'. Choose from: {list(operators_exprs.keys())}"
+        )
+
+    return (
+        hl.case()
+        .when(hl.is_missing(left_expr) & hl.is_missing(right_expr), False)
+        .when(hl.is_missing(left_expr) | hl.is_missing(right_expr), True)
+        .when(operators_exprs[operator], True)
+        .default(False)
+    )
 
 
 def make_filters_expr_dict(
@@ -146,7 +277,7 @@ def make_group_sum_expr_dict(
     t = t.rows() if isinstance(t, hl.MatrixTable) else t
 
     # Check if subset string is provided to avoid adding a delimiter to empty string
-    # (An empty string is passed to run this check on the entire callset)
+    # (An empty string is passed to run this check on the entire callset).
     if subset:
         subset += delimiter
 
@@ -209,7 +340,7 @@ def make_group_sum_expr_dict(
     # If metric_first_field is True, metric is AC, subset is tgp, sum_group is pop, and group is adj, then the values below are:
     # check_field_left = "AC-tgp-adj"
     # check_field_right = "sum-AC-tgp-adj-pop" to match the annotation dict
-    # key from above
+    # key from above.
     field_check_expr = {}
     for metric in metrics:
         if metric_first_field:
@@ -218,7 +349,9 @@ def make_group_sum_expr_dict(
             check_field_left = f"{subset}{metric}{delimiter}{group}"
         check_field_right = f"sum{delimiter}{check_field_left}{delimiter}{sum_group}"
         field_check_expr[f"{check_field_left} = {check_field_right}"] = {
-            "expr": t.info[check_field_left] != annot_dict[check_field_right],
+            "expr": generate_field_check_expr(
+                t.info[check_field_left], annot_dict[check_field_right], "!="
+            ),
             "agg_func": hl.agg.count_where,
             "display_fields": hl.struct(
                 **{
@@ -279,7 +412,6 @@ def summarize_variant_filters(
     :return: None
     """
     t = t.rows() if isinstance(t, hl.MatrixTable) else t
-
     filters = t.aggregate(hl.agg.counter(t.filters))
     logger.info("Variant filter counts: %s", filters)
 
@@ -355,41 +487,6 @@ def summarize_variant_filters(
         _filter_agg_order(t, add_agg_expr, n_rows, n_cols)
 
 
-def generic_field_check_loop(
-    ht: hl.Table,
-    field_check_expr: Dict[str, Dict[str, Any]],
-    verbose: bool,
-    show_percent_sites: bool = False,
-    ht_count: int = None,
-) -> None:
-    """
-    Loop through all conditional checks for a given hail Table.
-
-    This loop allows aggregation across the hail Table once, as opposed to aggregating during every conditional check.
-
-    :param ht: Table containing annotations to be checked.
-    :param field_check_expr: Dictionary whose keys are conditions being checked and values are the expressions for filtering to condition.
-    :param verbose: If True, show top values of annotations being checked, including checks that pass; if False, show only top values of annotations that fail checks.
-    :param show_percent_sites: Show percentage of sites that fail checks. Default is False.
-    :param ht_count: Previously computed sum of sites within hail Table. Default is None.
-    :return: None
-    """
-    ht_field_check_counts = ht.aggregate(
-        hl.struct(**{k: v["agg_func"](v["expr"]) for k, v in field_check_expr.items()})
-    )
-    for check_description, n_fail in ht_field_check_counts.items():
-        generic_field_check(
-            ht,
-            check_description=check_description,
-            n_fail=n_fail,
-            display_fields=field_check_expr[check_description]["display_fields"],
-            cond_expr=field_check_expr[check_description]["expr"],
-            verbose=verbose,
-            show_percent_sites=show_percent_sites,
-            ht_count=ht_count,
-        )
-
-
 def compare_subset_freqs(
     t: Union[hl.MatrixTable, hl.Table],
     subsets: List[str],
@@ -442,7 +539,9 @@ def compare_subset_freqs(
                         )
 
                     field_check_expr[f"{check_field_left} != {check_field_right}"] = {
-                        "expr": t.info[check_field_left] == t.info[check_field_right],
+                        "expr": generate_field_check_expr(
+                            t.info[check_field_left], t.info[check_field_right], "=="
+                        ),
                         "agg_func": hl.agg.count_where,
                         "display_fields": hl.struct(
                             **{
@@ -457,6 +556,7 @@ def compare_subset_freqs(
         field_check_expr,
         verbose,
         show_percent_sites=show_percent_sites,
+        function_name="compare_subset_freqs",
     )
 
     # Spot check the raw AC counts
@@ -501,6 +601,7 @@ def sum_group_callstats(
     :return: None
     """
     # TODO: Add support for subpop sums
+    # set_first_function()
     t = t.rows() if isinstance(t, hl.MatrixTable) else t
 
     field_check_expr = {}
@@ -530,7 +631,9 @@ def sum_group_callstats(
                     metrics,
                 )
                 field_check_expr.update(field_check_expr_s)
-    generic_field_check_loop(t, field_check_expr, verbose)
+    generic_field_check_loop(
+        t, field_check_expr, verbose, function_name="sum_group_callstats"
+    )
 
 
 def summarize_variants(
@@ -726,7 +829,9 @@ def check_raw_and_adj_callstats(
             check_field_right = f"{field_check_label}adj"
 
             field_check_expr[f"{check_field_left} >= {check_field_right}"] = {
-                "expr": t.info[check_field_left] < t.info[check_field_right],
+                "expr": generate_field_check_expr(
+                    t.info[check_field_left], t.info[check_field_right], "<"
+                ),
                 "agg_func": hl.agg.count_where,
                 "display_fields": hl.struct(
                     **{
@@ -736,7 +841,9 @@ def check_raw_and_adj_callstats(
                 ),
             }
 
-    generic_field_check_loop(t, field_check_expr, verbose)
+    generic_field_check_loop(
+        t, field_check_expr, verbose, function_name="check_raw_and_adj_callstats"
+    )
 
 
 def check_sex_chr_metrics(
@@ -767,10 +874,11 @@ def check_sex_chr_metrics(
     xx_metrics = [x for x in info_metrics if f"{delimiter}XX" in x]
 
     if len(xx_metrics) == 0:
-        raise ValueError("No XX metrics found!")
+        logger.info("FAILED check for XX metrics: no XX metrics found!")
     else:
         logger.info("Checking the following XX metrics: %s", xx_metrics)
 
+    # Check that metrics for chrY variants in XX samples are NA and not 0.
     if "chrY" in contigs:
         logger.info("Check values of XX metrics for Y variants are NA:")
         t_y = hl.filter_intervals(
@@ -781,6 +889,11 @@ def check_sex_chr_metrics(
                 )
             ],
         )
+        n_y = t_y.count()
+        if n_y == 0:
+            logger.info("FAILED metric checks on chrY: no Y variants found!")
+        else:
+            logger.info("Found %d chrY variants", n_y)
         metrics_values = {}
         for metric in xx_metrics:
             metrics_values[metric] = hl.agg.any(hl.is_defined(t_y.info[metric]))
@@ -801,7 +914,11 @@ def check_sex_chr_metrics(
                 )
             else:
                 logger.info("PASSED %s = %s check for Y variants", metric, None)
+    else:
+        logger.info("FAILED metric checks on chrY: no chrY found!")
 
+    # Check that nhomalt counts are equal to XX nhomalt counts for all non-PAR
+    # chrX variants.
     t_x = hl.filter_intervals(
         t,
         [
@@ -813,12 +930,14 @@ def check_sex_chr_metrics(
     t_xnonpar = t_x.filter(t_x.locus.in_x_nonpar())
     n = t_xnonpar.count()
     logger.info("Found %d X nonpar sites", n)
+    if n == 0:
+        logger.info("FAILED metric checks for X nonpar sites: no X nonpar sites found!")
 
     logger.info("Check (nhomalt == nhomalt_xx) for X nonpar variants:")
     xx_metrics = [x for x in xx_metrics if nhomalt_metric in x]
 
     if len(xx_metrics) == 0:
-        raise ValueError("No XX nhomalt metrics found!")
+        logger.info("FAILED check for XX nhomalt metrics: no XX nhomalt metrics found!")
     else:
         logger.info("Checking the following XX nhomalt metrics: %s", xx_metrics)
 
@@ -828,8 +947,11 @@ def check_sex_chr_metrics(
         check_field_left = f"{metric}"
         check_field_right = f"{standard_field}"
         field_check_expr[f"{check_field_left} == {check_field_right}"] = {
-            "expr": t_xnonpar.info[check_field_left]
-            != t_xnonpar.info[check_field_right],
+            "expr": generate_field_check_expr(
+                t_xnonpar.info[check_field_left],
+                t_xnonpar.info[check_field_right],
+                "!=",
+            ),
             "agg_func": hl.agg.count_where,
             "display_fields": hl.struct(
                 **{
@@ -839,7 +961,9 @@ def check_sex_chr_metrics(
             ),
         }
 
-    generic_field_check_loop(t_xnonpar, field_check_expr, verbose)
+    generic_field_check_loop(
+        t_xnonpar, field_check_expr, verbose, function_name="check_sex_chr_metrics"
+    )
 
 
 def compute_missingness(
@@ -892,7 +1016,7 @@ def compute_missingness(
                 n_missing,
                 (100 * n_missing / n_sites),
             )
-    logger.info("%d missing metrics checks failed", n_fail)
+    logger.warning("%d missing metrics checks failed for top level annotations", n_fail)
 
 
 def vcf_field_check(
@@ -988,6 +1112,20 @@ def check_global_and_row_annot_lengths(
     t = t.rows() if isinstance(t, hl.MatrixTable) else t
     if not check_all_rows:
         t = t.head(1)
+
+    n_rows = t.count()
+
+    global_lengths = {
+        global_field: hl.eval(hl.len(t.index_globals()[global_field]))
+        for row_field, global_fields in row_to_globals_check.items()
+        for global_field in global_fields
+    }
+
+    row_length_counts = {
+        row_field: t.aggregate(hl.agg.counter(hl.len(t[row_field])))
+        for row_field in row_to_globals_check.keys()
+    }
+
     for row_field, global_fields in row_to_globals_check.items():
         if not check_all_rows:
             logger.info(
@@ -995,28 +1133,28 @@ def check_global_and_row_annot_lengths(
                 row_field,
                 global_fields,
             )
+
+        row_lengths = row_length_counts[row_field]
+
         for global_field in global_fields:
-            global_len = hl.eval(hl.len(t[global_field]))
-            row_len_expr = hl.len(t[row_field])
-            failed_rows = t.aggregate(
-                hl.struct(
-                    n_fail=hl.agg.count_where(row_len_expr != global_len),
-                    row_len=hl.agg.counter(row_len_expr),
-                )
+            global_len = global_lengths[global_field]
+            failed_rows = sum(
+                count for length, count in row_lengths.items() if length != global_len
             )
-            outcome = "Failed" if failed_rows["n_fail"] > 0 else "Passed"
-            n_rows = t.count()
+
+            outcome = "Failed" if failed_rows > 0 else "Passed"
+
             logger.info(
                 "%s global and row lengths comparison: Length of %s in"
-                " globals (%d) does %smatch length of %s in %d out of %d rows (%s)",
+                " globals (%d) does %smatch length of %s in %d out of %d rows (row length counter: %s)",
                 outcome,
                 global_field,
                 global_len,
                 "NOT " if outcome == "Failed" else "",
                 row_field,
-                failed_rows["n_fail"] if outcome == "Failed" else n_rows,
+                failed_rows if outcome == "Failed" else n_rows,
                 n_rows,
-                failed_rows["row_len"],
+                row_lengths,
             )
 
 
