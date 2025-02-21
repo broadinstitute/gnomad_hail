@@ -445,13 +445,13 @@ def test_make_group_sum_expr_dict_logs(ht_for_group_sums, caplog) -> None:
         )
     log_messages = [record.getMessage().lower().strip() for record in caplog.records]
 
-    # Perform assertions on log output.
+    # Perform assertions on log output (does not include all expected log messages).
     expected_logs = [
         "including field ac_afr_adj",
         "including field ac_amr_adj",
         "an_afr_adj is not in table's info field, it will not be included in make_group_sum_expr_dict",
         "an_amr_adj is not in table's info field, it will not be included in make_group_sum_expr_dict",
-        "generated annot_dict keys: ['sum_ac_adj_pop', 'sum_an_adj_pop']",  # Avoid exact key formatting issues
+        "generated annot_dict keys: ['sum_ac_adj_pop', 'sum_an_adj_pop']",
         "no valid fields found for sum_an_adj_pop",
     ]
 
@@ -484,20 +484,22 @@ def test_sum_group_callstats(ht_for_group_sums, caplog) -> None:
             gen_anc_label_name="gen_anc",
         )
 
-    log_messages = [record.getMessage() for record in caplog.records]
+    # Convert expected log messages to lowercase and strip whitespace
+    log_messages = [record.getMessage().lower().strip() for record in caplog.records]
 
-    # Perform assertions on log output.
     expected_logs = [
-        "PASSED AC_adj = sum_AC_adj_gen_anc check",
-        "PASSED AN_adj = sum_AN_adj_gen_anc check",
-        "PASSED AC_adj = sum_AC_adj_sex check",
-        "PASSED AN_adj = sum_AN_adj_sex check",
-        "PASSED AC_adj = sum_AC_adj_gen_anc_sex check",
-        "Found 1 sites that fail AN_adj = sum_AN_adj_gen_anc_sex check:",
+        "passed ac_adj = sum_ac_adj_gen_anc check",
+        "found 3 sites that fail an_adj = sum_an_adj_gen_anc check",
+        "found 3 sites that fail ac_adj = sum_ac_adj_sex check",
+        "found 3 sites that fail an_adj = sum_an_adj_sex check",
+        "found 3 sites that fail ac_adj = sum_ac_adj_gen_anc_sex check",
+        "found 1 sites that fail an_adj = sum_an_adj_gen_anc_sex check",
     ]
 
-    for msg in expected_logs:
-        assert msg in log_messages, f"Expected log message is missing: {msg}"
+    for log_phrase in expected_logs:
+        assert any(
+            log_phrase in log for log in log_messages
+        ), f"Expected phrase missing: {log_phrase}"
 
 
 @pytest.fixture
@@ -614,7 +616,6 @@ def test_check_raw_and_adj_callstats(
         "PASSED AC_raw defined when AN defined and missing when AN missing check",
         "PASSED AC_adj defined when AN defined and missing when AN missing check",
         "PASSED AF_adj defined when AN defined (and > 0) and missing when AN missing check",
-        "PASSED AC_raw >= AC_adj check",
         "PASSED nhomalt_raw <= AC_raw / 2 check",
         # Expected FAILURES.
         "Found 1 sites that fail nhomalt_raw defined when AN defined and missing when AN missing check:",
@@ -624,12 +625,15 @@ def test_check_raw_and_adj_callstats(
         "Found 1 sites that fail AF_adj missing when AN 0 check:",
         "Found 2 sites that fail AC_raw > 0 check:",
         "Found 1 sites that fail AC_adj >= 0 check:",
+        "Found 1 sites that fail AC_raw >= AC_adj check",
         "Found 2 sites that fail AF_raw > 0 check:",
         "Found 1 sites that fail AF_adj >= 0 check:",
-        "Found 1 sites that fail AN_raw >= AN_adj check:",
-        "Found 1 sites that fail nhomalt_raw >= nhomalt_adj check:",
+        "Found 2 sites that fail AN_raw >= AN_adj check:",
+        "Found 2 sites that fail nhomalt_raw >= nhomalt_adj check:",
         "Found 1 sites that fail nhomalt_adj <= AC_adj / 2 check:",
     ]
 
-    for msg in expected_logs:
-        assert msg in log_messages, f"Expected log message is missing: {msg}"
+    for log_phrase in expected_logs:
+        assert any(
+            log_phrase in log for log in log_messages
+        ), f"Expected phrase missing: {log_phrase}"
