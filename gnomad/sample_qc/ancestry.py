@@ -169,6 +169,10 @@ def apply_sklearn_classification_model(
     except TypeError:
         raise TypeError("The supplied model is not an sklearn model!")
 
+    logger.warning(
+        "The use of .onnx files and apply_onnx_classification_model is recommended."
+    )
+
     classification = fit.predict(data_pd)
     probs = fit.predict_proba(data_pd)
     probs = pd.DataFrame(probs, columns=[f"prob_{p}" for p in fit.classes_])
@@ -192,6 +196,13 @@ def convert_sklearn_rf_to_onnx(
         check_is_fitted(fit)
     except TypeError:
         raise TypeError("The supplied model is not an sklearn model!")
+
+    logger.warning(
+        "sklearn models have different rounding behavior than ONNX models. Use of sklearn"
+        "rf models rounds probabilities to two decimal places when used in assign_population_pcs(),"
+        "while use of onnx rf models does not. This may lead to subtly different assignment results"
+        "for samples around probability cutoffs."
+    )
 
     initial_type = [("float_input", FloatTensorType([None, fit.n_features_in_]))]
     onx = convert_sklearn(fit, initial_types=initial_type, target_opset=target_opset)
