@@ -169,6 +169,9 @@ def apply_sklearn_classification_model(
     except TypeError:
         raise TypeError("The supplied model is not an sklearn model!")
 
+    logger.warning(
+        "sklearn models have different rounding behavior than ONNX models. This may lead to subtly different results around cutoffs."
+    )
     classification = fit.predict(data_pd)
     probs = fit.predict_proba(data_pd)
     probs = pd.DataFrame(probs, columns=[f"prob_{p}" for p in fit.classes_])
