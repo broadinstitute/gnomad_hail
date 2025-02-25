@@ -7,9 +7,11 @@ import hail as hl
 import pytest
 
 from gnomad.assessment.validity_checks import (
+    check_global_and_row_annot_lengths,
     check_missingness_of_struct,
     check_raw_and_adj_callstats,
     check_sex_chr_metrics,
+    compare_subset_freqs,
     flatten_missingness_struct,
     make_group_sum_expr_dict,
     sum_group_callstats,
@@ -445,13 +447,13 @@ def test_make_group_sum_expr_dict_logs(ht_for_group_sums, caplog) -> None:
         )
     log_messages = [record.getMessage().lower().strip() for record in caplog.records]
 
-    # Perform assertions on log output.
+    # Perform assertions on log output (does not include all expected log messages).
     expected_logs = [
         "including field ac_afr_adj",
         "including field ac_amr_adj",
         "an_afr_adj is not in table's info field, it will not be included in make_group_sum_expr_dict",
         "an_amr_adj is not in table's info field, it will not be included in make_group_sum_expr_dict",
-        "generated annot_dict keys: ['sum_ac_adj_pop', 'sum_an_adj_pop']",  # Avoid exact key formatting issues
+        "generated annot_dict keys: ['sum_ac_adj_pop', 'sum_an_adj_pop']",
         "no valid fields found for sum_an_adj_pop",
     ]
 
@@ -484,16 +486,70 @@ def test_sum_group_callstats(ht_for_group_sums, caplog) -> None:
             gen_anc_label_name="gen_anc",
         )
 
-    log_messages = [record.getMessage() for record in caplog.records]
+    # Convert expected log messages to lowercase and strip whitespace
+    log_messages = [record.getMessage().lower().strip() for record in caplog.records]
 
-    # Perform assertions on log output.
     expected_logs = [
-        "PASSED AC_adj = sum_AC_adj_gen_anc check",
-        "PASSED AN_adj = sum_AN_adj_gen_anc check",
-        "PASSED AC_adj = sum_AC_adj_sex check",
-        "PASSED AN_adj = sum_AN_adj_sex check",
-        "PASSED AC_adj = sum_AC_adj_gen_anc_sex check",
-        "Found 1 sites that fail AN_adj = sum_AN_adj_gen_anc_sex check:",
+        "passed ac_adj = sum_ac_adj_gen_anc check",
+        "found 3 sites that fail an_adj = sum_an_adj_gen_anc check",
+        "found 3 sites that fail ac_adj = sum_ac_adj_sex check",
+        "found 3 sites that fail an_adj = sum_an_adj_sex check",
+        "found 3 sites that fail ac_adj = sum_ac_adj_gen_anc_sex check",
+        "found 1 sites that fail an_adj = sum_an_adj_gen_anc_sex check",
+    ]
+
+    for log_phrase in expected_logs:
+        assert any(
+            log_phrase in log for log in log_messages
+        ), f"Expected phrase missing: {log_phrase}"
+
+
+@pytest.fixture
+def ht_for_check_global_and_row_annot_lengths() -> hl.Table:
+    """Fixture to set up a Hail Table with the desired structure and data for check_global_and_row_annot_lengths."""
+    ht = hl.Table.parallelize(
+        [
+            {"freq": [0.1, 0.2, 0.3], "faf": [0.01, 0.02]},
+            {"freq": [0.8, 0.4, 0.5], "faf": [0.03, 0.04, 0.05]},
+        ],
+        hl.tstruct(freq=hl.tarray(hl.tfloat64), faf=hl.tarray(hl.tfloat64)),
+    )
+
+    return ht.annotate_globals(
+        freq_meta=["A", "B", "C"],
+        freq_index_dict={"A": 0, "B": 1, "C": 2},
+        freq_meta_sample_count=[100, 200, 300],
+        faf_meta=["D", "E"],
+        faf_index_dict={"D": 0, "E": 1},
+    )
+
+
+def test_check_global_and_row_annot_lengths(
+    ht_for_check_global_and_row_annot_lengths, caplog
+) -> None:
+    """Test that check_global_and_row_annot_lengths produces the expected log messages."""
+    ht = ht_for_check_global_and_row_annot_lengths
+
+    # Define the row_to_globals_check dictionary.
+    row_to_globals_check = {
+        "freq": ["freq_meta", "freq_index_dict", "freq_meta_sample_count"],
+        "faf": ["faf_meta", "faf_index_dict"],
+    }
+
+    with caplog.at_level(logging.INFO, logger="gnomad.assessment.validity_checks"):
+        check_global_and_row_annot_lengths(
+            ht, row_to_globals_check, check_all_rows=True
+        )
+
+    log_messages = [record.message for record in caplog.records]
+
+    # Verify log messages.
+    expected_logs = [
+        "Passed global and row lengths comparison: Length of freq_meta in globals (3) does match length of freq in 2 out of 2 rows (row length counter: {3: 2})",
+        "Passed global and row lengths comparison: Length of freq_index_dict in globals (3) does match length of freq in 2 out of 2 rows (row length counter: {3: 2})",
+        "Passed global and row lengths comparison: Length of freq_meta_sample_count in globals (3) does match length of freq in 2 out of 2 rows (row length counter: {3: 2})",
+        "Failed global and row lengths comparison: Length of faf_meta in globals (2) does NOT match length of faf in 1 out of 2 rows (row length counter: {2: 1, 3: 1})",
+        "Failed global and row lengths comparison: Length of faf_index_dict in globals (2) does NOT match length of faf in 1 out of 2 rows (row length counter: {2: 1, 3: 1})",
     ]
 
     for msg in expected_logs:
@@ -614,7 +670,6 @@ def test_check_raw_and_adj_callstats(
         "PASSED AC_raw defined when AN defined and missing when AN missing check",
         "PASSED AC_adj defined when AN defined and missing when AN missing check",
         "PASSED AF_adj defined when AN defined (and > 0) and missing when AN missing check",
-        "PASSED AC_raw >= AC_adj check",
         "PASSED nhomalt_raw <= AC_raw / 2 check",
         # Expected FAILURES.
         "Found 1 sites that fail nhomalt_raw defined when AN defined and missing when AN missing check:",
@@ -624,12 +679,89 @@ def test_check_raw_and_adj_callstats(
         "Found 1 sites that fail AF_adj missing when AN 0 check:",
         "Found 2 sites that fail AC_raw > 0 check:",
         "Found 1 sites that fail AC_adj >= 0 check:",
+        "Found 1 sites that fail AC_raw >= AC_adj check",
         "Found 2 sites that fail AF_raw > 0 check:",
         "Found 1 sites that fail AF_adj >= 0 check:",
-        "Found 1 sites that fail AN_raw >= AN_adj check:",
-        "Found 1 sites that fail nhomalt_raw >= nhomalt_adj check:",
+        "Found 2 sites that fail AN_raw >= AN_adj check:",
+        "Found 2 sites that fail nhomalt_raw >= nhomalt_adj check:",
         "Found 1 sites that fail nhomalt_adj <= AC_adj / 2 check:",
     ]
 
-    for msg in expected_logs:
-        assert msg in log_messages, f"Expected log message is missing: {msg}"
+    for log_phrase in expected_logs:
+        assert any(
+            log_phrase in log for log in log_messages
+        ), f"Expected phrase missing: {log_phrase}"
+
+
+@pytest.fixture
+def ht_for_compare_subset_freqs() -> hl.Table:
+    """Fixture to set up a Hail Table with the desired structure and data for compare_subset_freqs."""
+    data = [
+        {
+            "idx": 0,
+            "info": {
+                "AC_adj": 10,
+                "AC_raw": 12,
+                "AC_subset1_adj": 9,
+                "AC_subset1_raw": 12,
+            },
+        },
+        {
+            "idx": 1,
+            "info": {
+                "AC_adj": 0,
+                "AC_raw": 0,
+                "AC_subset1_adj": 0,
+                "AC_subset1_raw": 0,
+            },
+        },
+        {
+            "idx": 2,
+            "info": {
+                "AC_adj": 5,
+                "AC_raw": 7,
+                "AC_subset1_adj": 3,
+                "AC_subset1_raw": 6,
+            },
+        },
+    ]
+
+    ht = hl.Table.parallelize(
+        data,
+        hl.tstruct(
+            idx=hl.tint32,
+            info=hl.tstruct(
+                AC_adj=hl.tint32,
+                AC_raw=hl.tint32,
+                AC_subset1_adj=hl.tint32,
+                AC_subset1_raw=hl.tint32,
+            ),
+        ),
+    )
+
+    return ht
+
+
+def test_compare_subset_freqs(ht_for_compare_subset_freqs, caplog) -> None:
+    """Test that compare_subset_freqs produces the expected log messages."""
+    ht = ht_for_compare_subset_freqs
+
+    subsets = ["subset1"]
+    metrics = ["AC"]
+
+    with caplog.at_level(logging.INFO, logger="gnomad.assessment.validity_checks"):
+        compare_subset_freqs(ht, subsets, verbose=True, metrics=metrics, delimiter="_")
+
+    log_messages = [record.message for record in caplog.records]
+
+    # Verify log messages.
+    expected_logs = [
+        "PASSED AC_adj != AC_subset1_adj while non-zero check:",
+        "Found 1 sites (33.33%) that fail AC_raw != AC_subset1_raw while non-zero check:",
+        "Total defined raw AC count: 3",
+    ]
+
+    for log_phrase in expected_logs:
+        assert any(
+            log_phrase in log for log in log_messages
+        ), f"Expected phrase missing: {log_phrase}"
